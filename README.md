@@ -55,6 +55,14 @@ oncowatch/
 - **Reports**: ReportLab PDF generation
 - **Secrets**: encrypted locally at rest with a generated machine-local key file
 
+### Privacy modes
+OncoWatch supports two privacy modes:
+
+- **Mode 1 — Local-only**: patient context stays on-device and no AI provider receives case context.
+- **Mode 2 — De-identified AI assist**: identifying details stay local; only minimized oncology context can be sent to a selected AI provider for summaries and briefing questions after explicit disclosure acknowledgement.
+
+See `docs/privacy-modes.md` for the de-identification boundary and allowed/blocked AI payload categories.
+
 ### Connector strategy
 The public release ships with:
 - `clinicaltrials_gov` – live ClinicalTrials.gov trial search

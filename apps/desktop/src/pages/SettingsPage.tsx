@@ -70,6 +70,9 @@ export function SettingsPage() {
     }
   }
 
+  const needsAiDisclosureAcknowledgement =
+    settings.privacy_mode === 'deidentified_ai_assist' && !settings.deidentified_ai_disclosure_acknowledged;
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -120,12 +123,66 @@ export function SettingsPage() {
           </div>
         </div>
         <div className="button-row">
-          <button className="primary-button" onClick={saveGeneral} disabled={busy}>
+          <button className="primary-button" onClick={saveGeneral} disabled={busy || needsAiDisclosureAcknowledgement}>
             Save general settings
           </button>
           <button className="secondary-button" onClick={() => (window.location.hash = '#/support')}>
             Open support details
           </button>
+        </div>
+      </Card>
+
+      <Card
+        title="AI privacy mode"
+        description="Choose whether OncoWatch stays fully local or can use optional cloud AI with minimized, de-identified oncology context."
+      >
+        <div className="stack">
+          <div className="field">
+            <label>AI assist mode</label>
+            <select
+              value={settings.privacy_mode}
+              onChange={(e) => {
+                const privacyMode = e.target.value as AppSettings['privacy_mode'];
+                setSettings({
+                  ...settings,
+                  privacy_mode: privacyMode,
+                  deidentified_ai_disclosure_acknowledged:
+                    privacyMode === 'deidentified_ai_assist'
+                      ? settings.deidentified_ai_disclosure_acknowledged
+                      : false
+                });
+              }}
+            >
+              <option value="local_only">Mode 1 — Local-only</option>
+              <option value="deidentified_ai_assist">Mode 2 — De-identified AI assist</option>
+            </select>
+          </div>
+          <div className="callout">
+            <strong>Mode 1:</strong> patient context stays on this device. OncoWatch uses local rules and source-backed reports only.
+            <br />
+            <strong>Mode 2:</strong> identifying details stay local, but minimized cancer context may be sent to your selected AI provider for summaries and briefing questions.
+          </div>
+          {settings.privacy_mode === 'deidentified_ai_assist' && (
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={settings.deidentified_ai_disclosure_acknowledged}
+                onChange={(e) =>
+                  setSettings({ ...settings, deidentified_ai_disclosure_acknowledged: e.target.checked })
+                }
+              />
+              <div>
+                <strong>I understand de-identified cancer context can still be sensitive.</strong>
+                <div className="muted">
+                  OncoWatch will strip local identity fields before cloud AI calls, but cancer type, stage, biomarkers,
+                  prior therapies, and public source text may leave this device when AI assist is enabled.
+                </div>
+              </div>
+            </label>
+          )}
+          {needsAiDisclosureAcknowledgement && (
+            <div className="callout callout-danger">Acknowledge the AI privacy disclosure before saving Mode 2.</div>
+          )}
         </div>
       </Card>
 

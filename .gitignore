@@ -10,6 +10,7 @@ apps/desktop/src-tauri/gen/
 playwright-report/
 test-results/
 .playwright/
+.hermes/
 
 # Python environments and caches
 .venv/

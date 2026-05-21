@@ -86,11 +86,10 @@ def run_health_check(session: Session) -> HealthCheckResponse:
                 label=source.name,
                 ok=ok,
                 message=message,
-                severity="blocking",
-                blocking=True,
+                severity="ok" if ok else "warning",
+                blocking=False,
             )
         )
-        overall_ok &= ok
 
     provider = get_provider_config(session)
     api_key = get_provider_api_key(provider)

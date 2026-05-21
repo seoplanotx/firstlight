@@ -355,3 +355,54 @@ class FindingsServiceTests(unittest.TestCase):
             )
             self.assertEqual(snapshot["blockers"][0]["label"], "Performance status was not available.")
             self.assertEqual(snapshot["blockers"][0]["finding_count"], 2)
+
+    def test_briefing_snapshot_exposes_heartbeat_source_statuses_and_questions(self) -> None:
+        with self.session_factory() as session:
+            profile = build_profile_record()
+            session.add(profile)
+            session.commit()
+            session.refresh(profile)
+
+            run = MonitoringRun(
+                profile_id=profile.id,
+                status="completed",
+                triggered_by="heartbeat",
+                started_at=datetime(2026, 3, 27, 4, 0, tzinfo=timezone.utc),
+                completed_at=datetime(2026, 3, 27, 4, 5, tzinfo=timezone.utc),
+                new_findings_count=0,
+                changed_findings_count=0,
+                summary_json={
+                    "heartbeat": {
+                        "source_statuses": [
+                            {"connector_key": "clinicaltrials_gov", "status": "ok", "retrieved": 2},
+                            {
+                                "connector_key": "pubmed_literature",
+                                "status": "error",
+                                "retrieved": 0,
+                                "message": "timeout",
+                            },
+                        ],
+                        "source_failures": [
+                            {
+                                "connector_key": "pubmed_literature",
+                                "status": "error",
+                                "retrieved": 0,
+                                "message": "timeout",
+                            }
+                        ],
+                        "suggested_questions": ["Question worth reviewing?"],
+                        "question_generation": {"mode": "local_only", "status": "deterministic_fallback"},
+                    }
+                },
+                sources_checked=["clinicaltrials_gov"],
+            )
+            session.add(run)
+            session.commit()
+            session.refresh(run)
+
+            snapshot = build_briefing_snapshot([], latest_run=run)
+
+            self.assertEqual(snapshot["source_statuses"][1]["connector_key"], "pubmed_literature")
+            self.assertEqual(snapshot["source_failures"][0]["message"], "timeout")
+            self.assertEqual(snapshot["suggested_questions"], ["Question worth reviewing?"])
+            self.assertEqual(snapshot["question_generation"]["status"], "deterministic_fallback")
