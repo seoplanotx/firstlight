@@ -48,6 +48,8 @@ export type OnboardingState = {
   last_health_check: Record<string, unknown>;
 };
 
+export type PrivacyMode = 'local_only' | 'deidentified_ai_assist';
+
 export type AppSettings = {
   id?: number;
   default_profile_id?: number | null;
@@ -58,6 +60,8 @@ export type AppSettings = {
   timezone_label?: string;
   report_output_dir?: string | null;
   demo_profile_enabled: boolean;
+  privacy_mode: PrivacyMode;
+  deidentified_ai_disclosure_acknowledged: boolean;
   last_health_check_at?: string | null;
 };
 
@@ -173,6 +177,13 @@ export type BriefingBlocker = {
   examples: string[];
 };
 
+export type BriefingSourceStatus = {
+  connector_key: string;
+  status: string;
+  retrieved: number;
+  message?: string | null;
+};
+
 export type BriefingSnapshot = {
   latest_run_started_at?: string | null;
   latest_run_completed_at?: string | null;
@@ -180,6 +191,10 @@ export type BriefingSnapshot = {
   changed_count: number;
   sections: BriefingFindingSection[];
   blockers: BriefingBlocker[];
+  source_statuses: BriefingSourceStatus[];
+  source_failures: BriefingSourceStatus[];
+  suggested_questions: string[];
+  question_generation: Record<string, unknown>;
 };
 
 export type Dashboard = {

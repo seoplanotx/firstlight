@@ -14,7 +14,9 @@ const defaultSettings: AppSettings = {
   daily_run_time: '08:30',
   default_report_style: 'clinical',
   default_report_length: 'daily_summary',
-  demo_profile_enabled: false
+  demo_profile_enabled: false,
+  privacy_mode: 'local_only',
+  deidentified_ai_disclosure_acknowledged: false
 };
 
 const blankProfile: PatientProfile = {

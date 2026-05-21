@@ -18,6 +18,7 @@ from app.models.run import MonitoringRun
 from app.models.settings import ReportExport
 from app.schemas.run import BriefingSnapshot
 from app.services.findings_service import build_briefing_snapshot, rank_findings_for_briefing
+from app.services.heartbeat_service import deterministic_briefing_questions
 from app.utils.dates import utcnow
 
 
@@ -41,17 +42,7 @@ def _report_title(report_type: str) -> str:
 
 
 def _deterministic_questions(profile: PatientProfile, findings: list[Finding]) -> list[str]:
-    questions: list[str] = []
-    if profile.biomarkers:
-        questions.append("Does the current molecular testing still capture the most important resistance changes to review now?")
-    if any(item.type == "clinical_trials" for item in findings):
-        questions.append("Are any of these trials worth a formal screening review based on the full chart and current performance status?")
-    if profile.current_therapy_status:
-        questions.append("Do any of these updates matter for the current treatment plan or the next likely treatment step?")
-    if any(item.matching_gaps for item in findings):
-        questions.append("Which missing details would matter most before deciding whether any finding is worth pursuing further?")
-    questions.append("Should any additional tissue or liquid biopsy work be considered before the next major treatment decision?")
-    return questions[:5]
+    return deterministic_briefing_questions(profile, findings)
 
 
 def _profile_rows(profile: PatientProfile) -> list[list[str]]:

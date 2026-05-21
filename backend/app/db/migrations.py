@@ -10,6 +10,10 @@ from sqlalchemy import create_engine, inspect
 from app.core.paths import get_app_paths
 
 
+BASELINE_REVISION = "20260403_0001"
+PRIVACY_MODE_COLUMNS = {"privacy_mode", "deidentified_ai_disclosure_acknowledged"}
+
+
 def _script_location() -> Path:
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS) / "alembic"
@@ -32,7 +36,13 @@ def ensure_schema_up_to_date(db_url: str | None = None) -> None:
     effective_db_url = db_url or _db_url()
     engine = create_engine(effective_db_url, future=True)
     try:
-        table_names = set(inspect(engine).get_table_names())
+        inspector = inspect(engine)
+        table_names = set(inspector.get_table_names())
+        app_settings_columns = (
+            {column["name"] for column in inspector.get_columns("app_settings")}
+            if "app_settings" in table_names
+            else set()
+        )
     finally:
         engine.dispose()
 
@@ -42,6 +52,10 @@ def ensure_schema_up_to_date(db_url: str | None = None) -> None:
         return
 
     if table_names:
+        if "app_settings" in table_names and not PRIVACY_MODE_COLUMNS.issubset(app_settings_columns):
+            command.stamp(config, BASELINE_REVISION)
+            command.upgrade(config, "head")
+            return
         command.stamp(config, "head")
         return
 
