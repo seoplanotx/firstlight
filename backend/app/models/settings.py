@@ -46,6 +46,8 @@ class AppSettings(Base, TimestampMixin):
     timezone_label: Mapped[str] = mapped_column(String(80), default="local")
     report_output_dir: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     demo_profile_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    privacy_mode: Mapped[str] = mapped_column(String(40), default="local_only")
+    deidentified_ai_disclosure_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
     last_health_check_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 

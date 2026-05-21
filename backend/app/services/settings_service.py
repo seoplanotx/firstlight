@@ -8,7 +8,16 @@ from sqlalchemy.orm import Session
 from app.core.release import PUBLIC_SOURCE_CATEGORIES, PUBLIC_SOURCE_KEYS
 from app.core.security import decrypt_secret, encrypt_secret
 from app.models.settings import ApiProviderConfig, AppSettings, SourceConfig
-from app.schemas.settings import AppSettingsUpdate, ApiProviderConfigUpsert, OpenRouterTestResponse, SourceConfigUpdate
+from app.schemas.settings import (
+    ApiProviderConfigUpsert,
+    AppSettingsUpdate,
+    OpenRouterTestResponse,
+    SourceConfigUpdate,
+)
+from app.services.deidentification_service import (
+    PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
+    PRIVACY_MODE_LOCAL_ONLY,
+)
 from app.services.llm_service import OpenRouterClient
 from app.services.scheduler_service import configure_scheduler_from_settings
 
@@ -29,6 +38,8 @@ def get_settings(session: Session) -> AppSettings:
             default_report_style="clinical",
             default_report_length="daily_summary",
             enabled_source_categories=sorted(PUBLIC_SOURCE_CATEGORIES),
+            privacy_mode=PRIVACY_MODE_LOCAL_ONLY,
+            deidentified_ai_disclosure_acknowledged=False,
         )
         session.add(settings)
         session.commit()
@@ -40,17 +51,33 @@ def get_settings(session: Session) -> AppSettings:
             if category in PUBLIC_SOURCE_CATEGORIES
         ] or sorted(PUBLIC_SOURCE_CATEGORIES)
         settings.demo_profile_enabled = False
+        if settings.privacy_mode not in {PRIVACY_MODE_LOCAL_ONLY, PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST}:
+            settings.privacy_mode = PRIVACY_MODE_LOCAL_ONLY
+        if settings.privacy_mode == PRIVACY_MODE_LOCAL_ONLY:
+            settings.deidentified_ai_disclosure_acknowledged = False
         session.commit()
     return settings
 
 
 def update_settings(session: Session, payload: AppSettingsUpdate) -> AppSettings:
+    if (
+        payload.privacy_mode == PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST
+        and not payload.deidentified_ai_disclosure_acknowledged
+    ):
+        raise ValueError("De-identified AI assist requires disclosure acknowledgement.")
+
     settings = get_settings(session)
     settings.default_profile_id = payload.default_profile_id
     settings.daily_run_time = payload.daily_run_time
     settings.default_report_style = payload.default_report_style
     settings.default_report_length = payload.default_report_length
     settings.demo_profile_enabled = False
+    settings.privacy_mode = payload.privacy_mode
+    settings.deidentified_ai_disclosure_acknowledged = (
+        payload.deidentified_ai_disclosure_acknowledged
+        if payload.privacy_mode == PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST
+        else False
+    )
     settings.last_health_check_at = datetime.now(timezone.utc)
     session.commit()
     configure_scheduler_from_settings(settings.daily_run_time)

@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
+from app.services.deidentification_service import assert_deidentified_packet
 
 
 class OpenRouterClient:
@@ -33,21 +34,22 @@ class OpenRouterClient:
         except Exception as exc:
             return False, f"Could not validate the API key: {exc}", []
 
-    def generate_clinician_questions(self, *, profile: dict[str, Any], findings: list[dict[str, Any]]) -> list[str]:
+    def generate_clinician_questions(self, *, case_packet: dict[str, Any]) -> list[str]:
+        assert_deidentified_packet(case_packet)
         messages = [
             {
                 "role": "system",
                 "content": (
                     "You are generating cautious clinician-discussion questions for a local oncology monitoring app. "
+                    "Use only the de-identified case context provided. Do not infer identity. "
                     "Do not give treatment advice. Do not claim eligibility. Keep each question plain, short, and respectful."
                 ),
             },
             {
                 "role": "user",
                 "content": {
-                    "profile": profile,
-                    "findings": findings[:8],
-                    "instruction": "Generate 5 short questions the patient could bring to an oncologist visit.",
+                    "deidentified_case_packet": case_packet,
+                    "instruction": "Generate 5 short questions the patient or clinician could review at an oncology visit.",
                 },
             },
         ]

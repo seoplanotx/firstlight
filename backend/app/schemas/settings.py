@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+PrivacyMode = Literal["local_only", "deidentified_ai_assist"]
 
 
 class SourceConfigRead(BaseModel):
@@ -37,6 +41,8 @@ class AppSettingsRead(BaseModel):
     timezone_label: str
     report_output_dir: str | None = None
     demo_profile_enabled: bool
+    privacy_mode: PrivacyMode = "local_only"
+    deidentified_ai_disclosure_acknowledged: bool = False
     last_health_check_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
@@ -48,6 +54,8 @@ class AppSettingsUpdate(BaseModel):
     default_report_style: str = "clinical"
     default_report_length: str = "daily_summary"
     demo_profile_enabled: bool = False
+    privacy_mode: PrivacyMode = "local_only"
+    deidentified_ai_disclosure_acknowledged: bool = False
 
 
 class ApiProviderConfigRead(BaseModel):

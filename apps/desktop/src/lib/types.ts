@@ -48,6 +48,8 @@ export type OnboardingState = {
   last_health_check: Record<string, unknown>;
 };
 
+export type PrivacyMode = 'local_only' | 'deidentified_ai_assist';
+
 export type AppSettings = {
   id?: number;
   default_profile_id?: number | null;
@@ -58,6 +60,8 @@ export type AppSettings = {
   timezone_label?: string;
   report_output_dir?: string | null;
   demo_profile_enabled: boolean;
+  privacy_mode: PrivacyMode;
+  deidentified_ai_disclosure_acknowledged: boolean;
   last_health_check_at?: string | null;
 };
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
@@ -29,7 +29,10 @@ def read_settings(db: Session = Depends(get_db)) -> AppSettingsRead:
 
 @router.put("", response_model=AppSettingsRead)
 def write_settings(payload: AppSettingsUpdate, db: Session = Depends(get_db)) -> AppSettingsRead:
-    return update_settings(db, payload)
+    try:
+        return update_settings(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/provider/openrouter", response_model=ApiProviderConfigRead | None)
