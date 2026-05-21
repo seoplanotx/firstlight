@@ -43,6 +43,13 @@ class BriefingBlocker(BaseModel):
     examples: list[str] = Field(default_factory=list)
 
 
+class BriefingSourceStatus(BaseModel):
+    connector_key: str
+    status: str
+    retrieved: int = 0
+    message: str | None = None
+
+
 class BriefingSnapshot(BaseModel):
     latest_run_started_at: datetime | None = None
     latest_run_completed_at: datetime | None = None
@@ -50,6 +57,10 @@ class BriefingSnapshot(BaseModel):
     changed_count: int = 0
     sections: list[BriefingFindingSection] = Field(default_factory=list)
     blockers: list[BriefingBlocker] = Field(default_factory=list)
+    source_statuses: list[BriefingSourceStatus] = Field(default_factory=list)
+    source_failures: list[BriefingSourceStatus] = Field(default_factory=list)
+    suggested_questions: list[str] = Field(default_factory=list)
+    question_generation: dict = Field(default_factory=dict)
 
 
 class DashboardResponse(BaseModel):

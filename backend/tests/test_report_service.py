@@ -10,7 +10,8 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
 from app.models import AppSettings, Biomarker, Finding, FindingEvidence, MonitoringRun, PatientProfile
-from app.services.report_service import write_report
+from app.services.llm_service import validate_clinician_questions
+from app.services.report_service import _deterministic_questions, write_report
 
 
 def build_profile() -> PatientProfile:
@@ -181,3 +182,27 @@ class ReportServiceTests(unittest.TestCase):
                 ["new_findings", "changed_findings", "top_trial_matches", "top_literature_updates"],
             )
             self.assertEqual(export.summary_json["sections"][0]["items"][0]["title"], "New recruiting EGFR trial")
+
+    def test_report_deterministic_questions_pass_clinician_review_safety_policy(self) -> None:
+        profile = build_profile()
+        finding = build_finding(
+            profile_id=1,
+            monitoring_run_id=1,
+            title="New recruiting EGFR trial",
+            external_identifier="NCT-NEW-OPEN",
+            finding_type="clinical_trials",
+            status="new",
+            score=91.0,
+            relevance_label="High relevance",
+            recruitment_bucket="open",
+            freshness_bucket="very_recent",
+        )
+
+        questions = _deterministic_questions(profile, [finding])
+
+        self.assertTrue(questions)
+        self.assertEqual(validate_clinician_questions(questions), questions)
+
+
+if __name__ == "__main__":
+    unittest.main()

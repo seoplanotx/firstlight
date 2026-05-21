@@ -41,7 +41,7 @@ def _run_scheduled_job() -> None:
 
     with SessionLocal() as session:
         try:
-            run_monitoring(session, triggered_by="scheduler")
+            run_monitoring(session, triggered_by="heartbeat")
         except RunConflictError:
             logger.info("Skipped scheduled run because monitoring is already in progress.")
 

@@ -177,6 +177,13 @@ export type BriefingBlocker = {
   examples: string[];
 };
 
+export type BriefingSourceStatus = {
+  connector_key: string;
+  status: string;
+  retrieved: number;
+  message?: string | null;
+};
+
 export type BriefingSnapshot = {
   latest_run_started_at?: string | null;
   latest_run_completed_at?: string | null;
@@ -184,6 +191,10 @@ export type BriefingSnapshot = {
   changed_count: number;
   sections: BriefingFindingSection[];
   blockers: BriefingBlocker[];
+  source_statuses: BriefingSourceStatus[];
+  source_failures: BriefingSourceStatus[];
+  suggested_questions: string[];
+  question_generation: Record<string, unknown>;
 };
 
 export type Dashboard = {

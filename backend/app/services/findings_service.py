@@ -176,6 +176,13 @@ def _run_summary_ids(latest_run: MonitoringRun | None) -> tuple[set[int], set[in
     )
 
 
+def _heartbeat_summary(latest_run: MonitoringRun | None) -> dict[str, Any]:
+    if latest_run is None or not isinstance(latest_run.summary_json, dict):
+        return {}
+    heartbeat = latest_run.summary_json.get("heartbeat")
+    return heartbeat if isinstance(heartbeat, dict) else {}
+
+
 def _section_payload(
     *,
     key: str,
@@ -225,6 +232,7 @@ def build_briefing_snapshot(
 ) -> dict[str, Any]:
     ranked = rank_findings_for_briefing(findings)
     new_ids, changed_ids = _run_summary_ids(latest_run)
+    heartbeat = _heartbeat_summary(latest_run)
 
     if new_ids or changed_ids:
         new_items = [finding for finding in ranked if finding.id in new_ids]
@@ -301,6 +309,10 @@ def build_briefing_snapshot(
             ),
         ],
         "blockers": blockers,
+        "source_statuses": heartbeat.get("source_statuses") or [],
+        "source_failures": heartbeat.get("source_failures") or [],
+        "suggested_questions": heartbeat.get("suggested_questions") or [],
+        "question_generation": heartbeat.get("question_generation") or {"mode": "local_only", "status": "deterministic_fallback"},
     }
 
 

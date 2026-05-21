@@ -10,7 +10,8 @@ from app.connectors.base import ConnectorContext
 from app.connectors.registry import connector_registry
 from app.models.run import MonitoringRun
 from app.models.settings import SourceConfig
-from app.services.findings_service import find_existing_finding, upsert_finding
+from app.services.findings_service import find_existing_finding, list_findings, upsert_finding
+from app.services.heartbeat_service import build_heartbeat_metadata
 from app.services.matching_service import evaluate
 from app.services.profile_service import get_active_profile, get_profile
 from app.utils.dates import utcnow
@@ -127,6 +128,13 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
                     }
                 )
 
+        findings = list_findings(session, profile_id=profile.id)
+        heartbeat_metadata = build_heartbeat_metadata(
+            session,
+            profile=profile,
+            findings=findings,
+            connector_summaries=connector_summaries,
+        )
         run.new_findings_count = new_count
         run.changed_findings_count = changed_count
         run.completed_at = utcnow()
@@ -134,8 +142,9 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
             "connectors": connector_summaries,
             "new_finding_ids": new_finding_ids,
             "changed_finding_ids": changed_finding_ids,
+            "heartbeat": heartbeat_metadata,
         }
-        run.status = "completed"
+        run.status = "completed_with_warnings" if heartbeat_metadata["source_failures"] else "completed"
         session.commit()
         session.refresh(run)
         return run

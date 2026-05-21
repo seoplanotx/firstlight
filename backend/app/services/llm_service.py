@@ -1,11 +1,72 @@
 from __future__ import annotations
 
+import json
+import re
 from typing import Any
 
 import httpx
 
 from app.core.config import settings
 from app.services.deidentification_service import assert_deidentified_packet
+
+_UNSAFE_QUESTION_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\bshould\b",
+        r"\b(?:start|starting|switch|take|prescribe|enroll)\b",
+        r"\bbest\s+(?:treatment|for\s+this\s+patient)\b",
+        r"\beligib(?:le|ility)\b",
+        r"\bqualif(?:y|ies|ied|ying)\b",
+        r"\bcandidate\s+for\b",
+        r"\brecommend(?:ed|ation|ations|ing|s)?\b",
+        r"\bbenefit(?:s|ed|ing)?\s+from\b",
+        r"\blikely\s+(?:eligible|to\s+benefit|to\s+respond)\b",
+        r"\bappropriate\b",
+        r"\bgood\s+fit\b",
+        r"\b(?:dose|dosing)\b",
+        r"\b(?:rank|ranking|choose|choosing|compare|comparing)\b",
+        r"\brespond(?:s|ed|ing)?\b",
+        r"\b(?:diagnose|diagnosis|diagnostic|prove)\b",
+        r"\bfinal\s+(?:decision|relevance)\b",
+    )
+)
+_REVIEW_FRAME_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\bclinician(?:-review)?\b",
+        r"\bcare\s+team\b.*\breview\b",
+        r"\boncology\s+team\b.*\b(?:review|discuss)",
+        r"\b(?:review|reviewing|discuss|discussing|discussion)\b",
+        r"\bworth\s+formal\s+screening\b",
+    )
+)
+
+
+def _strip_question_prefix(text: str) -> str:
+    return text.strip("-• ").strip().lstrip("0123456789. )").strip()
+
+
+def validate_clinician_questions(questions: list[str]) -> list[str]:
+    """Keep only cautious clinician-review questions; fail closed on advice/eligibility output."""
+
+    validated: list[str] = []
+    unsafe_found = False
+    for question in questions:
+        cleaned = _strip_question_prefix(str(question))
+        if len(cleaned) <= 5:
+            continue
+        if any(pattern.search(cleaned) for pattern in _UNSAFE_QUESTION_PATTERNS):
+            unsafe_found = True
+            continue
+        if "?" not in cleaned:
+            continue
+        if not any(pattern.search(cleaned) for pattern in _REVIEW_FRAME_PATTERNS):
+            unsafe_found = True
+            continue
+        validated.append(cleaned)
+    if unsafe_found:
+        return []
+    return validated[:5]
 
 
 class OpenRouterClient:
@@ -47,10 +108,14 @@ class OpenRouterClient:
             },
             {
                 "role": "user",
-                "content": {
-                    "deidentified_case_packet": case_packet,
-                    "instruction": "Generate 5 short questions the patient or clinician could review at an oncology visit.",
-                },
+                "content": json.dumps(
+                    {
+                        "deidentified_case_packet": case_packet,
+                        "instruction": "Generate 5 short questions the patient or clinician could review at an oncology visit.",
+                    },
+                    sort_keys=True,
+                    default=str,
+                ),
             },
         ]
         try:
@@ -67,6 +132,6 @@ class OpenRouterClient:
                 response.raise_for_status()
                 content = response.json()["choices"][0]["message"]["content"]
                 lines = [line.strip("-• ").strip() for line in str(content).splitlines() if line.strip()]
-                return [line for line in lines if len(line) > 5][:5]
+                return validate_clinician_questions(lines)
         except Exception:
             return []
