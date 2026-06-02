@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import httpx
 
@@ -113,6 +114,38 @@ class ClinicalTrialsConnectorTests(unittest.TestCase):
         self.assertEqual(record.raw_payload["nct_id"], "NCT12345678")
         self.assertIn("Inclusion Criteria", record.raw_payload["inclusion_excerpt"])
         self.assertEqual(record.evidence_label, "Eligibility criteria excerpt")
+
+    def test_fetch_retries_transient_server_error(self) -> None:
+        connector = ClinicalTrialsGovConnector()
+        calls = {"count": 0}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            calls["count"] += 1
+            if calls["count"] == 1:
+                return httpx.Response(503, text="service unavailable")
+            body = {
+                "studies": [
+                    {
+                        "protocolSection": {
+                            "identificationModule": {
+                                "nctId": "NCT99999999",
+                                "briefTitle": "Recovered after a transient outage",
+                            },
+                            "statusModule": {"overallStatus": "RECRUITING"},
+                        }
+                    }
+                ]
+            }
+            return httpx.Response(200, json=body)
+
+        connector._build_client = lambda timeout: httpx.Client(transport=httpx.MockTransport(handler), timeout=timeout)  # type: ignore[method-assign]
+
+        with patch("app.connectors.http.time.sleep"):
+            records = connector.fetch(build_context({"page_size": 5}))
+
+        self.assertEqual(calls["count"], 2)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].external_identifier, "NCT99999999")
 
 
 class PubMedConnectorTests(unittest.TestCase):

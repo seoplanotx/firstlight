@@ -8,6 +8,7 @@ from xml.etree import ElementTree as ET
 import httpx
 
 from app.connectors.base import BaseConnector, ConnectorContext, ConnectorRecord
+from app.connectors.http import get_with_retries
 
 
 class PubMedConnector(BaseConnector):
@@ -45,7 +46,8 @@ class PubMedConnector(BaseConnector):
         retmax = int(context.source_config.settings_json.get("retmax", context.source_config.settings_json.get("page_size", 5)))
         retmax = max(1, min(retmax, 20))
         with self._build_client(20.0) as client:
-            search_response = client.get(
+            search_response = get_with_retries(
+                client,
                 self._search_url,
                 params={
                     "db": "pubmed",
@@ -60,7 +62,8 @@ class PubMedConnector(BaseConnector):
             if not ids:
                 return []
 
-            summary_response = client.get(
+            summary_response = get_with_retries(
+                client,
                 self._summary_url,
                 params={
                     "db": "pubmed",
@@ -71,7 +74,8 @@ class PubMedConnector(BaseConnector):
             summary_response.raise_for_status()
             data = summary_response.json().get("result", {})
 
-            fetch_response = client.get(
+            fetch_response = get_with_retries(
+                client,
                 self._fetch_url,
                 params={
                     "db": "pubmed",
@@ -146,9 +150,11 @@ class PubMedConnector(BaseConnector):
     def healthcheck(self) -> tuple[bool, str]:
         try:
             with self._build_client(10.0) as client:
-                response = client.get(
+                response = get_with_retries(
+                    client,
                     self._search_url,
                     params={"db": "pubmed", "retmode": "json", "retmax": 1, "term": "cancer"},
+                    max_attempts=2,
                 )
                 response.raise_for_status()
             return True, "PubMed reachable"

@@ -50,6 +50,29 @@ def run_health_check(session: Session) -> HealthCheckResponse:
     )
     overall_ok &= db_ok
 
+    try:
+        integrity_result = session.execute(text("PRAGMA quick_check")).scalar()
+        integrity_ok = integrity_result == "ok"
+        integrity_message = (
+            "SQLite integrity check passed."
+            if integrity_ok
+            else f"SQLite integrity check reported a problem: {integrity_result}"
+        )
+    except Exception as exc:
+        integrity_ok = False
+        integrity_message = f"SQLite integrity check failed: {exc}"
+    items.append(
+        HealthCheckItem(
+            key="database_integrity",
+            label="Database integrity",
+            ok=integrity_ok,
+            message=integrity_message,
+            severity="ok" if integrity_ok else "blocking",
+            blocking=True,
+        )
+    )
+    overall_ok &= integrity_ok
+
     pdf_ok, pdf_message = can_render_test_pdf()
     items.append(
         HealthCheckItem(

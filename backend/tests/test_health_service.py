@@ -67,6 +67,10 @@ class HealthServiceTests(unittest.TestCase):
         self.assertEqual(source_item.severity, "warning")
         self.assertFalse(source_item.blocking)
 
+        integrity_item = next(item for item in health.items if item.key == "database_integrity")
+        self.assertTrue(integrity_item.ok)
+        self.assertTrue(integrity_item.blocking)
+
 
 if __name__ == "__main__":
     unittest.main()
