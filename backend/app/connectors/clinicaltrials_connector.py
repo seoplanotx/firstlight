@@ -6,6 +6,7 @@ from typing import Any
 import httpx
 
 from app.connectors.base import BaseConnector, ConnectorContext, ConnectorRecord
+from app.connectors.http import get_with_retries
 
 
 ACTIVE_RECRUITMENT_STATUSES = [
@@ -89,7 +90,7 @@ class ClinicalTrialsGovConnector(BaseConnector):
             params["filter.overallStatus"] = ",".join(overall_statuses)
 
         with self._build_client(30.0) as client:
-            response = client.get(self._studies_url, params=params)
+            response = get_with_retries(client, self._studies_url, params=params)
             response.raise_for_status()
             payload = response.json()
 
@@ -367,7 +368,7 @@ class ClinicalTrialsGovConnector(BaseConnector):
     def healthcheck(self) -> tuple[bool, str]:
         try:
             with self._build_client(10.0) as client:
-                response = client.get(self._version_url)
+                response = get_with_retries(client, self._version_url, max_attempts=2)
                 response.raise_for_status()
                 data = response.json()
             timestamp = data.get("dataTimestamp")

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.profile import Biomarker, PatientProfile, TherapyHistoryEntry
 from app.models.settings import AppSettings
 from app.schemas.profile import PatientProfileCreate, PatientProfileUpdate
+from app.services.audit_service import record_audit_event
 
 
 def _profile_query():
@@ -75,6 +76,7 @@ def create_profile(session: Session, payload: PatientProfileCreate) -> PatientPr
         settings.default_profile_id = profile.id
         session.commit()
 
+    record_audit_event("profile_created", {"profile_id": profile.id})
     return get_profile(session, profile.id)  # type: ignore[return-value]
 
 
@@ -120,13 +122,19 @@ def update_profile(session: Session, profile_id: int, payload: PatientProfileUpd
             )
 
     session.commit()
+    record_audit_event("profile_updated", {"profile_id": profile_id})
     return get_profile(session, profile_id)  # type: ignore[return-value]
 
 
+DEMO_PROFILE_NAME = "Sample EGFR NSCLC"
+
+
 def create_demo_profile(session: Session) -> PatientProfile:
-    existing = session.scalar(select(PatientProfile).where(PatientProfile.profile_name == "Sample EGFR NSCLC"))
-    if existing:
-        return get_profile(session, existing.id)  # type: ignore[return-value]
+    # profile_name is encrypted at rest, so it can't be matched in a SQL WHERE
+    # clause; scan the (few) local profiles and compare decrypted values.
+    for candidate in session.scalars(select(PatientProfile)).all():
+        if candidate.profile_name == DEMO_PROFILE_NAME:
+            return get_profile(session, candidate.id)  # type: ignore[return-value]
 
     payload = PatientProfileCreate(
         profile_name="Sample EGFR NSCLC",

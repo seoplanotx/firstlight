@@ -32,4 +32,16 @@ test('first launch onboarding reaches the dashboard and support surface', async 
   await page.goto('/#/support');
   await expect(page.getByRole('heading', { name: 'About / Support' })).toBeVisible();
   await expect(page.getByText('Local storage')).toBeVisible();
+
+  // Honest-scope surface and data-ownership controls (Workstreams B + F).
+  await expect(page.getByRole('heading', { name: "What OncoWatch is — and isn't" })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Export my data' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Delete all my data' })).toBeVisible();
+
+  // The activity log should record the profile created during onboarding.
+  await expect(page.getByText('Profile created')).toBeVisible({ timeout: 15_000 });
+
+  // Exporting writes a local JSON copy through the real backend.
+  await page.getByRole('button', { name: 'Export my data' }).click();
+  await expect(page.getByText(/exported to a local JSON file/i)).toBeVisible({ timeout: 15_000 });
 });

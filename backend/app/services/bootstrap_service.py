@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.paths import get_app_paths
 from app.core.release import DEMO_FINDING_SOURCE_NAMES, DEMO_SOURCE_KEYS, PUBLIC_SOURCE_CATEGORIES, PUBLIC_SOURCE_KEYS
 from app.db.migrations import ensure_schema_up_to_date
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, check_database_integrity
 from app.models.finding import Finding
 from app.models.run import MonitoringRun
 from app.models.settings import ApiProviderConfig, AppSettings, OnboardingState, SourceConfig
@@ -54,6 +54,9 @@ DISCLAIMER_TEXT = (
 def initialize_application() -> None:
     get_app_paths()
     ensure_schema_up_to_date()
+    integrity_ok, integrity_message = check_database_integrity()
+    if not integrity_ok:
+        logger.warning("Database integrity check at startup: %s", integrity_message)
     with SessionLocal() as session:
         _ensure_defaults(session)
         _recover_interrupted_runs(session)

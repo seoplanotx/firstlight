@@ -3,10 +3,11 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+from app.db.types import EncryptedDate, EncryptedString
 
 if TYPE_CHECKING:
     from app.models.finding import Finding
@@ -17,16 +18,18 @@ class PatientProfile(Base, TimestampMixin):
     __tablename__ = "patient_profiles"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    profile_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    display_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Identifying fields are encrypted at rest so filesystem access to the
+    # SQLite file alone does not expose patient identity.
+    profile_name: Mapped[str] = mapped_column(EncryptedString, nullable=False)
+    display_name: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
+    date_of_birth: Mapped[date | None] = mapped_column(EncryptedDate, nullable=True)
     cancer_type: Mapped[str] = mapped_column(String(120), nullable=False)
     subtype: Mapped[str | None] = mapped_column(String(120), nullable=True)
     stage_or_context: Mapped[str | None] = mapped_column(String(120), nullable=True)
     current_therapy_status: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    location_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    location_label: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
     travel_radius_miles: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
     would_consider: Mapped[list[str]] = mapped_column(JSON, default=list)
     would_not_consider: Mapped[list[str]] = mapped_column(JSON, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -53,7 +56,7 @@ class Biomarker(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     variant: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[str | None] = mapped_column(String(60), nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
 
     profile: Mapped["PatientProfile"] = relationship(back_populates="biomarkers")
 
@@ -69,6 +72,6 @@ class TherapyHistoryEntry(Base, TimestampMixin):
     status: Mapped[str | None] = mapped_column(String(60), nullable=True)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
 
     profile: Mapped["PatientProfile"] = relationship(back_populates="therapy_history")
