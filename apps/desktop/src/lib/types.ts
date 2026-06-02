@@ -230,6 +230,20 @@ export type ReportExport = {
   summary_json: ReportSummary;
 };
 
+export type AuditEvent = {
+  timestamp: string;
+  action: string;
+  detail: Record<string, unknown>;
+};
+
+export type DataDeletionSummary = {
+  profiles: number;
+  findings: number;
+  monitoring_runs: number;
+  reports: number;
+  report_files_removed: number;
+};
+
 export type BootstrapInfo = {
   app_name: string;
   app_version: string;

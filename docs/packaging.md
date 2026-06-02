@@ -26,15 +26,18 @@ Tauri supports bundling external binaries using `externalBin`, which is the clea
 ## Build flow
 
 1. Install backend build dependencies with `python -m pip install -e './backend[build]'`
-2. Build the backend sidecar binary
-3. Build the Tauri macOS app bundle
-4. Wrap the `.app` in a DMG with the repo-owned `scripts/build_macos_dmg.sh`
+2. Build the backend sidecar binary (`scripts/build_backend_sidecar.py` names it
+   per Rust target triple, e.g. `oncowatch-backend-x86_64-pc-windows-msvc.exe`)
+3. Build the platform bundle:
+   - macOS: `npm run build:desktop` → `.app` then a DMG via `scripts/build_macos_dmg.sh`
+   - Windows: `npm run build:desktop:win` → NSIS `*-setup.exe`
 
 ## Installer expectations
 
 ### Windows
-- MSI / EXE style installer via Tauri bundle target
-- backend sidecar included automatically
+- NSIS installer via the Tauri `nsis` bundle target (`npm run build:desktop:win`)
+- backend sidecar included automatically through `externalBin`
+- installer and sidecar should be Authenticode-signed before distribution
 
 ### macOS
 - Tauri builds the `.app` bundle and the repo wraps it into the distributable DMG
@@ -44,4 +47,8 @@ Tauri supports bundling external binaries using `externalBin`, which is the clea
 
 ## Update strategy
 
-Not included in MVP. Tauri’s updater plugin can be layered in later without changing the app’s local-first storage design.
+Auto-update uses Tauri's updater plugin and is configured as release
+infrastructure (signing keypair + hosted endpoint) rather than in app code, so
+the local-first storage design is unchanged. See the "Auto-update setup" section
+of `docs/release-checklist.md` for the exact steps. Until that infra is in
+place, releases are install-only.

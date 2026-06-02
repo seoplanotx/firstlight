@@ -77,6 +77,13 @@ def main() -> None:
         "--onefile",
         "--add-data",
         f"{BACKEND_DIR / 'alembic'}{os.pathsep}alembic",
+        # keyring discovers its OS backends (macOS Keychain / Windows Credential
+        # Manager) through entry points, so bundle its submodules and metadata
+        # or the packaged app silently falls back to the local key file.
+        "--collect-submodules",
+        "keyring",
+        "--copy-metadata",
+        "keyring",
         "--paths",
         str(BACKEND_DIR),
         str(BACKEND_DIR / "app" / "serve.py"),

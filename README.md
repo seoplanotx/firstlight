@@ -8,16 +8,19 @@
 
 ## What this MVP includes
 
-- Tauri desktop shell for macOS-first packaging
+- Tauri desktop shell packaged for macOS and Windows
 - React + TypeScript desktop UI
-- Local FastAPI service with SQLite persistence
+- Local FastAPI service with SQLite persistence (WAL journaling + startup integrity check)
 - First-run onboarding wizard
 - Structured patient profile management
+- Encryption at rest for identifying fields, with the master key in the OS keychain
+- Resilient connectors with retry/backoff so one flaky source can't fail a run
 - Real ClinicalTrials.gov and PubMed connectors for the public release
 - Local scheduling while the app is open
 - Deterministic matching and scoring pipeline
 - Source-backed findings feed and trial-focused view
 - Local PDF export with report history
+- Local activity (audit) log plus export-my-data and delete-my-data controls
 - About / Support view with local storage paths and recovery steps
 
 ## Core product principles
@@ -206,9 +209,8 @@ Default language stays cautious:
 
 - Deeper trial feasibility filters for geography and status edge cases
 - Additional drug safety and label connectors
-- OS keychain integration for secrets
 - Multi-profile households
 - Better geographic feasibility scoring
 - Stronger audit diffing for changed findings
 - Offline evidence caching for selected sources
-- Auto-updater channel for packaged releases
+- Auto-updater channel for packaged releases (see `docs/release-checklist.md`)
