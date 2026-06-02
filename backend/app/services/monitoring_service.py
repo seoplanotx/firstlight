@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.connectors.base import ConnectorContext
 from app.connectors.registry import connector_registry
+from app.services.audit_service import record_audit_event
 from app.models.run import MonitoringRun
 from app.models.settings import SourceConfig
 from app.services.findings_service import find_existing_finding, list_findings, upsert_finding
@@ -56,6 +57,7 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
         session.add(run)
         session.commit()
         session.refresh(run)
+        record_audit_event("monitoring_run_started", {"run_id": run.id, "triggered_by": triggered_by})
 
         if profile is None:
             run.status = "failed"
@@ -147,6 +149,15 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
         run.status = "completed_with_warnings" if heartbeat_metadata["source_failures"] else "completed"
         session.commit()
         session.refresh(run)
+        record_audit_event(
+            "monitoring_run_completed",
+            {
+                "run_id": run.id,
+                "status": run.status,
+                "new_findings": new_count,
+                "changed_findings": changed_count,
+            },
+        )
         return run
     except Exception as exc:
         if "run" in locals() and isinstance(run, MonitoringRun):

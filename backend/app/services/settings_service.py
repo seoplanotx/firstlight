@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.release import PUBLIC_SOURCE_CATEGORIES, PUBLIC_SOURCE_KEYS
 from app.core.security import decrypt_secret, encrypt_secret
+from app.services.audit_service import record_audit_event
 from app.models.settings import ApiProviderConfig, AppSettings, SourceConfig
 from app.schemas.settings import (
     ApiProviderConfigUpsert,
@@ -80,6 +81,13 @@ def update_settings(session: Session, payload: AppSettingsUpdate) -> AppSettings
     )
     settings.last_health_check_at = datetime.now(timezone.utc)
     session.commit()
+    record_audit_event(
+        "privacy_mode_set",
+        {
+            "privacy_mode": settings.privacy_mode,
+            "deidentified_ai_disclosure_acknowledged": settings.deidentified_ai_disclosure_acknowledged,
+        },
+    )
     configure_scheduler_from_settings(settings.daily_run_time)
     return get_settings(session)
 

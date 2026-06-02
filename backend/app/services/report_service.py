@@ -17,6 +17,7 @@ from app.models.profile import PatientProfile
 from app.models.run import MonitoringRun
 from app.models.settings import ReportExport
 from app.schemas.run import BriefingSnapshot
+from app.services.audit_service import record_audit_event
 from app.services.findings_service import build_briefing_snapshot, rank_findings_for_briefing
 from app.services.heartbeat_service import deterministic_briefing_questions
 from app.utils.dates import utcnow
@@ -281,6 +282,7 @@ def write_report(session: Session, *, profile: PatientProfile, findings: list[Fi
     session.add(export)
     session.commit()
     session.refresh(export)
+    record_audit_event("report_exported", {"report_id": export.id, "report_type": report_type})
     return export
 
 
