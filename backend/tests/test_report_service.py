@@ -182,6 +182,9 @@ class ReportServiceTests(unittest.TestCase):
                 ["new_findings", "changed_findings", "top_trial_matches", "top_literature_updates"],
             )
             self.assertEqual(export.summary_json["sections"][0]["items"][0]["title"], "New recruiting EGFR trial")
+            # The patient name must not be persisted in the DB summary JSON.
+            self.assertNotIn("profile_name", export.summary_json)
+            self.assertEqual(export.summary_json["report_title"], "Daily Summary Report")
 
     def test_report_deterministic_questions_pass_clinician_review_safety_policy(self) -> None:
         profile = build_profile()

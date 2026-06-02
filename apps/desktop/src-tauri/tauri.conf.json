@@ -25,7 +25,8 @@
   "bundle": {
     "active": true,
     "targets": [
-      "app"
+      "app",
+      "nsis"
     ],
     "externalBin": [
       "../../../dist-sidecar/oncowatch-backend"

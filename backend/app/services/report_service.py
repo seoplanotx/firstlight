@@ -263,10 +263,13 @@ def write_report(session: Session, *, profile: PatientProfile, findings: list[Fi
     output_path.write_bytes(report_bytes)
 
     briefing_json = BriefingSnapshot.model_validate(briefing).model_dump(mode="json")
+    # The patient name is intentionally NOT stored in summary_json: it would
+    # otherwise sit in plaintext in the database JSON column, defeating the
+    # at-rest encryption of identifying fields. The generated PDF still
+    # contains the full profile snapshot for the clinician visit.
     summary_json = {
         **briefing_json,
         "finding_count": len(findings),
-        "profile_name": profile.profile_name,
         "report_title": _report_title(report_type),
         "report_type": report_type,
         "generated_at": utcnow().isoformat(),

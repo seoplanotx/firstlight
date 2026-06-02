@@ -109,6 +109,24 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
         </div>
       </Card>
 
+      <Card
+        title="What OncoWatch is — and isn't"
+        description="Please read this before relying on anything OncoWatch surfaces."
+      >
+        <div className="stack">
+          <p>
+            OncoWatch is an information monitoring and summarization tool. It searches public sources, matches them to
+            the profile you enter, and produces source-backed briefings to bring to your oncology team.
+          </p>
+          <p className="muted">
+            OncoWatch is <strong>not</strong> a medical device, a diagnostic system, or a substitute for an oncologist.
+            It does not determine treatment, trial eligibility, or medical appropriateness. Every finding requires review
+            by a licensed clinician. Identifying details are encrypted on this device and never leave it unless you
+            explicitly enable de-identified AI assistance.
+          </p>
+        </div>
+      </Card>
+
       <Card title="Local storage" description="These folders matter for support, debugging, and manual recovery.">
         <div className="detail-grid support-path-grid">
           <div>
