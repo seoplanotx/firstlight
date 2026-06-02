@@ -976,6 +976,34 @@ p {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.audit-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.audit-action {
+  font-weight: 600;
+}
+
+.audit-time {
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
 .onboarding-shell {
   display: grid;
   grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);

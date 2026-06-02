@@ -1,7 +1,9 @@
 import type {
   AppSettings,
+  AuditEvent,
   BootstrapInfo,
   Dashboard,
+  DataDeletionSummary,
   Finding,
   HealthResponse,
   MonitoringRun,
@@ -124,6 +126,14 @@ export const api = {
   downloadReport: async (reportId: number) => {
     const response = await fetch(`${API_BASE}/api/reports/${reportId}/download`);
     if (!response.ok) throw new Error('Could not download report');
+    return response.blob();
+  },
+
+  getAuditLog: () => request<{ events: AuditEvent[] }>('/data/audit-log'),
+  deleteAllData: () => request<DataDeletionSummary>('/data/delete', { method: 'POST' }),
+  exportAllData: async () => {
+    const response = await fetch(`${API_BASE}/api/data/export`);
+    if (!response.ok) throw new Error('Could not export your data');
     return response.blob();
   }
 };

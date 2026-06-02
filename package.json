@@ -22,6 +22,7 @@
     "check:rust": "npm run build:backend-sidecar && cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml",
     "lint": "npm --workspace apps/desktop run lint",
     "test:e2e": "playwright test",
+    "test:frontend": "npm --workspace apps/desktop run test",
     "test:backend": "cd backend && PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v",
     "set:version": "python scripts/set_version.py"
   },

@@ -1,11 +1,80 @@
+import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../components/Card';
-import type { BootstrapInfo } from '../lib/types';
+import { EmptyState } from '../components/EmptyState';
+import { api } from '../lib/api';
+import { formatAuditAction, formatAuditTimestamp } from '../lib/audit';
+import { getErrorMessage } from '../lib/errors';
+import type { AuditEvent, BootstrapInfo } from '../lib/types';
 
 type SupportPageProps = {
   bootstrap: BootstrapInfo;
 };
 
 export function SupportPage({ bootstrap }: SupportPageProps) {
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const loadAudit = useCallback(async () => {
+    try {
+      const result = await api.getAuditLog();
+      setAuditEvents(result.events);
+      setAuditError(null);
+    } catch (error) {
+      setAuditError(getErrorMessage(error, 'Unknown error'));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAudit();
+  }, [loadAudit]);
+
+  const handleExport = useCallback(async () => {
+    setBusy('export');
+    setStatusMessage(null);
+    try {
+      const blob = await api.exportAllData();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `oncowatch-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setStatusMessage('Your data was exported to a local JSON file.');
+      void loadAudit();
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error, 'Could not export your data.'));
+    } finally {
+      setBusy(null);
+    }
+  }, [loadAudit]);
+
+  const handleDelete = useCallback(async () => {
+    const confirmed = window.confirm(
+      'Permanently delete all local profiles, findings, monitoring runs, and reports? This cannot be undone. ' +
+        'Consider exporting your data first.'
+    );
+    if (!confirmed) {
+      return;
+    }
+    setBusy('delete');
+    setStatusMessage(null);
+    try {
+      const summary = await api.deleteAllData();
+      setStatusMessage(
+        `Deleted ${summary.profiles} profile(s), ${summary.findings} finding(s), and ${summary.reports} report(s).`
+      );
+      void loadAudit();
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error, 'Could not delete your data.'));
+    } finally {
+      setBusy(null);
+    }
+  }, [loadAudit]);
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -13,13 +82,13 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
           <div className="eyebrow">About and support</div>
           <h1>About / Support</h1>
           <p className="page-lede">
-            Local product details, storage locations, privacy notes, and the quickest recovery steps if something goes
-            wrong.
+            Local product details, storage locations, privacy notes, your data controls, and the quickest recovery
+            steps if something goes wrong.
           </p>
         </div>
       </div>
 
-      <Card title="Release details" description="The public macOS release stays narrow and truthful.">
+      <Card title="Release details" description="The public release stays narrow and truthful.">
         <div className="detail-grid">
           <div>
             <strong>Version</strong>
@@ -59,6 +128,44 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
             <div className="support-path">{bootstrap.config_dir}</div>
           </div>
         </div>
+      </Card>
+
+      <Card
+        title="Your data"
+        description="Identifying details are encrypted on this device. Export a portable copy or permanently delete everything."
+      >
+        <div className="button-row">
+          <button type="button" className="secondary-button" onClick={handleExport} disabled={busy !== null}>
+            {busy === 'export' ? 'Exporting…' : 'Export my data'}
+          </button>
+          <button type="button" className="ghost-button" onClick={handleDelete} disabled={busy !== null}>
+            {busy === 'delete' ? 'Deleting…' : 'Delete all my data'}
+          </button>
+        </div>
+        {statusMessage ? (
+          <p className="muted" role="status">
+            {statusMessage}
+          </p>
+        ) : null}
+      </Card>
+
+      <Card title="Activity log" description="A local, append-only record of data-affecting actions on this device.">
+        {auditError ? (
+          <p className="muted" role="alert">
+            Could not load the activity log: {auditError}
+          </p>
+        ) : auditEvents.length === 0 ? (
+          <EmptyState title="No activity yet" message="Actions like profile edits, monitoring runs, and exports will appear here." />
+        ) : (
+          <ul className="audit-list">
+            {auditEvents.map((event, index) => (
+              <li key={`${event.timestamp}-${index}`} className="audit-item">
+                <span className="audit-action">{formatAuditAction(event.action)}</span>
+                <span className="muted audit-time">{formatAuditTimestamp(event.timestamp)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card title="Recovery steps" description="Use these steps before reinstalling the app.">
