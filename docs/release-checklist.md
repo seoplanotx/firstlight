@@ -58,21 +58,28 @@ Python or start a backend.
 
 ## Auto-update setup (required infra before public GA)
 
-Auto-update depends on a signing keypair and a hosting endpoint, so it is
-configured once as release infrastructure rather than in app code:
+The updater is already **wired in code**: `tauri-plugin-updater` is a
+dependency, registered in `main.rs`, granted via the `updater:default`
+capability, and configured in `apps/desktop/src-tauri/tauri.conf.json` under
+`plugins.updater` (endpoint template + a placeholder public key). What remains
+is signing-key and hosting infrastructure, which cannot live in the repo:
 
-1. Generate an updater keypair: `npm --workspace apps/desktop run tauri signer generate -- -w ./oncowatch-updater.key`
-2. Add the **public** key to `apps/desktop/src-tauri/tauri.conf.json` under
-   `plugins.updater.pubkey`, and set `plugins.updater.endpoints` to the hosted
-   `latest.json` URL.
-3. Add `tauri-plugin-updater` to `Cargo.toml` and register it in `main.rs`,
-   and add `updater:default` to the desktop capability.
-4. Store the **private** key (and its password) as CI secrets
-   (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) and
-   enable `createUpdaterArtifacts` so signed update bundles are produced.
-5. Publish `latest.json` + signed artifacts to the endpoint per release.
+1. **Generate your own keypair** (do not reuse any placeholder):
+   `npm --workspace apps/desktop run tauri -- signer generate -w ./oncowatch-updater.key`
+2. Replace `plugins.updater.pubkey` in `tauri.conf.json` with **your** public
+   key, and point `plugins.updater.endpoints` at your real hosted manifest URL.
+3. Store the **private** key (and password, if set) as CI secrets
+   (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`).
+4. Add `"createUpdaterArtifacts": true` to the `bundle` config so signed update
+   artifacts (`*.sig`) are produced during the release build.
+5. Publish the update manifest + signed artifacts to the endpoint per release,
+   and (optionally) call the updater plugin's check API on app startup.
 
-Until this is configured, releases are install-only (no in-app update).
+> Note: the public key committed today is a **non-functional placeholder** so
+> the app builds with the updater enabled; its private key was intentionally
+> not retained. You must complete steps 1–2 before shipping real updates.
+
+Until steps 1–5 are done, releases are install-only (no in-app update).
 
 ## Release handoff
 
