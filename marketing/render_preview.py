@@ -87,6 +87,14 @@ def render_slide(slide, idx):
     d = ImageDraw.Draw(img)
     for sp in slide.shapes:
         x, y, w, h = px(sp.left or 0), px(sp.top or 0), px(sp.width or 0), px(sp.height or 0)
+        if sp.shape_type == MSO_SHAPE_TYPE.PICTURE:
+            try:
+                import io as _io
+                pic = Image.open(_io.BytesIO(sp.image.blob)).convert("RGB").resize((max(1, w), max(1, h)))
+                img.paste(pic, (x, y))
+            except Exception:
+                pass
+            continue
         fill = shape_fill(sp)
         is_auto = sp.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
         # draw shape background

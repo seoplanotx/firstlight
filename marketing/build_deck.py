@@ -147,6 +147,31 @@ def logo_mark(s, x, y, scale=1.0):
     return sh
 
 
+import os
+from PIL import Image as _PILImage
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SHOTS = os.path.join(HERE, "screenshots", "raw")
+
+
+def framed_image(s, name, x, y, w, pad=Inches(0.05), border=WHITE, accent=None):
+    """Place a real screenshot inside a rounded white frame; returns its height."""
+    path = os.path.join(SHOTS, name)
+    iw, ih = _PILImage.open(path).size
+    inner_w = w - pad * 2
+    inner_h = Emu(int(inner_w * ih / iw))
+    h = inner_h + pad * 2
+    frame = rect(s, x, y, w, h, border, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+    try:
+        frame.adjustments[0] = 0.04
+    except Exception:
+        pass
+    s.shapes.add_picture(path, x + pad, y + pad, width=inner_w)
+    if accent:
+        rect(s, x, y, w, Inches(0.10), accent, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+    return h
+
+
 # ================================================================ SLIDE 1 — HERO
 s = slide()
 bg(s, NAVY)
@@ -283,7 +308,59 @@ for num, title, body, col in steps:
 page_tag(s, 4, "")
 
 
-# ================================================================ SLIDE 5 — SOURCE-BACKED / TRIALS
+# ================================================================ SLIDE 5 — SEE IT IN ACTION (real screenshot)
+s = slide()
+bg(s, NAVY)
+rect(s, Inches(0), Inches(0), Inches(0.32), EMU_H, TEAL_BR)
+kicker(s, Inches(0.9), Inches(0.72), "See it in action", TEAL_BR)
+text(s, Inches(0.9), Inches(1.1), Inches(4.2), Inches(2.0),
+     [[("Open the app.", 31, WHITE, True, FONT)],
+      [("See the whole", 31, WHITE, True, FONT)],
+      [("picture.", 31, TEAL_BR, True, FONT)]],
+     line_spacing=1.04)
+text(s, Inches(0.92), Inches(3.5), Inches(4.2), Inches(2.2),
+     [[("A calm, source-backed briefing the moment you open Coffey — "
+        "what's new, what changed, and what's worth a closer look.",
+        15.5, RGBColor(0xC9,0xD8,0xE0), False, FONT)]],
+     line_spacing=1.22)
+chip(s, Inches(0.92), Inches(5.35), "Real product UI", TEAL, WHITE)
+text(s, Inches(0.92), Inches(5.95), Inches(4.0), Inches(0.5),
+     [[("Actual screenshot — not a mockup.", 12, RGBColor(0x9B,0xB0,0xBE), False, FONT, True)]])
+framed_image(s, "dashboard.png", Inches(5.45), Inches(1.5), Inches(7.25), accent=TEAL_BR)
+rect(s, Inches(0.0), Inches(7.34), EMU_W, Inches(0.16), TEAL_BR)
+
+
+# ================================================================ SLIDE 6 — GUIDED TOUR GALLERY (real screenshots)
+s = slide()
+bg(s, CLOUD)
+kicker(s, Inches(0.9), Inches(0.5), "A guided tour", TEAL)
+text(s, Inches(0.9), Inches(0.8), Inches(11.5), Inches(0.8),
+     [[("Every screen, built around clarity.", 29, INK, True, FONT)]])
+
+tour = [
+    ("findings.png", "Findings feed"),
+    ("trials.png", "Trial matches"),
+    ("updates.png", "Literature updates"),
+    ("reports.png", "Reports for your team"),
+    ("settings.png", "Privacy & settings"),
+    ("support.png", "About / support"),
+]
+tw = Inches(3.4)
+gx = Inches(1.43)
+gy = Inches(1.78)
+col_step = Inches(3.53)
+row_step = Inches(2.77)
+for i, (name, label) in enumerate(tour):
+    r, c = divmod(i, 3)
+    x = gx + col_step * c
+    y = gy + row_step * r
+    hh = framed_image(s, name, x, y, tw, border=WHITE, accent=TEAL_BR)
+    text(s, x, y + hh + Inches(0.03), tw, Inches(0.3),
+         [[(label, 12.5, SLATE, True, FONT)]], align=PP_ALIGN.CENTER)
+page_tag(s, 6, "")
+
+
+# ================================================================ SLIDE 7 — SOURCE-BACKED / TRIALS
 s = slide()
 bg(s, WHITE)
 rect(s, Inches(7.7), Inches(0), Inches(5.63), EMU_H, LIGHT)
@@ -322,7 +399,7 @@ text(s, cx + Inches(0.3), cy + Inches(2.0), Inches(4.2), Inches(2.0),
      line_spacing=1.16)
 text(s, cx + Inches(0.3), cy + Inches(4.55), Inches(4.2), Inches(0.6),
      [[("Source:  ClinicalTrials.gov · NCT0000000   ↗", 12, TEAL, True, FONT)]])
-page_tag(s, 5, "")
+page_tag(s, 7, "")
 
 
 # ================================================================ SLIDE 6 — PRIVACY
@@ -394,7 +471,7 @@ for item in right:
     text(s, Inches(7.4), y - Inches(0.04), Inches(4.8), Inches(0.7),
          [[(item, 15.5, SLATE, False, FONT)]], line_spacing=1.1)
     y = y + Inches(0.82)
-page_tag(s, 7, "")
+page_tag(s, 9, "")
 
 
 # ================================================================ SLIDE 8 — HONEST SCOPE
@@ -427,7 +504,7 @@ for i, t in enumerate(["A diagnostic system","A treatment recommender",
 text(s, Inches(0.9), Inches(6.45), Inches(11.5), Inches(0.6),
      [[("Every finding requires clinician review. Coffey helps you ask better questions — not make medical decisions.",
         13.5, MUTED, False, FONT, True)]], align=PP_ALIGN.CENTER)
-page_tag(s, 8, "")
+page_tag(s, 10, "")
 
 
 # ================================================================ SLIDE 9 — WHO IT'S FOR
@@ -481,7 +558,7 @@ for i, (t, b) in enumerate(road):
          [[(t, 17, INK, True, FONT)]])
     text(s, x + Inches(0.28), y + Inches(1.05), Inches(3.25), Inches(0.7),
          [[(b, 13.5, SLATE, False, FONT)]], line_spacing=1.12)
-page_tag(s, 10, "")
+page_tag(s, 12, "")
 
 
 # ================================================================ SLIDE 11 — DEDICATION

@@ -20,7 +20,7 @@ DEMO_SOURCE_KEYS = frozenset({
     "demo_biomarker",
 })
 DEMO_FINDING_SOURCE_NAMES = frozenset({
-    "OncoWatch Demo Trial Feed",
-    "OncoWatch Demo Drug Feed",
-    "OncoWatch Demo Biomarker Feed",
+    "Coffey Demo Trial Feed",
+    "Coffey Demo Drug Feed",
+    "Coffey Demo Biomarker Feed",
 })

@@ -31,14 +31,18 @@ shapes import cleanly.
 2. The problem — families can't keep up with fast-moving research
 3. Meet Coffey — Watches · Understands · Explains · Prepares
 4. How it works — the four-step flow
-5. Evidence you can trust — source-backed findings
-6. Private by design — Mode 1 (local-only) & Mode 2 (de-identified AI assist)
-7. Reports — what you bring to your oncology team
-8. Honest scope — what Coffey is, and is not
-9. Who it's for — patients, caregivers, care teams
-10. Where it's going — roadmap
-11. Why it's called Coffey — dedication to Judy Coffey
-12. Call to action
+5. **See it in action — real Dashboard screenshot**
+6. **A guided tour — real screenshots of all six core screens**
+7. Evidence you can trust — source-backed findings
+8. Private by design — Mode 1 (local-only) & Mode 2 (de-identified AI assist)
+9. Reports — what you bring to your oncology team
+10. Honest scope — what Coffey is, and is not
+11. Who it's for — patients, caregivers, care teams
+12. Where it's going — roadmap
+13. Why it's called Coffey — dedication to Judy Coffey
+14. Call to action
+
+Slides 5–6 use **actual product screenshots** (see `screenshots/`), not mockups.
 
 ## Personalize the dedication (slide 11)
 
