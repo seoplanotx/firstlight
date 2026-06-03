@@ -21,7 +21,7 @@ export function Sidebar() {
         <div className="sidebar-brand">
           <div className="brand-mark">O</div>
           <div>
-            <strong>OncoWatch</strong>
+            <strong>Coffey</strong>
             <div className="muted">Calm local oncology monitoring</div>
           </div>
         </div>

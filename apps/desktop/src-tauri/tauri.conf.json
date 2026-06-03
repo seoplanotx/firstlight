@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OncoWatch",
+  "productName": "Coffey",
   "version": "0.1.0",
   "identifier": "ai.oncowatch.desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "OncoWatch",
+        "title": "Coffey",
         "width": 1360,
         "height": 920,
         "resizable": true

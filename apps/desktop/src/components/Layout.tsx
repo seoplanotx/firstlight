@@ -26,7 +26,7 @@ export function Layout({ children, disclaimer }: LayoutProps) {
         <div className="page-content">{children}</div>
         <footer className="footer-note">
           <span>Profiles, settings, reports, and logs stay on this device.</span>
-          <span>Automatic runs happen only while OncoWatch is open, and treatment or eligibility decisions still require a licensed oncology team.</span>
+          <span>Automatic runs happen only while Coffey is open, and treatment or eligibility decisions still require a licensed oncology team.</span>
         </footer>
       </main>
     </div>
