@@ -52,8 +52,22 @@ def bg(s, color):
     s.background.fill.fore_color.rgb = color
 
 
+def _strip_style(sp):
+    """Remove the default theme shape style (lnRef/fillRef/effectRef).
+
+    PowerPoint and Google Slides honor this <p:style> even when explicit fill/
+    line/effect are set, which paints unwanted borders + drop shadows on every
+    shape. Deleting it makes shapes reliably flat across all renderers.
+    """
+    el = sp._element
+    style = el.find(qn("p:style"))
+    if style is not None:
+        el.remove(style)
+
+
 def rect(s, x, y, w, h, color, line=None, shape=MSO_SHAPE.RECTANGLE):
     sp = s.shapes.add_shape(shape, x, y, w, h)
+    _strip_style(sp)
     sp.fill.solid()
     sp.fill.fore_color.rgb = color
     if line is None:
@@ -140,6 +154,7 @@ def logo_mark(s, x, y, scale=1.0):
     """Simple shield/pulse brand mark."""
     sz = Inches(0.62 * scale)
     sh = s.shapes.add_shape(MSO_SHAPE.HEART, x, y, sz, sz)
+    _strip_style(sh)
     sh.fill.solid()
     sh.fill.fore_color.rgb = CORAL
     sh.line.fill.background()
