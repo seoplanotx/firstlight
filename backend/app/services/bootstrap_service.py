@@ -45,7 +45,7 @@ DEFAULT_SOURCE_CONFIGS = [
 
 
 DISCLAIMER_TEXT = (
-    "OncoWatch is an information monitoring and summarization tool. "
+    "Coffey is an information monitoring and summarization tool. "
     "It does not determine treatment, trial eligibility, or medical appropriateness. "
     "All findings should be reviewed with a licensed oncology team."
 )
@@ -60,7 +60,7 @@ def initialize_application() -> None:
     with SessionLocal() as session:
         _ensure_defaults(session)
         _recover_interrupted_runs(session)
-    logger.info("OncoWatch local storage and database initialized.")
+    logger.info("Coffey local storage and database initialized.")
 
 
 def _ensure_defaults(session: Session) -> None:
@@ -187,7 +187,7 @@ def _recover_interrupted_runs(session: Session) -> None:
         run.status = "failed"
         run.completed_at = utcnow()
         if not run.error_text:
-            run.error_text = "The previous monitoring run stopped when OncoWatch closed or restarted."
+            run.error_text = "The previous monitoring run stopped when Coffey closed or restarted."
     session.commit()
 
 

@@ -87,7 +87,7 @@ export function DashboardPage() {
           <h1>Dashboard</h1>
           <p className="page-lede">
             Scan what is new, what changed, and what still needs clinician context. Automatic runs happen only while
-            OncoWatch is open.
+            Coffey is open.
           </p>
         </div>
         <div className="page-header-actions">

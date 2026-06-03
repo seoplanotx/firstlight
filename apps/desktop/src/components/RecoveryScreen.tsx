@@ -9,9 +9,9 @@ export function RecoveryScreen({ errorMessage, apiBase, onRetry }: RecoveryScree
     <div className="app-loading">
       <div className="recovery-card">
         <div className="eyebrow">Local backend recovery</div>
-        <h1>OncoWatch could not finish starting its local service.</h1>
+        <h1>Coffey could not finish starting its local service.</h1>
         <p className="muted">
-          OncoWatch waits for the bundled backend for a few seconds on launch. If that startup window is missed, retry
+          Coffey waits for the bundled backend for a few seconds on launch. If that startup window is missed, retry
           before reinstalling.
         </p>
         <div className="callout callout-danger">{errorMessage}</div>

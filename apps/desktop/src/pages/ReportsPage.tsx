@@ -134,7 +134,7 @@ export function ReportsPage() {
           <div className="page-stack">
             <div className="briefing-preview-header">
               <div>
-                <strong>{latestReport.summary_json.report_title || 'OncoWatch briefing'}</strong>
+                <strong>{latestReport.summary_json.report_title || 'Coffey briefing'}</strong>
                 <div className="muted">
                   {latestReport.summary_json.generated_at
                     ? new Date(latestReport.summary_json.generated_at).toLocaleString()

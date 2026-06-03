@@ -27,14 +27,14 @@ test('first launch onboarding reaches the dashboard and support surface', async 
   await page.getByRole('button', { name: 'Open dashboard' }).click();
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText('Automatic runs happen only while OncoWatch is open.')).toBeVisible();
+  await expect(page.getByText('Automatic runs happen only while Coffey is open.')).toBeVisible();
 
   await page.goto('/#/support');
   await expect(page.getByRole('heading', { name: 'About / Support' })).toBeVisible();
   await expect(page.getByText('Local storage')).toBeVisible();
 
   // Honest-scope surface and data-ownership controls (Workstreams B + F).
-  await expect(page.getByRole('heading', { name: "What OncoWatch is — and isn't" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: "What Coffey is — and isn't" })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export my data' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Delete all my data' })).toBeVisible();
 

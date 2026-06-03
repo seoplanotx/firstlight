@@ -12,7 +12,7 @@ from app.services.scheduler_service import next_run_time_iso
 
 
 DISCLAIMER = (
-    "OncoWatch is an information monitoring and summarization tool. "
+    "Coffey is an information monitoring and summarization tool. "
     "It does not determine treatment, trial eligibility, or medical appropriateness. "
     "All findings should be reviewed with a licensed oncology team."
 )

@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('OncoWatch render failure', error, errorInfo);
+    console.error('Coffey render failure', error, errorInfo);
   }
 
   render() {
@@ -27,9 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="app-loading">
           <div className="recovery-card">
             <div className="eyebrow">Unexpected error</div>
-            <h1>OncoWatch ran into a rendering problem.</h1>
+            <h1>Coffey ran into a rendering problem.</h1>
             <p className="muted">
-              Reload the app first. If this keeps happening, reopen OncoWatch and review the local logs from the
+              Reload the app first. If this keeps happening, reopen Coffey and review the local logs from the
               support page.
             </p>
             <div className="button-row">

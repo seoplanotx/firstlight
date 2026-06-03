@@ -28,7 +28,7 @@ export default function App() {
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [loadingLabel, setLoadingLabel] = useState('Starting local OncoWatch services...');
+  const [loadingLabel, setLoadingLabel] = useState('Starting local Coffey services...');
 
   async function load() {
     setLoading(true);
@@ -38,7 +38,7 @@ export default function App() {
     for (let attempt = 1; attempt <= BOOT_ATTEMPTS; attempt += 1) {
       setLoadingLabel(
         attempt === 1
-          ? 'Starting local OncoWatch services...'
+          ? 'Starting local Coffey services...'
           : `Waiting for the local backend to start (${attempt}/${BOOT_ATTEMPTS})...`
       );
       try {
@@ -57,7 +57,7 @@ export default function App() {
 
     setBootstrap(null);
     setOnboardingState(null);
-    setBootError(getErrorMessage(lastError, 'OncoWatch could not reach its local backend.'));
+    setBootError(getErrorMessage(lastError, 'Coffey could not reach its local backend.'));
     setLoading(false);
   }
 
