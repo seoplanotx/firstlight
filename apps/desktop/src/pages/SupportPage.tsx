@@ -110,16 +110,16 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
       </Card>
 
       <Card
-        title="What OncoWatch is — and isn't"
-        description="Please read this before relying on anything OncoWatch surfaces."
+        title="What Coffey is — and isn't"
+        description="Please read this before relying on anything Coffey surfaces."
       >
         <div className="stack">
           <p>
-            OncoWatch is an information monitoring and summarization tool. It searches public sources, matches them to
+            Coffey is an information monitoring and summarization tool. It searches public sources, matches them to
             the profile you enter, and produces source-backed briefings to bring to your oncology team.
           </p>
           <p className="muted">
-            OncoWatch is <strong>not</strong> a medical device, a diagnostic system, or a substitute for an oncologist.
+            Coffey is <strong>not</strong> a medical device, a diagnostic system, or a substitute for an oncologist.
             It does not determine treatment, trial eligibility, or medical appropriateness. Every finding requires review
             by a licensed clinician. Identifying details are encrypted on this device and never leave it unless you
             explicitly enable de-identified AI assistance.
@@ -189,7 +189,7 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
       <Card title="Recovery steps" description="Use these steps before reinstalling the app.">
         <div className="stack">
           <div className="support-step">
-            <strong>1. Retry startup or reopen OncoWatch.</strong>
+            <strong>1. Retry startup or reopen Coffey.</strong>
             <div className="muted">The local backend may need a second launch window after an update or crash.</div>
           </div>
           <div className="support-step">

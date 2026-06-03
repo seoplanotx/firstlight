@@ -70,7 +70,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       {
         label: 'Welcome',
         title: 'Set up a calm local briefing workflow.',
-        description: 'OncoWatch focuses on real trial and literature monitoring, conservative language, and clinician review.'
+        description: 'Coffey focuses on real trial and literature monitoring, conservative language, and clinician review.'
       },
       {
         label: 'Patient Profile',
@@ -79,7 +79,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       },
       {
         label: 'Monitoring Preferences',
-        title: 'Choose when OncoWatch can run while it is open.',
+        title: 'Choose when Coffey can run while it is open.',
         description: 'This release keeps monitoring local and truthful: automatic runs only happen while the app stays open.'
       },
       {
@@ -176,7 +176,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
         <div className="sidebar-brand large">
           <div className="brand-mark">O</div>
           <div>
-            <strong>OncoWatch</strong>
+            <strong>Coffey</strong>
             <div className="muted">Set up local oncology monitoring</div>
           </div>
         </div>
@@ -223,12 +223,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
 
         {step === 0 && (
           <Card
-            title="Welcome to OncoWatch"
+            title="Welcome to Coffey"
             description="A local-first workspace for tracking real public oncology information that may be worth discussing with a care team."
           >
             <div className="stack">
               <p>
-                OncoWatch helps patients and families monitor oncology information that <strong>may be relevant</strong>{' '}
+                Coffey helps patients and families monitor oncology information that <strong>may be relevant</strong>{' '}
                 so they can bring structured, source-backed notes to a doctor visit.
               </p>
               <p>
@@ -272,12 +272,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
         {step === 2 && (
           <Card
             title="Monitoring preferences"
-            description="Choose when OncoWatch can run while it is open and confirm which real sources are enabled."
+            description="Choose when Coffey can run while it is open and confirm which real sources are enabled."
           >
             <div className="stack">
               <div className="form-grid">
                 <div className="field">
-                  <label>Automatic run time while OncoWatch is open</label>
+                  <label>Automatic run time while Coffey is open</label>
                   <input
                     type="time"
                     value={settings.daily_run_time}
@@ -307,7 +307,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
               </div>
 
               <div className="callout">
-                Automatic runs are local and truthful in this release: they only happen while OncoWatch stays open on this
+                Automatic runs are local and truthful in this release: they only happen while Coffey stays open on this
                 Mac. You can always start a manual run from the dashboard.
               </div>
 
@@ -398,11 +398,11 @@ export function OnboardingWizard({ onCompleted }: Props) {
             description="The workspace is configured locally and ready to open the main dashboard."
           >
             <div className="stack">
-              <p>OncoWatch is ready on this computer.</p>
+              <p>Coffey is ready on this computer.</p>
               <p>Automatic run time while the app stays open: {settings.daily_run_time}.</p>
-              <p>Reports will be saved in the local OncoWatch reports folder.</p>
+              <p>Reports will be saved in the local Coffey reports folder.</p>
               <div className="callout">
-                Start with a manual run once the dashboard opens. Automatic runs only happen while OncoWatch stays open on
+                Start with a manual run once the dashboard opens. Automatic runs only happen while Coffey stays open on
                 this Mac.
               </div>
               {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}

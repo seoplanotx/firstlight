@@ -14,7 +14,7 @@ vi.mock('../lib/api', () => ({
 }));
 
 const bootstrap: BootstrapInfo = {
-  app_name: 'OncoWatch',
+  app_name: 'Coffey',
   app_version: '0.1.0',
   disclaimer: 'Not medical advice.',
   onboarding_completed: true,

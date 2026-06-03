@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-APP_NAME = "OncoWatch"
+APP_NAME = "Coffey"
 APP_VERSION = "0.1.0"
 MONITORING_MODE = "while_open"
 PRODUCT_SCOPE = "ClinicalTrials.gov trials and PubMed literature"
