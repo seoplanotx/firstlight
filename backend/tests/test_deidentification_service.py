@@ -15,7 +15,7 @@ class DeidentificationServiceTests(unittest.TestCase):
         profile = {
             "id": 42,
             "profile_name": "Mom",
-            "display_name": "Jane Coffey",
+            "display_name": "Jane Firstlight",
             "date_of_birth": "1958-04-12",
             "cancer_type": "Non-small cell lung cancer",
             "subtype": "adenocarcinoma",
@@ -77,7 +77,7 @@ class DeidentificationServiceTests(unittest.TestCase):
         self.assertNotIn("Progressed after osimertinib", serialized)
         self.assertNotIn("long-distance travel", serialized)
         self.assertNotIn("Jane", serialized)
-        self.assertNotIn("Coffey", serialized)
+        self.assertNotIn("Firstlight", serialized)
         self.assertNotIn("1958", serialized)
         self.assertNotIn("Dr. Smith", serialized)
         self.assertNotIn("Example Hospital", serialized)
@@ -184,7 +184,7 @@ class DeidentificationServiceTests(unittest.TestCase):
         unsafe_packet = {
             "profile_context": {
                 "cancer_type": "NSCLC",
-                "display_name": "Jane Coffey",
+                "display_name": "Jane Firstlight",
                 "contact": "jane@example.com",
             }
         }
@@ -195,8 +195,8 @@ class DeidentificationServiceTests(unittest.TestCase):
     def test_assert_deidentified_packet_rejects_unknown_keys_and_identity_free_text(self) -> None:
         unsafe_packet = {
             "privacy_mode": "deidentified_ai_assist",
-            "task": "Generate questions for Jane Coffey treated by Dr. Smith at Example Hospital",
-            "profile_context": {"cancer_type": "NSCLC", "patient": "Jane Coffey"},
+            "task": "Generate questions for Jane Firstlight treated by Dr. Smith at Example Hospital",
+            "profile_context": {"cancer_type": "NSCLC", "patient": "Jane Firstlight"},
             "findings": [],
             "safety_instructions": [],
         }
@@ -238,9 +238,9 @@ class DeidentificationServiceTests(unittest.TestCase):
     def test_build_packet_omits_identity_in_profile_free_text(self) -> None:
         packet = build_deidentified_case_packet(
             profile={
-                "display_name": "Jane Coffey",
+                "display_name": "Jane Firstlight",
                 "cancer_type": "NSCLC",
-                "stage_or_context": "Jane Coffey was diagnosed on 1958-04-12",
+                "stage_or_context": "Jane Firstlight was diagnosed on 1958-04-12",
             },
             findings=[],
             task="clinician_questions",
@@ -257,7 +257,7 @@ class DeidentificationServiceTests(unittest.TestCase):
             "task": "clinician_questions",
             "profile_context": {
                 "cancer_type": "NSCLC",
-                "stage_or_context": "Jane Coffey was diagnosed on 1958-04-12",
+                "stage_or_context": "Jane Firstlight was diagnosed on 1958-04-12",
                 "current_therapy_status": "Next appointment is April 12, 2026",
             },
             "findings": [],
@@ -275,7 +275,7 @@ class DeidentificationServiceTests(unittest.TestCase):
             "findings": [
                 {
                     "type": "clinical_trials",
-                    "title": "Jane Coffey study at Example Hospital on 2026-04-12",
+                    "title": "Jane Firstlight study at Example Hospital on 2026-04-12",
                     "source_name": "ClinicalTrials.gov",
                     "external_identifier": "NCT00000000",
                     "structured_tags": ["Jacksonville, NC 28546"],
@@ -293,7 +293,7 @@ class DeidentificationServiceTests(unittest.TestCase):
                 "cancer_type": "NSCLC",
                 "therapy_history": [
                     {
-                        "therapy_name": "Jane Coffey protocol",
+                        "therapy_name": "Jane Firstlight protocol",
                         "therapy_type": "targeted therapy",
                         "line_of_therapy": "1L",
                         "status": "prior",
@@ -314,18 +314,18 @@ class DeidentificationServiceTests(unittest.TestCase):
             build_deidentified_case_packet(
                 profile={"cancer_type": "NSCLC"},
                 findings=[],
-                task="Generate questions for Jane Coffey at Example Hospital",
+                task="Generate questions for Jane Firstlight at Example Hospital",
             )
 
     def test_build_packet_rejects_identity_fragments_in_allowed_cloud_fields(self) -> None:
         profile = {
-            "display_name": "Jane Coffey",
+            "display_name": "Jane Firstlight",
             "cancer_type": "Jane-associated NSCLC",
-            "biomarkers": [{"name": "EGFR", "variant": "Coffey-positive", "status": "positive"}],
+            "biomarkers": [{"name": "EGFR", "variant": "Firstlight-positive", "status": "positive"}],
         }
         findings = [
             {
-                "title": "Coffey's EGFR trial",
+                "title": "Firstlight's EGFR trial",
                 "type": "clinical_trials",
                 "source_name": "ClinicalTrials.gov",
                 "external_identifier": "NCT00000000",
@@ -344,7 +344,7 @@ class DeidentificationServiceTests(unittest.TestCase):
             "findings": [
                 {
                     "type": "clinical_trials",
-                    "title": "J. Coffey EGFR trial",
+                    "title": "J. Firstlight EGFR trial",
                     "source_name": "ClinicalTrials.gov",
                     "external_identifier": "NCT00000000",
                     "structured_tags": ["EGFR"],

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Local-first oncology monitoring desktop app",
+  "license": "AGPL-3.0-only",
   "packageManager": "npm@10.9.7",
   "engines": {
     "node": "22.x",

@@ -90,7 +90,7 @@ export function SettingsPage() {
 
       <Card
         title="General settings"
-        description="Automatic runs are local and only happen while Coffey remains open on this Mac."
+        description="Automatic runs are local and only happen while Firstlight remains open on this Mac."
       >
         <div className="form-grid">
           <div className="field">
@@ -134,7 +134,7 @@ export function SettingsPage() {
 
       <Card
         title="AI privacy mode"
-        description="Choose whether Coffey stays fully local or can use optional cloud AI with minimized, de-identified oncology context."
+        description="Choose whether Firstlight stays fully local or can use optional cloud AI with minimized, de-identified oncology context."
       >
         <div className="stack">
           <div className="field">
@@ -158,7 +158,7 @@ export function SettingsPage() {
             </select>
           </div>
           <div className="callout">
-            <strong>Mode 1:</strong> patient context stays on this device. Coffey uses local rules and source-backed reports only.
+            <strong>Mode 1:</strong> patient context stays on this device. Firstlight uses local rules and source-backed reports only.
             <br />
             <strong>Mode 2:</strong> identifying details stay local, but minimized cancer context may be sent to your selected AI provider for summaries and briefing questions.
           </div>
@@ -174,7 +174,7 @@ export function SettingsPage() {
               <div>
                 <strong>I understand de-identified cancer context can still be sensitive.</strong>
                 <div className="muted">
-                  Coffey will strip local identity fields before cloud AI calls, but cancer type, stage, biomarkers,
+                  Firstlight will strip local identity fields before cloud AI calls, but cancer type, stage, biomarkers,
                   prior therapies, and public source text may leave this device when AI assist is enabled.
                 </div>
               </div>

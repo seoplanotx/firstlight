@@ -1,5 +1,5 @@
 """
-Coffey — promotional deck generator.
+Firstlight — promotional deck generator.
 
 Produces a 16:9 .pptx that imports cleanly into Google Slides
 (upload to Drive -> "Open with Google Slides").
@@ -122,7 +122,7 @@ def kicker(s, x, y, txt, color=TEAL_BR):
 
 def page_tag(s, idx, label):
     text(s, Inches(11.7), Inches(7.02), Inches(1.5), Inches(0.34),
-         [[(f"Coffey  ·  {idx:02d}", 9, MUTED, False, FONT)]],
+         [[(f"Firstlight  ·  {idx:02d}", 9, MUTED, False, FONT)]],
          align=PP_ALIGN.RIGHT)
     rect(s, Inches(0.0), Inches(7.34), EMU_W, Inches(0.16), TEAL)
 
@@ -158,7 +158,7 @@ rect(s, Inches(9.2), Inches(0), Inches(4.13), EMU_H, RGBColor(0x0E, 0x2A, 0x42))
 
 logo_mark(s, Inches(1.0), Inches(1.0), scale=1.15)
 text(s, Inches(1.75), Inches(1.02), Inches(7), Inches(0.7),
-     [[("Coffey", 26, WHITE, True, FONT)]])
+     [[("Firstlight", 26, WHITE, True, FONT)]])
 
 text(s, Inches(1.0), Inches(2.55), Inches(9.6), Inches(2.2),
      [[("Never miss what", 46, WHITE, True, FONT)],
@@ -228,7 +228,7 @@ page_tag(s, 2, "")
 s = slide()
 bg(s, NAVY)
 rect(s, Inches(0), Inches(0), Inches(0.32), EMU_H, TEAL_BR)
-kicker(s, Inches(0.9), Inches(0.7), "Meet Coffey", TEAL_BR)
+kicker(s, Inches(0.9), Inches(0.7), "Meet Firstlight", TEAL_BR)
 text(s, Inches(0.9), Inches(1.05), Inches(11.5), Inches(1.4),
      [[("Your tireless research assistant — ", 34, WHITE, True, FONT)],
       [("working quietly on your kitchen counter.", 34, TEAL_BR, True, FONT)]],
@@ -262,7 +262,7 @@ text(s, Inches(0.9), Inches(0.86), Inches(11.5), Inches(0.9),
 
 steps = [
     ("1", "Build the profile", "Cancer type, subtype, biomarkers, stage, and prior therapies — entered once.", TEAL),
-    ("2", "Monitor sources", "Coffey queries trusted public sources on a schedule while it's open.", TEAL_BR),
+    ("2", "Monitor sources", "Firstlight queries trusted public sources on a schedule while it's open.", TEAL_BR),
     ("3", "Match & score", "Deterministic rules rank what's relevant and flag what's missing.", AMBER),
     ("4", "Brief your team", "Export a source-backed PDF with questions for your oncologist.", CORAL),
 ]
@@ -408,7 +408,7 @@ text(s, Inches(0.9), Inches(1.05), Inches(11.5), Inches(0.9),
 card(s, Inches(0.9), Inches(2.2), Inches(5.6), Inches(4.0), LIGHT)
 rect(s, Inches(0.9), Inches(2.2), Inches(0.16), Inches(4.0), TEAL, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
 text(s, Inches(1.25), Inches(2.45), Inches(5.0), Inches(0.6),
-     [[("Coffey IS", 18, TEAL, True, FONT)]])
+     [[("Firstlight IS", 18, TEAL, True, FONT)]])
 for i, t in enumerate(["An information monitor","A summarizer of public research",
                        "A preparation tool for visits","Transparent about its reasoning"]):
     text(s, Inches(1.25), Inches(3.1) + Inches(0.72)*i, Inches(5.0), Inches(0.6),
@@ -418,14 +418,14 @@ for i, t in enumerate(["An information monitor","A summarizer of public research
 card(s, Inches(6.8), Inches(2.2), Inches(5.6), Inches(4.0), RGBColor(0xFB,0xEF,0xEA))
 rect(s, Inches(6.8), Inches(2.2), Inches(0.16), Inches(4.0), CORAL, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
 text(s, Inches(7.15), Inches(2.45), Inches(5.0), Inches(0.6),
-     [[("Coffey is NOT", 18, CORAL, True, FONT)]])
+     [[("Firstlight is NOT", 18, CORAL, True, FONT)]])
 for i, t in enumerate(["A diagnostic system","A treatment recommender",
                        "A trial-eligibility decision","A substitute for your oncologist"]):
     text(s, Inches(7.15), Inches(3.1) + Inches(0.72)*i, Inches(5.0), Inches(0.6),
          [[("—  ", 16, CORAL, True, FONT), (t, 15.5, SLATE, False, FONT)]])
 
 text(s, Inches(0.9), Inches(6.45), Inches(11.5), Inches(0.6),
-     [[("Every finding requires clinician review. Coffey helps you ask better questions — not make medical decisions.",
+     [[("Every finding requires clinician review. Firstlight helps you ask better questions — not make medical decisions.",
         13.5, MUTED, False, FONT, True)]], align=PP_ALIGN.CENTER)
 page_tag(s, 8, "")
 
@@ -490,13 +490,13 @@ bg(s, NAVY)
 rect(s, Inches(0), Inches(0), EMU_W, Inches(0.16), CORAL)
 rect(s, Inches(0), Inches(7.34), EMU_W, Inches(0.16), CORAL)
 logo_mark(s, Inches(6.35), Inches(0.85), scale=1.2)
-kicker(s, Inches(0), Inches(1.62), "Why it's called Coffey", CORAL)
+kicker(s, Inches(0), Inches(1.62), "Why it's called Firstlight", CORAL)
 # center the kicker
 s.shapes[-1].left = Inches(0); s.shapes[-1].width = EMU_W
 s.shapes[-1].text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
 text(s, Inches(1.6), Inches(2.1), Inches(10.13), Inches(1.7),
-     [[("Coffey is named for my mom.", 24, RGBColor(0xC9,0xD8,0xE0), True, SERIF)],
+     [[("Firstlight is named for my mom.", 24, RGBColor(0xC9,0xD8,0xE0), True, SERIF)],
       [("", 6, WHITE, False, SERIF)],
       [("Judy Coffey", 46, AMBER, True, SERIF)]],
      align=PP_ALIGN.CENTER, line_spacing=1.05)
@@ -522,7 +522,7 @@ rect(s, Inches(0), Inches(0), Inches(0.32), EMU_H, TEAL)
 rect(s, Inches(0.32), Inches(0), Inches(0.10), EMU_H, TEAL_BR)
 logo_mark(s, Inches(1.0), Inches(1.1), scale=1.1)
 text(s, Inches(1.7), Inches(1.12), Inches(7), Inches(0.7),
-     [[("Coffey", 24, WHITE, True, FONT)]])
+     [[("Firstlight", 24, WHITE, True, FONT)]])
 text(s, Inches(1.0), Inches(2.5), Inches(11), Inches(1.8),
      [[("Bring the latest research", 40, WHITE, True, FONT)],
       [("into the conversation that matters.", 40, TEAL_BR, True, FONT)]],
@@ -540,13 +540,13 @@ text(s, Inches(4.6), Inches(5.62), Inches(7), Inches(0.7),
      [[("github.com/seoplanotx/oncowatch", 16, WHITE, True, FONT)]],
      anchor=MSO_ANCHOR.MIDDLE)
 text(s, Inches(1.02), Inches(6.75), Inches(11), Inches(0.5),
-     [[("Coffey is an information tool, not medical advice. Every finding requires clinician review.",
+     [[("Firstlight is an information tool, not medical advice. Every finding requires clinician review.",
         12, RGBColor(0x9B,0xB0,0xBE), False, FONT, True)]])
 rect(s, Inches(0.0), Inches(7.34), EMU_W, Inches(0.16), TEAL_BR)
 
 
 # ---------------------------------------------------------------- save
 import os
-out = os.path.join(os.path.dirname(__file__), "Coffey-Promotional-Deck.pptx")
+out = os.path.join(os.path.dirname(__file__), "Firstlight-Promotional-Deck.pptx")
 prs.save(out)
 print("Saved:", out, "| slides:", len(prs.slides._sldIdLst))

@@ -37,7 +37,7 @@ class UnsafeOpenRouterClient(FakeOpenRouterClient):
 def build_profile() -> PatientProfile:
     profile = PatientProfile(
         profile_name="Mom",
-        display_name="Jane Coffey",
+        display_name="Jane Firstlight",
         date_of_birth=datetime(1958, 4, 12, tzinfo=timezone.utc).date(),
         cancer_type="Non-small cell lung cancer",
         subtype="adenocarcinoma",
@@ -177,7 +177,7 @@ class HeartbeatServiceTests(unittest.TestCase):
         self.assertIn("Non-small cell lung cancer", serialized)
         self.assertIn("EGFR", serialized)
         self.assertNotIn("Jane", serialized)
-        self.assertNotIn("Coffey", serialized)
+        self.assertNotIn("Firstlight", serialized)
         self.assertNotIn("Dr. Smith", serialized)
         self.assertNotIn("Example Hospital", serialized)
         self.assertNotIn("1958", serialized)
