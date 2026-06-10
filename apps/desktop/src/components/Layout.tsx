@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-import { DisclaimerBanner } from './DisclaimerBanner';
 import { Sidebar } from './Sidebar';
 
 type LayoutProps = {
@@ -8,23 +7,17 @@ type LayoutProps = {
   disclaimer?: string;
 };
 
-export function Layout({ children, disclaimer }: LayoutProps) {
+const defaultDisclaimer =
+  'Firstlight is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness. All findings should be reviewed with a licensed oncology team.';
+
+export function Layout({ children, disclaimer = defaultDisclaimer }: LayoutProps) {
   return (
     <div className="app-shell">
       <Sidebar />
       <main className="app-main">
-        <header className="topbar">
-          <div className="topbar-copy">
-            <span className="topbar-eyebrow">Local-first oncology briefings</span>
-            <span className="topbar-text">
-              Structured questions and source-backed notes, prepared for clinician review.
-            </span>
-          </div>
-          <DisclaimerBanner disclaimer={disclaimer} />
-        </header>
         <div className="page-content">{children}</div>
         <footer className="footer-note">
-          <span>Profiles, settings, reports, and logs stay on this device.</span>
+          <span className="footer-disclaimer">{disclaimer}</span>
           <span>Automatic runs happen only while Firstlight is open.</span>
         </footer>
       </main>

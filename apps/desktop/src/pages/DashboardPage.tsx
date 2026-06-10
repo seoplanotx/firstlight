@@ -100,19 +100,23 @@ export function DashboardPage() {
       {notice && <div className="callout">{notice}</div>}
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
-      <div className="stats-grid">
-        <Card title="New findings" description="Since the last completed run." className="stat-card">
-          <div className="stat-value">{data.counts.new || 0}</div>
-        </Card>
-        <Card title="Changed findings" description="Existing items with meaningful updates." className="stat-card">
-          <div className="stat-value">{data.counts.changed || 0}</div>
-        </Card>
-        <Card title="High relevance" description="Items currently surfaced as the strongest fit." className="stat-card">
-          <div className="stat-value">{data.counts.high_relevance || 0}</div>
-        </Card>
-        <Card title="Trial matches" description="Trial-oriented findings worth a closer review." className="stat-card">
-          <div className="stat-value">{data.counts.trial_matches || 0}</div>
-        </Card>
+      <div className="stat-strip">
+        <div className="stat">
+          <span className="stat-num">{data.counts.new || 0}</span>
+          <span className="stat-label">New since last run</span>
+        </div>
+        <div className="stat">
+          <span className="stat-num">{data.counts.changed || 0}</span>
+          <span className="stat-label">Changed findings</span>
+        </div>
+        <div className="stat">
+          <span className="stat-num">{data.counts.high_relevance || 0}</span>
+          <span className="stat-label">High relevance</span>
+        </div>
+        <div className="stat">
+          <span className="stat-num">{data.counts.trial_matches || 0}</span>
+          <span className="stat-label">Trial matches</span>
+        </div>
       </div>
 
       <Card

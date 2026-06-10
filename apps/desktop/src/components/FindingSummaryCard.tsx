@@ -24,11 +24,13 @@ export function FindingSummaryCard({
   showMatchingMeta = false
 }: FindingSummaryCardProps) {
   const timestamp = finding.published_at || finding.retrieved_at;
-  const metaItems = [
-    { label: 'Captured', value: new Date(timestamp).toLocaleString() },
-    { label: 'Source', value: finding.source_name },
-    { label: 'Record', value: finding.external_identifier }
-  ];
+  const metaLine = [
+    new Date(timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
+    finding.source_name,
+    finding.external_identifier
+  ]
+    .filter(Boolean)
+    .join('  ·  ');
   const supportingItems = [
     { label: 'Location context', value: finding.location_summary || 'Location details not stored.' },
     { label: 'Match score', value: String(finding.score) },
@@ -42,8 +44,8 @@ export function FindingSummaryCard({
     <article className="finding-item">
       <div className="finding-topline">
         <div className="finding-heading">
-          <div className="finding-eyebrow">{formatFindingTypeLabel(finding.type)}</div>
           <h3 className="finding-title">{finding.title}</h3>
+          <p className="finding-meta-line">{metaLine}</p>
         </div>
         <div className="badge-row">
           <Badge label={formatFindingTypeLabel(finding.type)} tone={typeTone(finding.type)} />
@@ -53,15 +55,6 @@ export function FindingSummaryCard({
       </div>
 
       <p className="finding-summary">{finding.normalized_summary || finding.raw_summary || 'No summary available.'}</p>
-
-      <div className="finding-meta-strip">
-        {metaItems.map((item) => (
-          <div className="finding-meta-item" key={item.label}>
-            <span className="finding-meta-label">{item.label}</span>
-            <strong>{item.value}</strong>
-          </div>
-        ))}
-      </div>
 
       <TrialDetailsGrid finding={finding} />
 
