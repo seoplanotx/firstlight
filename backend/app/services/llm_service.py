@@ -72,7 +72,7 @@ def validate_clinician_questions(questions: list[str]) -> list[str]:
 class OpenRouterClient:
     def __init__(self, api_key: str, model: str | None = None) -> None:
         self.api_key = api_key
-        self.model = model or "openai/gpt-4.1-mini"
+        self.model = model or "anthropic/claude-sonnet-4.6"
         self.base_url = settings.openrouter_base_url
 
     @property

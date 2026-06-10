@@ -24,8 +24,8 @@ from app.services.scheduler_service import configure_scheduler_from_settings
 
 
 FALLBACK_MODELS = [
+    "anthropic/claude-sonnet-4.6",
     "openai/gpt-4.1-mini",
-    "anthropic/claude-3.7-sonnet",
     "google/gemini-2.5-pro",
     "meta-llama/llama-4-maverick",
 ]
