@@ -19,11 +19,8 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-panel">
         <div className="sidebar-brand">
-          <div className="brand-mark">F</div>
-          <div>
-            <strong>Firstlight</strong>
-            <div className="muted">Local oncology monitoring</div>
-          </div>
+          <span className="wordmark">Firstlight</span>
+          <div className="wordmark-sub">Local oncology monitoring</div>
         </div>
 
         <div className="sidebar-nav-group">

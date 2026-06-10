@@ -213,12 +213,9 @@ export function OnboardingWizard({ onCompleted }: Props) {
   return (
     <div className="onboarding-shell">
       <div className="onboarding-sidebar">
-        <div className="sidebar-brand large">
-          <div className="brand-mark">F</div>
-          <div>
-            <strong>Firstlight</strong>
-            <div className="muted">Set up local oncology monitoring</div>
-          </div>
+        <div className="sidebar-brand">
+          <span className="wordmark">Firstlight</span>
+          <div className="wordmark-sub">Set up local oncology monitoring</div>
         </div>
         <div className="onboarding-sidebar-copy">
           <div className="eyebrow">Private setup</div>
