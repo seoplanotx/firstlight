@@ -1,20 +1,20 @@
-# Coffey
+# Firstlight
 
 *formerly OncoWatch*
 
-**Coffey** is a local-first desktop application that helps cancer patients and families monitor relevant new oncology information, organize what may matter, and bring structured, source-backed summaries to their oncology team.
+**Firstlight** is a local-first desktop application that helps cancer patients and families monitor relevant new oncology information, organize what may matter, and bring structured, source-backed summaries to their oncology team.
 
 > **Safety disclaimer**
 >
-> Coffey is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness. It is not a diagnostic system and not a substitute for an oncologist. Every finding requires clinician review.
+> Firstlight is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness. It is not a diagnostic system and not a substitute for an oncologist. Every finding requires clinician review.
 
-## Why "Coffey"?
+## Why "Firstlight"?
 
-Coffey is named for **Judy Coffey**.
+Firstlight was built in memory of **Judy Coffey**.
 
 When she was facing cancer, her family went searching through the research and found a promising trio of drugs from recent trials. They brought it to her doctor, and he agreed it was worth a try. She passed before she could begin it, in April 2025.
 
-Coffey exists so that no other family has to find what matters too late. The name is hers — and it's also the quiet morning ritual this app is built around: sit down, and in a few minutes know what's new for the person you love.
+Firstlight exists so that no other family has to find what matters too late. The name is the promise: first light is when the day's new research lands — and when you sit down with your coffee and, in a few minutes, know what's new for the person you love.
 
 **The Judy Promise:** surface what might matter, show the evidence behind it, and make it easy to bring to the people who can actually help — always cautious, always clinician-reviewed.
 
@@ -46,7 +46,7 @@ Coffey exists so that no other family has to find what matters too late. The nam
 
 ## A note on the rename
 
-The product is now **Coffey**. The user-facing name, window title, installer, and reports all say Coffey.
+The product is now **Firstlight**. The user-facing name, window title, installer, and reports all say Firstlight.
 
 For backward compatibility and to avoid orphaning existing installs, some **internal identifiers intentionally keep the legacy `oncowatch` name**:
 
@@ -72,7 +72,7 @@ Renaming those safely requires a data/key migration step and is tracked as a fol
 - **Secrets**: encrypted locally at rest with a generated machine-local key file
 
 ### Privacy modes
-Coffey supports two privacy modes:
+Firstlight supports two privacy modes:
 
 - **Mode 1 — Local-only**: patient context stays on-device and no AI provider receives case context.
 - **Mode 2 — De-identified AI assist**: identifying details stay local; only minimized oncology context can be sent to a selected AI provider for summaries and briefing questions after explicit disclosure acknowledgement.
@@ -89,10 +89,10 @@ See `docs/connectors-and-matching.md` for connector behavior, normalization, sco
 
 ## End-user flow
 
-1. Install Coffey as a normal desktop app
+1. Install Firstlight as a normal desktop app
 2. Open the app
 3. Complete onboarding:
-   - learn what Coffey is and is not
+   - learn what Firstlight is and is not
    - enter patient profile details
    - choose monitoring preferences
    - run the setup health check
@@ -144,7 +144,7 @@ npm run test:e2e
 
 ## Packaging strategy
 
-Coffey is packaged as a Tauri desktop installer. The frontend is bundled by Tauri, and the Python backend is compiled into a standalone sidecar binary using PyInstaller. Tauri bundles external sidecar binaries via `externalBin`, which keeps the backend invisible to the end user and avoids any separate backend startup step. The repo then wraps the generated macOS `.app` in a deterministic `hdiutil`-based DMG step instead of relying on Finder automation.
+Firstlight is packaged as a Tauri desktop installer. The frontend is bundled by Tauri, and the Python backend is compiled into a standalone sidecar binary using PyInstaller. Tauri bundles external sidecar binaries via `externalBin`, which keeps the backend invisible to the end user and avoids any separate backend startup step. The repo then wraps the generated macOS `.app` in a deterministic `hdiutil`-based DMG step instead of relying on Finder automation.
 
 ### Build steps
 
@@ -160,7 +160,7 @@ See `docs/release-checklist.md` for the macOS signing, notarization, and release
 
 ## Local storage behavior
 
-Coffey creates local app directories automatically on first launch:
+Firstlight creates local app directories automatically on first launch:
 
 - SQLite database
 - logs
@@ -205,7 +205,7 @@ Reports are generated locally and saved to the user’s app report directory. Ea
 
 ## Safety guardrails
 
-Coffey never presents:
+Firstlight never presents:
 - treatment decisions
 - trial eligibility certainty
 - “best treatment” rankings
@@ -217,6 +217,20 @@ Default language stays cautious:
 - possible fit based on currently entered profile data
 - requires clinician review
 - insufficient information to determine fit
+
+## License
+
+Firstlight is open source under the **GNU Affero General Public License v3.0 (AGPL-3.0-only)** — see [LICENSE](LICENSE).
+
+What that means in practice:
+
+- You are free to use, study, modify, and share Firstlight.
+- If you distribute a modified version, or **run a modified version as a network service**, you must release your source code under the same license.
+- This keeps Firstlight — and every derivative of it — open for the families it was built for.
+
+Copyright © 2026 Tucker Coffey.
+
+**Commercial licensing:** organizations that want to build on Firstlight without AGPL obligations (for example, a hosted or proprietary offering) can contact the copyright holder about a separate commercial license.
 
 ## Future roadmap
 

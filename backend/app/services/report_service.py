@@ -24,7 +24,7 @@ from app.utils.dates import utcnow
 
 
 DISCLAIMER = (
-    "Coffey is an information monitoring and summarization tool. "
+    "Firstlight is an information monitoring and summarization tool. "
     "It does not determine treatment, trial eligibility, or medical appropriateness. "
     "All findings should be reviewed with a licensed oncology team."
 )
@@ -203,10 +203,10 @@ def build_report_bytes(
 ) -> bytes:
     styles = _styles()
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="Coffey Report")
+    doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="Firstlight Report")
     story: list[Any] = []
 
-    story.append(Paragraph(f"Coffey — {_report_title(report_type)}", styles["Title"]))
+    story.append(Paragraph(f"Firstlight — {_report_title(report_type)}", styles["Title"]))
     story.append(Paragraph(f"Generated: {utcnow().strftime('%Y-%m-%d %H:%M UTC')}", styles["BodySmall"]))
     story.append(Spacer(1, 8))
     story.append(Paragraph(DISCLAIMER, styles["BodySmall"]))

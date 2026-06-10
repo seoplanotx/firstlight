@@ -67,7 +67,7 @@ class LlmServicePrivacyTests(unittest.TestCase):
                 case_packet={
                     "profile_context": {
                         "cancer_type": "NSCLC",
-                        "display_name": "Jane Coffey",
+                        "display_name": "Jane Firstlight",
                     },
                     "findings": [],
                 }

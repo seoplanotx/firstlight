@@ -9,7 +9,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAURI_DIR="$ROOT_DIR/apps/desktop/src-tauri"
-APP_NAME="Coffey"
+APP_NAME="Firstlight"
 APP_PATH="$TAURI_DIR/target/release/bundle/macos/$APP_NAME.app"
 DMG_DIR="$TAURI_DIR/target/release/bundle/dmg"
 VERSION="$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$TAURI_DIR/tauri.conf.json" | head -n 1)"

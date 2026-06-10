@@ -170,7 +170,7 @@ def render_slide(slide, idx):
     return img
 
 
-prs = Presentation(os.path.join(HERE, "Coffey-Promotional-Deck.pptx"))
+prs = Presentation(os.path.join(HERE, "Firstlight-Promotional-Deck.pptx"))
 imgs = []
 for i, slide in enumerate(prs.slides, 1):
     im = render_slide(slide, i)

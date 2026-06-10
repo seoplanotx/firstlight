@@ -74,5 +74,8 @@ class BootstrapServiceTests(unittest.TestCase):
             settings = session.query(AppSettings).one()
             sources = session.query(SourceConfig).order_by(SourceConfig.connector_key).all()
 
-            self.assertEqual(settings.enabled_source_categories, ["clinical_trials", "literature"])
-            self.assertEqual([source.connector_key for source in sources], ["clinicaltrials_gov", "pubmed_literature"])
+            self.assertEqual(settings.enabled_source_categories, ["clinical_trials", "drug_updates", "literature"])
+            self.assertEqual(
+                [source.connector_key for source in sources],
+                ["clinicaltrials_gov", "europepmc_preprints", "openfda_drug_updates", "pubmed_literature"],
+            )

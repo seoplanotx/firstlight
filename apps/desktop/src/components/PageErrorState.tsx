@@ -17,7 +17,7 @@ export function PageErrorState({ title, message, onRetry }: PageErrorStateProps)
 
       <div className="recovery-card">
         <p className="muted">
-          Retry after the local backend finishes starting, or reopen Coffey if the problem persists.
+          Retry after the local backend finishes starting, or reopen Firstlight if the problem persists.
         </p>
         {onRetry && (
           <div className="button-row">

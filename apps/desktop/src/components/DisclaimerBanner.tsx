@@ -3,7 +3,7 @@ type DisclaimerBannerProps = {
 };
 
 const defaultDisclaimer =
-  'Coffey is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness.';
+  'Firstlight is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness.';
 
 export function DisclaimerBanner({ disclaimer = defaultDisclaimer }: DisclaimerBannerProps) {
   return (

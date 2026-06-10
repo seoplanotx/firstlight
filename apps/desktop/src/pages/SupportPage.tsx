@@ -110,16 +110,16 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
       </Card>
 
       <Card
-        title="What Coffey is — and isn't"
-        description="Please read this before relying on anything Coffey surfaces."
+        title="What Firstlight is — and isn't"
+        description="Please read this before relying on anything Firstlight surfaces."
       >
         <div className="stack">
           <p>
-            Coffey is an information monitoring and summarization tool. It searches public sources, matches them to
+            Firstlight is an information monitoring and summarization tool. It searches public sources, matches them to
             the profile you enter, and produces source-backed briefings to bring to your oncology team.
           </p>
           <p className="muted">
-            Coffey is <strong>not</strong> a medical device, a diagnostic system, or a substitute for an oncologist.
+            Firstlight is <strong>not</strong> a medical device, a diagnostic system, or a substitute for an oncologist.
             It does not determine treatment, trial eligibility, or medical appropriateness. Every finding requires review
             by a licensed clinician. Identifying details are encrypted on this device and never leave it unless you
             explicitly enable de-identified AI assistance.
@@ -189,7 +189,7 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
       <Card title="Recovery steps" description="Use these steps before reinstalling the app.">
         <div className="stack">
           <div className="support-step">
-            <strong>1. Retry startup or reopen Coffey.</strong>
+            <strong>1. Retry startup or reopen Firstlight.</strong>
             <div className="muted">The local backend may need a second launch window after an update or crash.</div>
           </div>
           <div className="support-step">
