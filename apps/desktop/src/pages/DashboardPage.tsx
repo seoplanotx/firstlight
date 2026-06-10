@@ -129,7 +129,6 @@ export function DashboardPage() {
           <div className="briefing-copy">
             <div className="eyebrow">Daily briefing</div>
             <h2>Start with the net-new items, then review changes that may affect follow-up questions.</h2>
-            <p className="muted">{data.disclaimer}</p>
           </div>
           <div className="briefing-metrics">
             <div className="briefing-metric">

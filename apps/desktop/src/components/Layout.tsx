@@ -13,20 +13,19 @@ export function Layout({ children, disclaimer }: LayoutProps) {
     <div className="app-shell">
       <Sidebar />
       <main className="app-main">
-        <div className="shell-header">
-          <div className="shell-header-copy">
-            <div className="eyebrow">Local-first oncology briefings</div>
-            <p className="shell-header-text">
-              Designed to help patients and families prepare structured questions and source-backed notes for clinician
-              review.
-            </p>
+        <header className="topbar">
+          <div className="topbar-copy">
+            <span className="topbar-eyebrow">Local-first oncology briefings</span>
+            <span className="topbar-text">
+              Structured questions and source-backed notes, prepared for clinician review.
+            </span>
           </div>
           <DisclaimerBanner disclaimer={disclaimer} />
-        </div>
+        </header>
         <div className="page-content">{children}</div>
         <footer className="footer-note">
           <span>Profiles, settings, reports, and logs stay on this device.</span>
-          <span>Automatic runs happen only while Firstlight is open, and treatment or eligibility decisions still require a licensed oncology team.</span>
+          <span>Automatic runs happen only while Firstlight is open.</span>
         </footer>
       </main>
     </div>
