@@ -808,6 +808,30 @@ p {
   margin-top: 6px;
 }
 
+.help-steps {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(31, 42, 68, 0.25);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.94rem;
+}
+
+.help-steps ol {
+  margin: 10px 0 12px 20px;
+  padding: 0;
+}
+
+.help-steps li + li {
+  margin-top: 6px;
+}
+
+.help-steps code {
+  background: rgba(31, 42, 68, 0.08);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.88em;
+}
+
 .filter-chip-row {
   display: flex;
   gap: 8px;

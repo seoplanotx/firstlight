@@ -20,6 +20,10 @@ test('first launch onboarding reaches the dashboard and support surface', async 
   await expect(page.getByText('Enabled real sources')).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
 
+  // AI assist step is optional and skippable without an OpenRouter key.
+  await expect(page.getByRole('heading', { name: 'AI assist (optional)' })).toBeVisible();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
+
   await page.getByRole('button', { name: 'Run health check' }).click();
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -27,7 +31,7 @@ test('first launch onboarding reaches the dashboard and support surface', async 
   await page.getByRole('button', { name: 'Open dashboard' }).click();
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText('Automatic runs happen only while Firstlight is open.')).toBeVisible();
+  await expect(page.getByText('Automatic runs happen only while Firstlight is open.', { exact: true })).toBeVisible();
 
   await page.goto('/#/support');
   await expect(page.getByRole('heading', { name: 'About / Support' })).toBeVisible();

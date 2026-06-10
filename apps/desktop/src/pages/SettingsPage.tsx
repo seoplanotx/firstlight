@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Card } from '../components/Card';
 import { PageErrorState } from '../components/PageErrorState';
+import { OpenRouterSetup } from '../features/ai/OpenRouterSetup';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import type { AppSettings, SourceConfig } from '../lib/types';
@@ -187,8 +188,15 @@ export function SettingsPage() {
       </Card>
 
       <Card
+        title="AI provider — OpenRouter"
+        description="Bring your own OpenRouter API key. It powers Mode 2 summaries and briefing questions, is encrypted, and never leaves this Mac."
+      >
+        <OpenRouterSetup />
+      </Card>
+
+      <Card
         title="Real sources"
-        description="This public release keeps the source list honest: ClinicalTrials.gov and PubMed only."
+        description="This public release keeps the source list honest: real public registries and literature sources only."
       >
         <div className="stack">
           {sources.map((source) => (
