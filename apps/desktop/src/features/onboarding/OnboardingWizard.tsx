@@ -4,6 +4,7 @@ import { Card } from '../../components/Card';
 import { api } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import type { AppSettings, HealthResponse, PatientProfile, SourceConfig } from '../../lib/types';
+import { OpenRouterSetup } from '../ai/OpenRouterSetup';
 import { ProfileForm } from '../profile/ProfileForm';
 
 type Props = {
@@ -43,6 +44,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [sources, setSources] = useState<SourceConfig[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [providerConfigured, setProviderConfigured] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -55,6 +57,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
         const [appSettings, sourceConfigs] = await Promise.all([api.getSettings(), api.getSources()]);
         setSettings(appSettings);
         setSources(sourceConfigs);
+        try {
+          const provider = await api.getProviderConfig();
+          setProviderConfigured(Boolean(provider?.is_configured));
+        } catch {
+          // AI provider config is optional during onboarding.
+        }
       } catch (error) {
         setErrorMessage(getErrorMessage(error, 'Could not load local onboarding settings.'));
       } finally {
@@ -81,6 +89,11 @@ export function OnboardingWizard({ onCompleted }: Props) {
         label: 'Monitoring Preferences',
         title: 'Choose when Firstlight can run while it is open.',
         description: 'This release keeps monitoring local and truthful: automatic runs only happen while the app stays open.'
+      },
+      {
+        label: 'AI Assist',
+        title: 'Choose how much AI helps, if at all.',
+        description: 'Optional. Plain-language summaries use your own OpenRouter key. Local-only mode needs no key.'
       },
       {
         label: 'Health Check',
@@ -110,6 +123,33 @@ export function OnboardingWizard({ onCompleted }: Props) {
       return;
     }
     setStep(3);
+  }
+
+  function continueFromAiAssist() {
+    setErrorMessage('');
+    setNotice('');
+    if (settings.privacy_mode === 'deidentified_ai_assist') {
+      if (!settings.deidentified_ai_disclosure_acknowledged) {
+        setErrorMessage('Acknowledge the AI privacy disclosure before continuing with AI assist.');
+        return;
+      }
+      if (!providerConfigured) {
+        setErrorMessage('Save a tested OpenRouter key below, or switch to local-only for now.');
+        return;
+      }
+    }
+    setStep(4);
+  }
+
+  function skipAiAssist() {
+    setErrorMessage('');
+    setNotice('');
+    setSettings((current) => ({
+      ...current,
+      privacy_mode: 'local_only',
+      deidentified_ai_disclosure_acknowledged: false
+    }));
+    setStep(4);
   }
 
   async function runHealth() {
@@ -174,7 +214,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
     <div className="onboarding-shell">
       <div className="onboarding-sidebar">
         <div className="sidebar-brand large">
-          <div className="brand-mark">O</div>
+          <div className="brand-mark">F</div>
           <div>
             <strong>Firstlight</strong>
             <div className="muted">Set up local oncology monitoring</div>
@@ -348,6 +388,80 @@ export function OnboardingWizard({ onCompleted }: Props) {
 
         {step === 3 && (
           <Card
+            title="AI assist (optional)"
+            description="Firstlight works fully without AI. Adding your own OpenRouter key unlocks plain-language summaries and briefing questions."
+          >
+            <div className="stack">
+              <div className="field">
+                <label>AI assist mode</label>
+                <select
+                  value={settings.privacy_mode}
+                  onChange={(e) => {
+                    const privacyMode = e.target.value as AppSettings['privacy_mode'];
+                    setSettings({
+                      ...settings,
+                      privacy_mode: privacyMode,
+                      deidentified_ai_disclosure_acknowledged:
+                        privacyMode === 'deidentified_ai_assist'
+                          ? settings.deidentified_ai_disclosure_acknowledged
+                          : false
+                    });
+                  }}
+                >
+                  <option value="local_only">Local-only — no AI, no key needed</option>
+                  <option value="deidentified_ai_assist">AI assist — de-identified summaries via OpenRouter</option>
+                </select>
+              </div>
+
+              <div className="callout">
+                <strong>Local-only:</strong> patient context stays on this device. Firstlight uses local rules and
+                source-backed reports only. <strong>AI assist:</strong> identifying details stay local, but minimized
+                cancer context may be sent to your selected AI provider for summaries and briefing questions. You can
+                change this anytime in Settings.
+              </div>
+
+              {settings.privacy_mode === 'deidentified_ai_assist' && (
+                <>
+                  <label className="toggle-row">
+                    <input
+                      type="checkbox"
+                      checked={settings.deidentified_ai_disclosure_acknowledged}
+                      onChange={(e) =>
+                        setSettings({ ...settings, deidentified_ai_disclosure_acknowledged: e.target.checked })
+                      }
+                    />
+                    <div>
+                      <strong>I understand</strong>
+                      <div className="muted">
+                        De-identified cancer context (never names or contact details) may be sent to the AI provider I
+                        configure below.
+                      </div>
+                    </div>
+                  </label>
+                  <div className="section-divider">Connect OpenRouter</div>
+                  <OpenRouterSetup onConfigured={() => setProviderConfigured(true)} />
+                </>
+              )}
+
+              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+
+              <div className="button-row">
+                <button className="ghost-button" onClick={() => setStep(2)}>
+                  Back
+                </button>
+                <button className="ghost-button" onClick={skipAiAssist}>
+                  Skip for now
+                </button>
+                <button className="primary-button" onClick={continueFromAiAssist}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {step === 4 && (
+          <Card
             title="Health check"
             description="This checks local storage, the database, PDF generation, and the enabled real data sources."
           >
@@ -377,12 +491,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 </div>
               )}
               <div className="button-row">
-                <button className="ghost-button" onClick={() => setStep(2)}>
+                <button className="ghost-button" onClick={() => setStep(3)}>
                   Back
                 </button>
                 <button
                   className="primary-button"
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(5)}
                   disabled={!health || hasBlockingHealthFailure}
                 >
                   Continue
@@ -392,7 +506,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
           </Card>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <Card
             title="Setup complete"
             description="The workspace is configured locally and ready to open the main dashboard."
@@ -400,6 +514,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
             <div className="stack">
               <p>Firstlight is ready on this computer.</p>
               <p>Automatic run time while the app stays open: {settings.daily_run_time}.</p>
+              <p>
+                AI assist:{' '}
+                {settings.privacy_mode === 'deidentified_ai_assist'
+                  ? 'on, using your OpenRouter key with de-identified context.'
+                  : 'off — everything stays local. Turn it on later in Settings.'}
+              </p>
               <p>Reports will be saved in the local Firstlight reports folder.</p>
               <div className="callout">
                 Start with a manual run once the dashboard opens. Automatic runs only happen while Firstlight stays open on
