@@ -31,7 +31,6 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, Box<dyn std::er
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(BackendState {
             child: Mutex::new(None),
         })
