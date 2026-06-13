@@ -86,8 +86,8 @@ export function DashboardPage() {
           <div className="eyebrow">Local monitoring</div>
           <h1>Dashboard</h1>
           <p className="page-lede">
-            Scan what is new, what changed, and what still needs clinician context. Automatic runs happen only while
-            Firstlight is open.
+            Scan what is new, what changed, and what still needs clinician context. Firstlight keeps monitoring in the
+            background while it runs in the menu bar or system tray, and notifies you when new research lands.
           </p>
         </div>
         <div className="page-header-actions">
