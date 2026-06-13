@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { RecoveryScreen } from './components/RecoveryScreen';
 import { OnboardingWizard } from './features/onboarding/OnboardingWizard';
 import { API_BASE, api } from './lib/api';
+import { useBackgroundMonitoring } from './lib/backgroundMonitoring';
 import { getErrorMessage } from './lib/errors';
 import type { BootstrapInfo, OnboardingState } from './lib/types';
 import { DashboardPage } from './pages/DashboardPage';
@@ -29,6 +30,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
   const [loadingLabel, setLoadingLabel] = useState('Starting local Firstlight services...');
+
+  useBackgroundMonitoring();
 
   async function load() {
     setLoading(true);

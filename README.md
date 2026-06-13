@@ -26,7 +26,7 @@ Firstlight is the public version of what I built for her, so that no other famil
 - Encryption at rest for identifying fields, with the master key in the OS keychain
 - Resilient connectors with retry/backoff so one flaky source can't fail a run
 - Four live research connectors for the public release: ClinicalTrials.gov, PubMed, openFDA drug updates, and Europe PMC preprints
-- Local scheduling while the app is open
+- Background monitoring with native notifications while Firstlight runs in the menu bar or system tray
 - Deterministic matching and scoring pipeline
 - Source-backed findings feed and trial-focused view
 - Local PDF export with report history
@@ -98,7 +98,7 @@ See `docs/connectors-and-matching.md` for connector behavior, normalization, sco
    - run the setup health check
 4. Review the dashboard and findings
 5. Start a manual run
-6. Optionally leave the app open for while-open automatic runs
+6. Keep Firstlight running in the menu bar or system tray for automatic background monitoring and notifications
 7. Run reports locally and bring them to the oncology visit
 
 ## Developer setup
