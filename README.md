@@ -12,11 +12,9 @@
 
 Firstlight was built in memory of **Judy Coffey**.
 
-When she was facing cancer, her family went searching through the research and found a promising trio of drugs from recent trials. They brought it to her doctor, and he agreed it was worth a try. She passed before she could begin it, in April 2025.
+When she was facing colorectal cancer, I built a tool to dig through the research for her — and it surfaced a promising drug combination from recent trials. We brought it to her oncologist, and he agreed it was worth trying. She passed in April 2025, before she could begin.
 
-Firstlight exists so that no other family has to find what matters too late. The name is the promise: first light is when the day's new research lands — and when you sit down with your coffee and, in a few minutes, know what's new for the person you love.
-
-**The Judy Promise:** surface what might matter, show the evidence behind it, and make it easy to bring to the people who can actually help — always cautious, always clinician-reviewed.
+Firstlight is the public version of what I built for her, so that no other family has to find what matters too late. The name is the promise: first light is when the day's new research lands — and when you sit down with your coffee and, in a few minutes, know what's new for the person you love.
 
 ## What this MVP includes
 
@@ -241,4 +239,3 @@ Copyright © 2026 Tucker Coffey.
 - Better geographic feasibility scoring
 - Stronger audit diffing for changed findings
 - Offline evidence caching for selected sources
-- Auto-updater channel for packaged releases (see `docs/release-checklist.md`)
