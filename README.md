@@ -25,7 +25,7 @@ Firstlight is the public version of what I built for her, so that no other famil
 - Structured patient profile management
 - Encryption at rest for identifying fields, with the master key in the OS keychain
 - Resilient connectors with retry/backoff so one flaky source can't fail a run
-- Real ClinicalTrials.gov and PubMed connectors for the public release
+- Four live research connectors for the public release: ClinicalTrials.gov, PubMed, openFDA drug updates, and Europe PMC preprints
 - Local scheduling while the app is open
 - Deterministic matching and scoring pipeline
 - Source-backed findings feed and trial-focused view
@@ -78,9 +78,11 @@ Firstlight supports two privacy modes:
 See `docs/privacy-modes.md` for the de-identification boundary and allowed/blocked AI payload categories.
 
 ### Connector strategy
-The public release ships with:
+The public release ships with four live connectors:
 - `clinicaltrials_gov` – live ClinicalTrials.gov trial search
 - `pubmed_literature` – live PubMed literature search with abstract-aware evidence snippets
+- `openfda_drug_updates` – live openFDA drug label and safety updates
+- `europepmc_preprints` – live Europe PMC preprint and literature search
 
 Contributor-only demo connectors still exist behind the explicit `backend/scripts/seed_demo.py` path for development, but they are not part of the public product scope.
 See `docs/connectors-and-matching.md` for connector behavior, normalization, scoring, and test details.
