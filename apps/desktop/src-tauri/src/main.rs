@@ -28,15 +28,47 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, Box<dyn std::er
     Ok(child)
 }
 
+#[cfg(not(debug_assertions))]
+fn check_for_updates(app: tauri::AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+
+    tauri::async_runtime::spawn(async move {
+        let updater = match app.updater() {
+            Ok(updater) => updater,
+            Err(error) => {
+                eprintln!("[updater] unavailable: {error}");
+                return;
+            }
+        };
+
+        match updater.check().await {
+            Ok(Some(update)) => {
+                println!("[updater] installing update {}", update.version);
+                match update.download_and_install(|_, _| {}, || {}).await {
+                    Ok(_) => {
+                        println!("[updater] update installed, restarting");
+                        app.restart();
+                    }
+                    Err(error) => eprintln!("[updater] install failed: {error}"),
+                }
+            }
+            Ok(None) => println!("[updater] up to date"),
+            Err(error) => eprintln!("[updater] check failed: {error}"),
+        }
+    });
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(BackendState {
             child: Mutex::new(None),
         })
         .setup(|_app| {
             #[cfg(not(debug_assertions))]
             {
+                check_for_updates(_app.handle().clone());
                 match spawn_backend(&_app.handle()) {
                     Ok(child) => {
                         let state = _app.state::<BackendState>();

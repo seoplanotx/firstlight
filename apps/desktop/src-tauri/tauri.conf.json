@@ -24,6 +24,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": [
       "app",
       "nsis"
@@ -31,5 +32,13 @@
     "externalBin": [
       "../../../dist-sidecar/oncowatch-backend"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVEREUyNzNGRUMxQjY2MEEKUldRS1podnNQeWZlN1RRK3EzUXBRamF0YVNpcmRpVnZEcEx2OGhkUGlWZWtpUy9Dd2ZOViszbVkK",
+      "endpoints": [
+        "https://github.com/seoplanotx/OncoWatch/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
