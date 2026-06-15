@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  BIOMARKER_SUGGESTIONS,
+  CANCER_TYPE_SUGGESTIONS,
+  THERAPY_SUGGESTIONS
+} from '../../lib/clinicalSuggestions';
 import type { Biomarker, PatientProfile, TherapyHistoryEntry } from '../../lib/types';
 
 type ProfileFormProps = {
   initialValue?: PatientProfile | null;
   onSave: (profile: PatientProfile) => Promise<void>;
   submitLabel?: string;
+  /** Fired whenever the form deviates from (or returns to) its last-saved state. */
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 function blankBiomarker(): Biomarker {
@@ -77,9 +84,11 @@ function computeStrength(form: PatientProfile): StrengthLevel {
   };
 }
 
-export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile' }: ProfileFormProps) {
+export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile', onDirtyChange }: ProfileFormProps) {
   const [form, setForm] = useState<PatientProfile>(initialValue || defaultProfile);
   const [saving, setSaving] = useState(false);
+  const [cancerError, setCancerError] = useState('');
+  const cancerInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setForm(initialValue || defaultProfile);
@@ -89,8 +98,22 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
   const avoidText = useMemo(() => form.would_not_consider.join('\n'), [form.would_not_consider]);
   const strength = useMemo(() => computeStrength(form), [form]);
 
+  // Compare the live form against its last-saved baseline so the parent can warn
+  // before the user navigates away from unsaved edits.
+  const baseline = useMemo(() => JSON.stringify(initialValue || defaultProfile), [initialValue]);
+  const isDirty = useMemo(() => JSON.stringify(form) !== baseline, [form, baseline]);
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!form.cancer_type.trim()) {
+      setCancerError('Add the cancer type so Firstlight knows what to look for. Plain words are fine.');
+      cancerInputRef.current?.focus();
+      return;
+    }
+    setCancerError('');
     setSaving(true);
     try {
       await onSave({
@@ -139,9 +162,34 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         <div className="field-hint">Optional. Stays encrypted on this computer.</div>
       </div>
       <div className="field">
-        <label>Cancer type</label>
-        <input value={form.cancer_type} onChange={(e) => setForm({ ...form, cancer_type: e.target.value })} required />
-        <div className="field-hint">In plain words is fine, e.g. "colon cancer" or "non-small cell lung cancer".</div>
+        <label htmlFor="profile-cancer-type">Cancer type</label>
+        <input
+          id="profile-cancer-type"
+          ref={cancerInputRef}
+          list="cancer-type-options"
+          value={form.cancer_type}
+          onChange={(e) => {
+            if (cancerError) setCancerError('');
+            setForm({ ...form, cancer_type: e.target.value });
+          }}
+          aria-invalid={cancerError ? true : undefined}
+          aria-describedby={cancerError ? 'profile-cancer-type-error' : undefined}
+        />
+        <datalist id="cancer-type-options">
+          {CANCER_TYPE_SUGGESTIONS.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+        {cancerError ? (
+          <div className="field-error" id="profile-cancer-type-error" role="alert">
+            {cancerError}
+          </div>
+        ) : (
+          <div className="field-hint">
+            In plain words is fine, e.g. "colon cancer" or "non-small cell lung cancer". Start typing to see common
+            examples — you can also type your own.
+          </div>
+        )}
       </div>
       <div className="field">
         <label>Subtype</label>
@@ -153,6 +201,15 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         <input value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
         <div className="field-hint">e.g. "Stage 4", "metastatic", or "newly diagnosed". Whatever the care team has said.</div>
       </div>
+      <details className="form-help field-span-2">
+        <summary>Not sure about subtype or stage?</summary>
+        <p>
+          These are optional. The <strong>subtype</strong> is a more specific name a pathologist may have used (for
+          example "adenocarcinoma" or "squamous cell"). The <strong>stage</strong> describes how far the cancer has
+          spread (for example "Stage 4" or "metastatic"). Both usually appear near the top of a pathology or imaging
+          report. If you are not certain, leave them blank — that is safer than guessing.
+        </p>
+      </details>
       <div className="field field-span-2">
         <label>Current therapy status</label>
         <textarea value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
@@ -179,12 +236,31 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         BRAF, MSI-High, PD-L1. They matter a lot for matching — but if you don't have them yet, leave this blank and add
         them later.
       </div>
+      <details className="form-help field-span-2">
+        <summary>What's a biomarker, and where do I find it?</summary>
+        <p>
+          A biomarker is a specific gene change or marker found by testing a tumor sample or blood — things like
+          <strong> EGFR</strong>, <strong>KRAS</strong>, <strong>HER2</strong>, or <strong>PD-L1</strong>. They often
+          decide which trials and targeted treatments are relevant, so they help Firstlight a lot.
+        </p>
+        <p>
+          Look for a section titled "molecular", "genomic", "next-generation sequencing (NGS)", or "biomarker results"
+          on a pathology or lab report. Enter the name (start typing for common examples), and add the variant or status
+          only if it's written down. If you don't have these results yet, leave this blank and add them later.
+        </p>
+      </details>
+      <datalist id="biomarker-options">
+        {BIOMARKER_SUGGESTIONS.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
       {form.biomarkers.map((item, index) => (
         <div key={`bio-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
               <label>Name</label>
               <input
+                list="biomarker-options"
                 placeholder="e.g. EGFR"
                 value={item.name}
                 onChange={(e) => {
@@ -238,14 +314,20 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
       <div className="section-divider field-span-2">Therapy history</div>
       <div className="field-hint field-span-2">
         Treatments tried so far, most recent first if you can. The drug or treatment name is the important part — the
-        rest is optional.
+        rest is optional. Start typing for common examples, or type your own.
       </div>
+      <datalist id="therapy-options">
+        {THERAPY_SUGGESTIONS.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
       {form.therapy_history.map((item, index) => (
         <div key={`therapy-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
               <label>Therapy</label>
               <input
+                list="therapy-options"
                 placeholder="e.g. carboplatin"
                 value={item.therapy_name}
                 onChange={(e) => {

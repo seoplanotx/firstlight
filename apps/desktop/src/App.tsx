@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, RouterProvider, createHashRouter } from 'react-router-dom';
 
 import { Layout } from './components/Layout';
 import { RecoveryScreen } from './components/RecoveryScreen';
@@ -84,20 +84,36 @@ export default function App() {
     return <OnboardingWizard onCompleted={load} />;
   }
 
-  return (
-    <HashRouter>
-      <Layout disclaimer={bootstrap.disclaimer}>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/findings" element={<FindingsPage />} />
-          <Route path="/trials" element={<TrialMatchesPage />} />
-          <Route path="/updates" element={<UpdatesPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/support" element={<SupportPage bootstrap={bootstrap} />} />
-        </Routes>
-      </Layout>
-    </HashRouter>
+  return <MainRouter bootstrap={bootstrap} />;
+}
+
+// A data router (createHashRouter) so pages can use useBlocker to guard
+// unsaved edits across every kind of navigation — sidebar links and the
+// browser/webview Back/Forward controls alike.
+function MainRouter({ bootstrap }: { bootstrap: BootstrapInfo }) {
+  const router = useMemo(
+    () =>
+      createHashRouter([
+        {
+          element: (
+            <Layout disclaimer={bootstrap.disclaimer}>
+              <Outlet />
+            </Layout>
+          ),
+          children: [
+            { index: true, element: <DashboardPage /> },
+            { path: 'profile', element: <ProfilePage /> },
+            { path: 'findings', element: <FindingsPage /> },
+            { path: 'trials', element: <TrialMatchesPage /> },
+            { path: 'updates', element: <UpdatesPage /> },
+            { path: 'reports', element: <ReportsPage /> },
+            { path: 'settings', element: <SettingsPage /> },
+            { path: 'support', element: <SupportPage bootstrap={bootstrap} /> }
+          ]
+        }
+      ]),
+    [bootstrap]
   );
+
+  return <RouterProvider router={router} />;
 }
