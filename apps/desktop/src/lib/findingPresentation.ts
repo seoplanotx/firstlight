@@ -1,7 +1,34 @@
 import type { BadgeTone } from '../components/Badge';
+import type { LanguageMode } from './languageMode';
 
-export function formatStatusLabel(status: string) {
+// Plain-language wording for the family-facing default, with the clinical
+// register preserved for users who turn it on in Settings.
+const RELEVANCE_PLAIN_LABELS: Record<string, string> = {
+  'High relevance': 'Strong match',
+  'Worth reviewing': 'Worth a look',
+  'Low confidence': 'Possible match',
+  'Insufficient data': 'Not enough detail yet'
+};
+
+const STATUS_PLAIN_LABELS: Record<string, string> = {
+  new: 'New',
+  changed: 'Updated',
+  unchanged: 'Seen before',
+  seen: 'Seen before'
+};
+
+export function formatStatusLabel(status: string, mode: LanguageMode = 'clinical') {
+  if (mode === 'plain') {
+    return STATUS_PLAIN_LABELS[status] || status.replace(/_/g, ' ');
+  }
   return status.replace(/_/g, ' ').toUpperCase();
+}
+
+export function formatRelevanceLabel(relevanceLabel: string, mode: LanguageMode = 'clinical') {
+  if (mode === 'plain') {
+    return RELEVANCE_PLAIN_LABELS[relevanceLabel] || relevanceLabel;
+  }
+  return relevanceLabel;
 }
 
 export function formatFindingTypeLabel(type: string) {
@@ -29,5 +56,7 @@ export function relevanceTone(relevanceLabel: string): BadgeTone {
   if (relevanceLabel === 'High relevance') return 'success';
   if (relevanceLabel === 'Worth reviewing') return 'info';
   if (relevanceLabel === 'Low confidence') return 'warning';
-  return 'danger';
+  // "Insufficient data" is a low-information signal, not an alarm: red is
+  // reserved for blockers, so keep this neutral.
+  return 'neutral';
 }

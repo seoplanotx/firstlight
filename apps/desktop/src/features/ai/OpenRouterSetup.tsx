@@ -98,7 +98,7 @@ export function OpenRouterSetup({ onConfigured }: Props) {
       });
       setConfig(saved);
       setApiKey('');
-      setSavedNotice('Saved. The key is encrypted and stored only on this Mac.');
+      setSavedNotice('Saved. The key is encrypted and stored only on this computer.');
       onConfigured?.(saved);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not save the OpenRouter settings.'));
@@ -162,8 +162,8 @@ export function OpenRouterSetup({ onConfigured }: Props) {
         </div>
       </div>
       <p className="muted">
-        The recommended model handles clinical text carefully at a low cost. The key is encrypted, stays on this Mac, and
-        is only used when AI assist is turned on.
+        The recommended model handles clinical text carefully at a low cost. The key is encrypted, stays on this
+        computer, and is only used when AI assist is turned on.
       </p>
 
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}

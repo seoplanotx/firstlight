@@ -7,7 +7,18 @@ import { EmptyState } from '../components/EmptyState';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import type { Dashboard } from '../lib/types';
+import type { Dashboard, FindingAction } from '../lib/types';
+
+const SOURCE_NAMES: Record<string, string> = {
+  clinicaltrials_gov: 'ClinicalTrials.gov',
+  pubmed_literature: 'PubMed',
+  openfda_drug_updates: 'openFDA drug updates',
+  europepmc_preprints: 'Europe PMC'
+};
+
+function friendlySourceName(connectorKey: string) {
+  return SOURCE_NAMES[connectorKey] || connectorKey.replace(/_/g, ' ');
+}
 
 function jumpToSection(anchorId: string) {
   document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -15,10 +26,12 @@ function jumpToSection(anchorId: string) {
 
 export function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
+  const [personName, setPersonName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [runBusy, setRunBusy] = useState(false);
+  const [pendingFindingId, setPendingFindingId] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
@@ -26,6 +39,12 @@ export function DashboardPage() {
     try {
       const result = await api.getDashboard();
       setData(result);
+      try {
+        const profile = await api.getActiveProfile();
+        setPersonName(profile?.display_name || profile?.profile_name || '');
+      } catch {
+        // The dashboard still works without a personalized greeting.
+      }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not load the dashboard.'));
     } finally {
@@ -43,28 +62,40 @@ export function DashboardPage() {
     setErrorMessage('');
     try {
       await api.triggerRun();
-      setNotice('Monitoring finished and the dashboard has been refreshed.');
+      setNotice('Done. The latest research has been pulled in and this page is up to date.');
       await load();
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Could not start monitoring.'));
+      setErrorMessage(getErrorMessage(error, 'Could not check for new research.'));
       await load();
     } finally {
       setRunBusy(false);
     }
   }
 
+  async function handleFindingAction(findingId: number, action: FindingAction) {
+    setPendingFindingId(findingId);
+    try {
+      await api.setFindingAction(findingId, action);
+      await load();
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
+    } finally {
+      setPendingFindingId(null);
+    }
+  }
+
   const latestRunLabel = useMemo(() => {
-    if (!data) return 'Run monitoring to populate the first briefing.';
+    if (!data) return 'Run your first check to see what is new.';
     if (data.briefing.latest_run_completed_at) {
-      return `Latest completed run: ${new Date(data.briefing.latest_run_completed_at).toLocaleString()}`;
+      return `Last checked: ${new Date(data.briefing.latest_run_completed_at).toLocaleString()}`;
     }
     if (data.latest_run) {
-      return `Latest run started: ${new Date(data.latest_run.started_at).toLocaleString()}`;
+      return `Check started: ${new Date(data.latest_run.started_at).toLocaleString()}`;
     }
-    return 'Run monitoring to populate the first briefing.';
+    return 'Run your first check to see what is new.';
   }, [data]);
 
-  if (loading) return <div className="loading-block">Loading dashboard...</div>;
+  if (loading) return <div className="loading-block">Loading...</div>;
   if (errorMessage && !data) {
     return <PageErrorState title="Dashboard unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -74,25 +105,23 @@ export function DashboardPage() {
   const sourceStatuses = data.briefing.source_statuses || [];
   const sourceFailures = data.briefing.source_failures || [];
   const suggestedQuestions = data.briefing.suggested_questions || [];
-  const questionGenerationStatus =
-    typeof data.briefing.question_generation?.status === 'string'
-      ? data.briefing.question_generation.status.replace(/_/g, ' ')
-      : 'deterministic fallback';
+  const hasEverRun = Boolean(data.latest_run);
+  const heading = personName ? `What's new for ${personName}` : 'Today';
 
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Local monitoring</div>
-          <h1>Dashboard</h1>
+          <div className="eyebrow">Your daily check</div>
+          <h1>{heading}</h1>
           <p className="page-lede">
-            Scan what is new, what changed, and what still needs clinician context. Firstlight keeps monitoring in the
-            background while it runs in the menu bar or system tray, and notifies you when new research lands.
+            A calm, once-a-day look at what is new in trials and research. Firstlight keeps watching while it runs in the
+            menu bar or system tray and lets you know when something new lands.
           </p>
         </div>
         <div className="page-header-actions">
           <button className="primary-button" onClick={() => void handleRunNow()} disabled={runInProgress}>
-            {runInProgress ? 'Monitoring...' : 'Run now'}
+            {runInProgress ? 'Checking…' : hasEverRun ? 'Check now' : 'Run your first check'}
           </button>
         </div>
       </div>
@@ -100,72 +129,113 @@ export function DashboardPage() {
       {notice && <div className="callout">{notice}</div>}
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
+      {runInProgress && (
+        <div className="callout first-run-callout">
+          <strong>Checking for new research…</strong>
+          <p>
+            Firstlight is looking through ClinicalTrials.gov, PubMed, openFDA, and Europe PMC. This usually takes up to a
+            minute — you can keep using the app while it works.
+          </p>
+        </div>
+      )}
+
+      {!hasEverRun && !runInProgress && (
+        <Card title="Let's run your first check" className="first-run-card">
+          <div className="stack">
+            <p>
+              When you run a check, Firstlight looks through the public research sources for anything that may be worth
+              discussing with {personName ? personName + "'s" : 'your'} care team. The first one usually takes up to a
+              minute.
+            </p>
+            <div className="mini-stats-grid">
+              <div className="mini-stat">
+                <span className="mini-stat-label">Trials</span>
+                <strong>ClinicalTrials.gov</strong>
+              </div>
+              <div className="mini-stat">
+                <span className="mini-stat-label">Research</span>
+                <strong>PubMed &amp; Europe PMC</strong>
+              </div>
+              <div className="mini-stat">
+                <span className="mini-stat-label">Drug updates</span>
+                <strong>openFDA</strong>
+              </div>
+            </div>
+            <button className="primary-button" onClick={() => void handleRunNow()} disabled={runInProgress}>
+              Run your first check
+            </button>
+          </div>
+        </Card>
+      )}
+
       <div className="stat-strip">
         <div className="stat">
           <span className="stat-num">{data.counts.new || 0}</span>
-          <span className="stat-label">New since last run</span>
+          <span className="stat-label">New since last check</span>
         </div>
         <div className="stat">
           <span className="stat-num">{data.counts.changed || 0}</span>
-          <span className="stat-label">Changed findings</span>
+          <span className="stat-label">Updated</span>
         </div>
         <div className="stat">
           <span className="stat-num">{data.counts.high_relevance || 0}</span>
-          <span className="stat-label">High relevance</span>
+          <span className="stat-label">Strong matches</span>
         </div>
         <div className="stat">
           <span className="stat-num">{data.counts.trial_matches || 0}</span>
-          <span className="stat-label">Trial matches</span>
+          <span className="stat-label">Possible trials</span>
         </div>
       </div>
 
-      <Card
-        title="What changed since the last run?"
-        description={latestRunLabel}
-        className="hero-card"
-        action={
-          <button className="secondary-button" onClick={() => (window.location.hash = '#/reports')}>
-            Open reports
-          </button>
-        }
-      >
-        <div className="briefing-hero">
-          <div className="briefing-copy">
-            <div className="eyebrow">Daily briefing</div>
-            <h2>Start with the net-new items, then review changes that may affect follow-up questions.</h2>
+      {hasEverRun && (
+        <Card
+          title="What changed since your last check?"
+          description={latestRunLabel}
+          className="hero-card"
+          action={
+            <button className="secondary-button" onClick={() => (window.location.hash = '#/reports')}>
+              Open reports
+            </button>
+          }
+        >
+          <div className="briefing-hero">
+            <div className="briefing-copy">
+              <div className="eyebrow">Daily briefing</div>
+              <h2>Start with what is new, then look at anything that changed and might be worth asking about.</h2>
+            </div>
+            <div className="briefing-metrics">
+              <div className="briefing-metric">
+                <span className="briefing-metric-label">New</span>
+                <strong>{data.briefing.new_count}</strong>
+              </div>
+              <div className="briefing-metric">
+                <span className="briefing-metric-label">Updated</span>
+                <strong>{data.briefing.changed_count}</strong>
+              </div>
+              <div className="briefing-metric">
+                <span className="briefing-metric-label">To fill in</span>
+                <strong>{data.briefing.blockers.length}</strong>
+              </div>
+              <div className="briefing-metric">
+                <span className="briefing-metric-label">Source issues</span>
+                <strong>{sourceFailures.length}</strong>
+              </div>
+            </div>
           </div>
-          <div className="briefing-metrics">
-            <div className="briefing-metric">
-              <span className="briefing-metric-label">New</span>
-              <strong>{data.briefing.new_count}</strong>
-            </div>
-            <div className="briefing-metric">
-              <span className="briefing-metric-label">Changed</span>
-              <strong>{data.briefing.changed_count}</strong>
-            </div>
-            <div className="briefing-metric">
-              <span className="briefing-metric-label">Blockers</span>
-              <strong>{data.briefing.blockers.length}</strong>
-            </div>
-            <div className="briefing-metric">
-              <span className="briefing-metric-label">Source issues</span>
-              <strong>{sourceFailures.length}</strong>
-            </div>
-          </div>
-        </div>
 
-        <div className="button-row hero-actions">
-          <button className="secondary-button" onClick={() => jumpToSection('dashboard-new-findings')}>
-            View new findings
-          </button>
-          <button className="secondary-button" onClick={() => jumpToSection('dashboard-changed-findings')}>
-            View changed findings
-          </button>
-          <button className="secondary-button" onClick={() => jumpToSection('dashboard-blockers')}>
-            View blockers
-          </button>
-        </div>
-      </Card>
+          <div className="button-row hero-actions">
+            <button className="secondary-button" onClick={() => jumpToSection('dashboard-new-findings')}>
+              See what's new
+            </button>
+            <button className="secondary-button" onClick={() => jumpToSection('dashboard-changed-findings')}>
+              See what changed
+            </button>
+            <button className="secondary-button" onClick={() => jumpToSection('dashboard-blockers')}>
+              See what's missing
+            </button>
+          </div>
+        </Card>
+      )}
 
       <div className="dashboard-layout">
         <div className="dashboard-main-column">
@@ -174,20 +244,22 @@ export function DashboardPage() {
               key={section.key}
               section={section}
               anchorId={`dashboard-${section.key.replace(/_/g, '-')}`}
+              onAction={handleFindingAction}
+              pendingId={pendingFindingId}
             />
           ))}
         </div>
 
         <div className="dashboard-side-column">
           <Card
-            title="Run status"
-            description="Monitoring cadence and the most recent execution details."
+            title="Check status"
+            description="How often Firstlight checks, and details of the most recent check."
             className="side-panel-card"
           >
             {data.latest_run ? (
               <div className="detail-grid">
                 <div>
-                  <strong>Last run</strong>
+                  <strong>Last check</strong>
                   <div>{new Date(data.latest_run.started_at).toLocaleString()}</div>
                 </div>
                 <div>
@@ -195,16 +267,16 @@ export function DashboardPage() {
                   <div>{data.latest_run.status}</div>
                 </div>
                 <div>
-                  <strong>Triggered by</strong>
+                  <strong>Started by</strong>
                   <div>{data.latest_run.triggered_by}</div>
                 </div>
                 <div>
-                  <strong>Next automatic run while open</strong>
+                  <strong>Next automatic check while open</strong>
                   <div>{data.next_scheduled_run ? new Date(data.next_scheduled_run).toLocaleString() : 'Not scheduled'}</div>
                 </div>
               </div>
             ) : (
-              <EmptyState title="No runs yet" message="Use Run now to populate the first monitoring results." />
+              <EmptyState title="No checks yet" message="Use the button above to run your first check." />
             )}
           </Card>
 
@@ -213,12 +285,12 @@ export function DashboardPage() {
           </div>
 
           <Card
-            title="Heartbeat questions"
-            description={`Generated by ${questionGenerationStatus}. Use these as review prompts, not medical advice.`}
+            title="Questions for the doctor"
+            description="Plain prompts you can bring to a visit. These are conversation starters, not medical advice."
             className="side-panel-card"
           >
             {suggestedQuestions.length === 0 ? (
-              <EmptyState title="No questions yet" message="Run monitoring to generate source-backed review prompts." />
+              <EmptyState title="No questions yet" message="Run a check to generate source-backed questions to ask." />
             ) : (
               <div className="headline-list">
                 {suggestedQuestions.map((question) => (
@@ -231,19 +303,20 @@ export function DashboardPage() {
           </Card>
 
           <Card
-            title="Source heartbeat"
-            description="Source-by-source status from the latest monitoring cycle."
+            title="Where we looked"
+            description="Each source Firstlight checked in the most recent run, and whether it responded."
             className="side-panel-card"
           >
             {sourceStatuses.length === 0 ? (
-              <EmptyState title="No source status yet" message="Run monitoring to check each enabled source." />
+              <EmptyState title="Nothing checked yet" message="Run a check to see how each source responded." />
             ) : (
               <div className="headline-list">
                 {sourceStatuses.map((source) => (
                   <article className="headline-item" key={source.connector_key}>
-                    <strong>{source.connector_key}</strong>
+                    <strong>{friendlySourceName(source.connector_key)}</strong>
                     <div className={source.status === 'ok' ? 'muted' : 'callout callout-danger'}>
-                      {source.status} • {source.retrieved} retrieved{source.message ? ` • ${source.message}` : ''}
+                      {source.status === 'ok' ? 'Responded' : 'Had trouble'} • {source.retrieved} found
+                      {source.message ? ` • ${source.message}` : ''}
                     </div>
                   </article>
                 ))}
@@ -251,9 +324,9 @@ export function DashboardPage() {
             )}
           </Card>
 
-          <Card title="Recent surfaced items" description="A quick glance at the latest stored records." className="side-panel-card">
+          <Card title="Recently found" description="A quick glance at the latest items Firstlight stored." className="side-panel-card">
             {data.recent_findings.length === 0 ? (
-              <EmptyState title="No findings stored" message="Once a run completes, findings will appear here." />
+              <EmptyState title="Nothing found yet" message="Once a check finishes, items will appear here." />
             ) : (
               <div className="headline-list">
                 {data.recent_findings.slice(0, 5).map((item) => (

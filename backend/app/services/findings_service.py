@@ -322,12 +322,15 @@ def list_findings(
     profile_id: int | None = None,
     finding_type: str | None = None,
     q: str | None = None,
+    include_dismissed: bool = False,
 ) -> list[Finding]:
     query = base_query()
     if profile_id is not None:
         query = query.where(Finding.profile_id == profile_id)
     if finding_type:
         query = query.where(Finding.type == finding_type)
+    if not include_dismissed:
+        query = query.where(Finding.user_action != "dismissed")
     if q:
         like = f"%{q.lower()}%"
         query = query.where(
@@ -338,6 +341,15 @@ def list_findings(
 
 def get_finding(session: Session, finding_id: int) -> Finding | None:
     return session.scalar(base_query().where(Finding.id == finding_id))
+
+
+def set_finding_action(session: Session, finding_id: int, action: str) -> Finding | None:
+    finding = session.scalar(select(Finding).where(Finding.id == finding_id))
+    if finding is None:
+        return None
+    finding.user_action = action
+    session.commit()
+    return get_finding(session, finding_id)
 
 
 def upsert_finding(

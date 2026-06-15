@@ -6,12 +6,13 @@ import { FindingSummaryCard } from '../components/FindingSummaryCard';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import type { Finding } from '../lib/types';
+import type { Finding, FindingAction } from '../lib/types';
 
 export function UpdatesPage() {
   const [items, setItems] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
@@ -20,7 +21,7 @@ export function UpdatesPage() {
       const result = await api.getFindings({ finding_type: 'literature' });
       setItems(result.items);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Could not load literature updates.'));
+      setErrorMessage(getErrorMessage(error, 'Could not load research updates.'));
     } finally {
       setLoading(false);
     }
@@ -30,38 +31,56 @@ export function UpdatesPage() {
     void load();
   }, []);
 
-  if (loading) return <div className="loading-block">Loading literature updates...</div>;
+  async function handleAction(findingId: number, action: FindingAction) {
+    setPendingId(findingId);
+    try {
+      await api.setFindingAction(findingId, action);
+      await load();
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  if (loading) return <div className="loading-block">Loading research updates...</div>;
   if (errorMessage && items.length === 0) {
-    return <PageErrorState title="Literature unavailable" message={errorMessage} onRetry={load} />;
+    return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
 
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Literature monitoring</div>
-          <h1>Literature Updates</h1>
+          <div className="eyebrow">Research updates</div>
+          <h1>Research Updates</h1>
           <p className="page-lede">
-            PubMed findings in one calmer feed with evidence excerpts and explicit source context.
+            New research from PubMed and Europe PMC in one calm list, each with a short excerpt and the reason it came up.
           </p>
         </div>
         <div className="page-header-actions">
-          <span className="section-counter">{items.length} stored</span>
+          <span className="section-counter">{items.length} found</span>
         </div>
       </div>
 
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
       <Card
-        title="Literature"
-        description="These records keep the evidence excerpt and the reason each item was surfaced side by side."
+        title="Research"
+        description="Each item keeps the evidence excerpt and the plain reason it came up side by side."
       >
         {items.length === 0 ? (
-          <EmptyState title="No literature stored" message="Run monitoring to populate PubMed findings." />
+          <EmptyState title="No research yet" message="Run a check to pull in new research." />
         ) : (
           <div className="finding-list">
             {items.map((item) => (
-              <FindingSummaryCard key={item.id} finding={item} showWhy />
+              <FindingSummaryCard
+                key={item.id}
+                finding={item}
+                showWhy
+                onAction={(action) => handleAction(item.id, action)}
+                actionPending={pendingId === item.id}
+              />
             ))}
           </div>
         )}

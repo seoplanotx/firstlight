@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+
+class FindingActionUpdate(BaseModel):
+    action: Literal["none", "discuss", "dismissed"]
 
 
 class FindingEvidenceRead(BaseModel):
@@ -40,6 +45,7 @@ class FindingRead(BaseModel):
     score: float
     relevance_label: str
     status: str
+    user_action: str = "none"
     location_summary: str | None = None
     matching_gaps: list[str] = Field(default_factory=list)
     match_debug: dict = Field(default_factory=dict)

@@ -9,14 +9,14 @@ type BriefingBlockersProps = {
 export function BriefingBlockers({ blockers }: BriefingBlockersProps) {
   return (
     <Card
-      title="Confidence blockers / missing info"
-      description="These are the explicit reasons a finding may still need more profile context or clinician confirmation."
+      title="What's still missing"
+      description="Details that, if you can add them, would help Firstlight judge these items more confidently."
       action={<span className="section-counter">{blockers.length} tracked</span>}
     >
       {blockers.length === 0 ? (
         <EmptyState
-          title="No explicit blockers"
-          message="The highest-priority findings did not include structured missing-information blockers."
+          title="Nothing missing right now"
+          message="The top items did not flag any missing details to fill in."
         />
       ) : (
         <div className="blocker-list">

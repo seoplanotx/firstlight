@@ -30,7 +30,7 @@ test('first launch onboarding reaches the dashboard and support surface', async 
 
   await page.getByRole('button', { name: 'Open dashboard' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: "What's new for Smoke profile" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('Automatic runs happen only while Firstlight is open.', { exact: true })).toBeVisible();
 
   await page.goto('/#/support');

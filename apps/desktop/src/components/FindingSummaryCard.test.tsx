@@ -22,6 +22,7 @@ function buildFinding(overrides: Partial<Finding> = {}): Finding {
     score: 42,
     relevance_label: 'Worth reviewing',
     status: 'new',
+    user_action: 'none',
     matching_gaps: [],
     match_debug: {},
     llm_metadata: {},
@@ -40,16 +41,25 @@ describe('FindingSummaryCard', () => {
     render(<FindingSummaryCard finding={buildFinding()} />);
     expect(screen.getByText('EGFR-directed therapy after osimertinib progression')).toBeInTheDocument();
     expect(screen.getAllByText('Clinical trial').length).toBeGreaterThan(0);
-    expect(screen.getByText('Worth reviewing')).toBeInTheDocument();
+    // Default plain-language wording reframes the clinical relevance label.
+    expect(screen.getByText('Worth a look')).toBeInTheDocument();
   });
 
   it('shows rationale only when showWhy is enabled', () => {
     const { rerender } = render(<FindingSummaryCard finding={buildFinding()} showWhy={false} />);
-    expect(screen.queryByText('Why it surfaced')).not.toBeInTheDocument();
+    expect(screen.queryByText('Why this came up')).not.toBeInTheDocument();
 
     rerender(<FindingSummaryCard finding={buildFinding()} showWhy />);
-    expect(screen.getByText('Why it surfaced')).toBeInTheDocument();
+    expect(screen.getByText('Why this came up')).toBeInTheDocument();
     expect(screen.getByText('Matches your cancer type and EGFR biomarker.')).toBeInTheDocument();
+  });
+
+  it('renders triage actions when onAction is provided', () => {
+    const actions: string[] = [];
+    render(<FindingSummaryCard finding={buildFinding()} onAction={(action) => actions.push(action)} />);
+    screen.getByRole('button', { name: /ask the doctor about this/i }).click();
+    screen.getByRole('button', { name: /not relevant/i }).click();
+    expect(actions).toEqual(['discuss', 'dismissed']);
   });
 
   it('renders the evidence snippet and a source link', () => {
