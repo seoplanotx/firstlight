@@ -29,6 +29,9 @@ Firstlight is the public version of what I built for her, so that no other famil
 - Background monitoring with native notifications while Firstlight runs in the menu bar or system tray
 - Deterministic matching and scoring pipeline
 - Source-backed findings feed and trial-focused view
+- Plain-language interface by default, with an optional clinical-terms mode in Settings
+- Per-item triage: mark findings to discuss with the care team or set aside ones that are not relevant
+- Personalized daily briefing with a guided first run and friendly source status
 - Local PDF export with report history
 - Local activity (audit) log plus export-my-data and delete-my-data controls
 - About / Support view with local storage paths and recovery steps

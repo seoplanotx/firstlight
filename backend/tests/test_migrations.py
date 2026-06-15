@@ -44,7 +44,7 @@ class MigrationTests(unittest.TestCase):
                 with engine.connect() as connection:
                     version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
                 self.assertIn("alembic_version", tables)
-                self.assertEqual(version, "20260520_0002")
+                self.assertEqual(version, "20260615_0003")
             finally:
                 engine.dispose()
 
@@ -70,8 +70,10 @@ class MigrationTests(unittest.TestCase):
                 app_settings_columns = {column["name"] for column in inspector.get_columns("app_settings")}
                 self.assertIn("privacy_mode", app_settings_columns)
                 self.assertIn("deidentified_ai_disclosure_acknowledged", app_settings_columns)
+                findings_columns = {column["name"] for column in inspector.get_columns("findings")}
+                self.assertIn("user_action", findings_columns)
                 with engine.connect() as connection:
                     version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-                self.assertEqual(version, "20260520_0002")
+                self.assertEqual(version, "20260615_0003")
             finally:
                 engine.dispose()

@@ -27,7 +27,7 @@ def get_dashboard(session: Session, profile_id: int | None = None) -> DashboardR
         latest_run_query = latest_run_query.where(MonitoringRun.profile_id == effective_profile_id)
     latest_run = session.scalar(latest_run_query.order_by(MonitoringRun.started_at.desc()))
 
-    base = select(Finding)
+    base = select(Finding).where(Finding.user_action != "dismissed")
     if effective_profile_id is not None:
         base = base.where(Finding.profile_id == effective_profile_id)
 

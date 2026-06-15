@@ -102,6 +102,8 @@ export type HealthResponse = {
   items: HealthItem[];
 };
 
+export type FindingAction = 'none' | 'discuss' | 'dismissed';
+
 export type FindingEvidence = {
   id: number;
   label?: string | null;
@@ -131,6 +133,7 @@ export type Finding = {
   score: number;
   relevance_label: string;
   status: string;
+  user_action: FindingAction;
   location_summary?: string | null;
   matching_gaps: string[];
   match_debug: Record<string, unknown>;

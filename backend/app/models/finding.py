@@ -41,6 +41,8 @@ class Finding(Base, TimestampMixin):
     score: Mapped[float] = mapped_column(Float, default=0.0)
     relevance_label: Mapped[str] = mapped_column(String(40), default="Insufficient data")
     status: Mapped[str] = mapped_column(String(40), default="new")
+    # User triage state, set from the findings feed. One of: none, discuss, dismissed.
+    user_action: Mapped[str] = mapped_column(String(20), default="none", server_default="none", nullable=False)
 
     location_summary: Mapped[str | None] = mapped_column(String(255), nullable=True)
     matching_gaps: Mapped[list[str]] = mapped_column(JSON, default=list)

@@ -3,26 +3,33 @@ import { EvidenceCallout } from './EvidenceCallout';
 import { TrialDetailsGrid } from './TrialDetailsGrid';
 import {
   formatFindingTypeLabel,
+  formatRelevanceLabel,
   formatStatusLabel,
   relevanceTone,
   statusTone,
   typeTone
 } from '../lib/findingPresentation';
-import type { Finding } from '../lib/types';
+import { useLanguageMode } from '../lib/languageMode';
+import type { Finding, FindingAction } from '../lib/types';
 
 type FindingSummaryCardProps = {
   finding: Finding;
   showWhy?: boolean;
   showSourceLink?: boolean;
   showMatchingMeta?: boolean;
+  onAction?: (action: FindingAction) => void;
+  actionPending?: boolean;
 };
 
 export function FindingSummaryCard({
   finding,
   showWhy = false,
   showSourceLink = true,
-  showMatchingMeta = false
+  showMatchingMeta = false,
+  onAction,
+  actionPending = false
 }: FindingSummaryCardProps) {
+  const mode = useLanguageMode();
   const timestamp = finding.published_at || finding.retrieved_at;
   const metaLine = [
     new Date(timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
@@ -35,13 +42,16 @@ export function FindingSummaryCard({
     { label: 'Location context', value: finding.location_summary || 'Location details not stored.' },
     { label: 'Match score', value: String(finding.score) },
     {
-      label: 'Missing information',
+      label: mode === 'plain' ? 'Still missing' : 'Missing information',
       value: finding.matching_gaps.length ? finding.matching_gaps.join(' ') : 'No structured gaps stored.'
     }
   ];
 
+  const isDiscuss = finding.user_action === 'discuss';
+  const isDismissed = finding.user_action === 'dismissed';
+
   return (
-    <article className="finding-item">
+    <article className={`finding-item${isDismissed ? ' finding-item-dismissed' : ''}`}>
       <div className="finding-topline">
         <div className="finding-heading">
           <h3 className="finding-title">{finding.title}</h3>
@@ -49,8 +59,9 @@ export function FindingSummaryCard({
         </div>
         <div className="badge-row">
           <Badge label={formatFindingTypeLabel(finding.type)} tone={typeTone(finding.type)} />
-          <Badge label={formatStatusLabel(finding.status)} tone={statusTone(finding.status)} />
-          <Badge label={finding.relevance_label} tone={relevanceTone(finding.relevance_label)} />
+          <Badge label={formatStatusLabel(finding.status, mode)} tone={statusTone(finding.status)} />
+          <Badge label={formatRelevanceLabel(finding.relevance_label, mode)} tone={relevanceTone(finding.relevance_label)} />
+          {isDiscuss && <Badge label="To discuss" tone="success" />}
         </div>
       </div>
 
@@ -74,23 +85,45 @@ export function FindingSummaryCard({
       {showWhy && (
         <div className="detail-grid finding-rationale-grid">
           <div className="support-card">
-            <div className="support-card-label">Why it surfaced</div>
+            <div className="support-card-label">{mode === 'plain' ? 'Why this came up' : 'Why it surfaced'}</div>
             <div className="multiline">{finding.why_it_surfaced || 'No structured rationale stored.'}</div>
           </div>
           <div className="support-card caution">
-            <div className="support-card-label">Why it may not fit</div>
+            <div className="support-card-label">{mode === 'plain' ? 'Why it might not fit' : 'Why it may not fit'}</div>
             <div className="multiline">{finding.why_it_may_not_fit || 'No cautions stored.'}</div>
           </div>
         </div>
       )}
 
-      {showSourceLink && finding.source_url && (
-        <div className="finding-footer">
+      <div className="finding-footer">
+        {showSourceLink && finding.source_url && (
           <a href={finding.source_url} target="_blank" rel="noreferrer" className="source-link">
             Open source record
           </a>
-        </div>
-      )}
+        )}
+        {onAction && (
+          <div className="finding-actions">
+            {isDismissed ? (
+              <button className="ghost-button" disabled={actionPending} onClick={() => onAction('none')}>
+                Restore
+              </button>
+            ) : (
+              <>
+                <button
+                  className={isDiscuss ? 'secondary-button' : 'ghost-button'}
+                  disabled={actionPending}
+                  onClick={() => onAction(isDiscuss ? 'none' : 'discuss')}
+                >
+                  {isDiscuss ? 'Remove from list' : 'Ask the doctor about this'}
+                </button>
+                <button className="ghost-button" disabled={actionPending} onClick={() => onAction('dismissed')}>
+                  Not relevant
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </article>
   );
 }

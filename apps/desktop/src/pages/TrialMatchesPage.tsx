@@ -6,12 +6,13 @@ import { FindingSummaryCard } from '../components/FindingSummaryCard';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import type { Finding } from '../lib/types';
+import type { Finding, FindingAction } from '../lib/types';
 
 export function TrialMatchesPage() {
   const [items, setItems] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
@@ -20,7 +21,7 @@ export function TrialMatchesPage() {
       const result = await api.getFindings({ finding_type: 'clinical_trials' });
       setItems(result.items);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Could not load trial matches.'));
+      setErrorMessage(getErrorMessage(error, 'Could not load trials.'));
     } finally {
       setLoading(false);
     }
@@ -30,38 +31,58 @@ export function TrialMatchesPage() {
     void load();
   }, []);
 
-  if (loading) return <div className="loading-block">Loading trial matches...</div>;
+  async function handleAction(findingId: number, action: FindingAction) {
+    setPendingId(findingId);
+    try {
+      await api.setFindingAction(findingId, action);
+      await load();
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Could not update this trial.'));
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  if (loading) return <div className="loading-block">Loading trials...</div>;
   if (errorMessage && items.length === 0) {
-    return <PageErrorState title="Trial matches unavailable" message={errorMessage} onRetry={load} />;
+    return <PageErrorState title="No trials to show yet" message={errorMessage} onRetry={load} />;
   }
 
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Trial review</div>
-          <h1>Trial Matches</h1>
+          <div className="eyebrow">Trials to consider</div>
+          <h1>Trials to Consider</h1>
           <p className="page-lede">
-            Possible trial-oriented matches based on the current local profile and deterministic matching rules.
+            Trials that may relate to the details you entered. None of this confirms eligibility — it is a starting point
+            to review with the care team.
           </p>
         </div>
         <div className="page-header-actions">
-          <span className="section-counter">{items.length} stored</span>
+          <span className="section-counter">{items.length} found</span>
         </div>
       </div>
 
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
       <Card
-        title="Possible matches"
-        description="Review recruitment status, interventions, score, and explicit gaps before treating any result as actionable."
+        title="Possible trials"
+        description="Look at recruitment status, what is being tested, and what is still unknown before treating anything as a fit."
       >
         {items.length === 0 ? (
-          <EmptyState title="No trial matches stored" message="Trial-oriented findings will appear here after a monitoring run." />
+          <EmptyState title="No trials yet" message="Trials will appear here after you run a check." />
         ) : (
           <div className="finding-list">
             {items.map((item) => (
-              <FindingSummaryCard key={item.id} finding={item} showWhy showMatchingMeta />
+              <FindingSummaryCard
+                key={item.id}
+                finding={item}
+                showWhy
+                showMatchingMeta
+                onAction={(action) => handleAction(item.id, action)}
+                actionPending={pendingId === item.id}
+              />
             ))}
           </div>
         )}

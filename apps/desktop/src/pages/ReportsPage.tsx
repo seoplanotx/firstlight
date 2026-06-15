@@ -60,7 +60,7 @@ export function ReportsPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `oncowatch-${reportType}.pdf`;
+      link.download = `firstlight-${reportType}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
       setNotice('PDF download started.');
@@ -105,13 +105,17 @@ export function ReportsPage() {
       {notice && <div className="callout">{notice}</div>}
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
-      <Card title="Generate report" description="Reports are produced on this Mac using the active local profile and stored findings.">
+      <Card title="Make a report" description="Reports are made on this computer from the active profile and what Firstlight has found.">
+        <p className="muted">
+          A report is a clean PDF you can print or email to the care team. The daily summary is short; the full review
+          includes everything with an evidence appendix.
+        </p>
         <div className="button-row">
           <button className="primary-button" disabled={busy} onClick={() => void generate('daily_summary')}>
-            Generate daily summary
+            Make daily summary
           </button>
           <button className="secondary-button" disabled={busy} onClick={() => void generate('full_review')}>
-            Generate full oncology review
+            Make full oncology review
           </button>
         </div>
       </Card>

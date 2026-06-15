@@ -9,7 +9,12 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.db.base import Base
 from app.connectors.base import ConnectorRecord
 from app.models import Biomarker, Finding, FindingEvidence, MonitoringRun, PatientProfile
-from app.services.findings_service import build_briefing_snapshot, list_findings, upsert_finding
+from app.services.findings_service import (
+    build_briefing_snapshot,
+    list_findings,
+    set_finding_action,
+    upsert_finding,
+)
 from app.services.matching_service import evaluate
 
 
@@ -213,6 +218,60 @@ class FindingsServiceTests(unittest.TestCase):
 
             self.assertEqual(state, "unchanged")
             self.assertEqual(finding.status, "unchanged")
+
+    def test_dismissed_finding_is_hidden_from_default_list_but_restorable(self) -> None:
+        with self.session_factory() as session:
+            profile = build_profile_record()
+            session.add(profile)
+            session.commit()
+            session.refresh(profile)
+
+            timestamp = datetime(2026, 3, 27, 4, 0, tzinfo=timezone.utc)
+            findings = [
+                build_finding(
+                    profile_id=profile.id,
+                    monitoring_run_id=None,
+                    external_identifier="NCT-KEEP",
+                    title="Trial to keep",
+                    finding_type="clinical_trials",
+                    status="new",
+                    score=80.0,
+                    relevance_label="High relevance",
+                    published_at=timestamp,
+                    updated_at=timestamp,
+                ),
+                build_finding(
+                    profile_id=profile.id,
+                    monitoring_run_id=None,
+                    external_identifier="NCT-DROP",
+                    title="Trial to set aside",
+                    finding_type="clinical_trials",
+                    status="new",
+                    score=70.0,
+                    relevance_label="Worth reviewing",
+                    published_at=timestamp,
+                    updated_at=timestamp,
+                ),
+            ]
+            session.add_all(findings)
+            session.commit()
+            drop_id = findings[1].id
+
+            self.assertEqual(set_finding_action(session, drop_id, "dismissed").user_action, "dismissed")
+
+            visible_titles = [item.title for item in list_findings(session, profile_id=profile.id)]
+            self.assertEqual(visible_titles, ["Trial to keep"])
+
+            with_dismissed = [item.title for item in list_findings(session, profile_id=profile.id, include_dismissed=True)]
+            self.assertIn("Trial to set aside", with_dismissed)
+
+            self.assertEqual(set_finding_action(session, drop_id, "discuss").user_action, "discuss")
+            restored_titles = [item.title for item in list_findings(session, profile_id=profile.id)]
+            self.assertIn("Trial to set aside", restored_titles)
+
+    def test_set_finding_action_returns_none_for_unknown_finding(self) -> None:
+        with self.session_factory() as session:
+            self.assertIsNone(set_finding_action(session, 9999, "discuss"))
 
     def test_briefing_snapshot_prioritizes_new_changed_trials_updates_and_blockers(self) -> None:
         with self.session_factory() as session:

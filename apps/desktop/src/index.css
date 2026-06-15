@@ -1033,6 +1033,26 @@ code {
 
 .finding-footer {
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.finding-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finding-actions button {
+  font-size: 0.82rem;
+  padding: 5px 12px;
+}
+
+.finding-item-dismissed {
+  opacity: 0.62;
 }
 
 .source-link {
@@ -1519,4 +1539,75 @@ code {
   .nav-item {
     transition: none;
   }
+}
+
+/* Profile field guidance + match-strength meter */
+.field-hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.profile-strength {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-shade);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-strength-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.profile-strength-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.profile-strength-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.profile-strength-basic .profile-strength-bar {
+  background: var(--amber);
+}
+
+.profile-strength-good .profile-strength-bar {
+  background: var(--accent);
+}
+
+.profile-strength-strong .profile-strength-bar {
+  background: var(--ok);
+}
+
+/* Guided first-run experience */
+.first-run-card {
+  border-left: 2px solid var(--accent);
+}
+
+.first-run-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.first-run-callout p {
+  margin: 0;
+}
+
+.dismissed-toggle {
+  margin-top: 12px;
 }

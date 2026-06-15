@@ -33,6 +33,50 @@ const defaultProfile: PatientProfile = {
   therapy_history: [blankTherapy()]
 };
 
+type StrengthLevel = {
+  label: string;
+  ratio: number;
+  tone: 'basic' | 'good' | 'strong';
+  message: string;
+};
+
+// The matching engine leans most on cancer type, biomarkers, stage, prior
+// therapy, and location. Reflect that back so the user understands which
+// details improve results — without ever pressuring them to guess.
+function computeStrength(form: PatientProfile): StrengthLevel {
+  const signals = [
+    Boolean(form.cancer_type.trim()),
+    form.biomarkers.some((item) => item.name.trim()),
+    Boolean((form.stage_or_context || '').trim()),
+    form.therapy_history.some((item) => item.therapy_name.trim()),
+    Boolean((form.location_label || '').trim())
+  ];
+  const filled = signals.filter(Boolean).length;
+  const ratio = filled / signals.length;
+  if (filled <= 1) {
+    return {
+      label: 'Basic',
+      ratio,
+      tone: 'basic',
+      message: 'Adding biomarkers, stage, and recent therapy will help Firstlight find more relevant matches.'
+    };
+  }
+  if (filled <= 3) {
+    return {
+      label: 'Good',
+      ratio,
+      tone: 'good',
+      message: 'Good detail. A few more facts — like biomarkers or location — can sharpen the matches further.'
+    };
+  }
+  return {
+    label: 'Strong',
+    ratio,
+    tone: 'strong',
+    message: 'Strong detail. Firstlight has what it needs to match trials and research closely.'
+  };
+}
+
 export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile' }: ProfileFormProps) {
   const [form, setForm] = useState<PatientProfile>(initialValue || defaultProfile);
   const [saving, setSaving] = useState(false);
@@ -43,6 +87,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
 
   const considerText = useMemo(() => form.would_consider.join('\n'), [form.would_consider]);
   const avoidText = useMemo(() => form.would_not_consider.join('\n'), [form.would_not_consider]);
+  const strength = useMemo(() => computeStrength(form), [form]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -67,37 +112,56 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
+      <div className={`profile-strength profile-strength-${strength.tone} field-span-2`}>
+        <div className="profile-strength-head">
+          <strong>Match strength: {strength.label}</strong>
+          <span className="muted">More detail finds better matches — but leaving something blank is always safer than guessing.</span>
+        </div>
+        <div className="profile-strength-track" aria-hidden="true">
+          <div className="profile-strength-bar" style={{ width: `${Math.round(strength.ratio * 100)}%` }} />
+        </div>
+        <div className="muted">{strength.message}</div>
+      </div>
+
       <div className="field">
         <label>Profile name</label>
         <input value={form.profile_name} onChange={(e) => setForm({ ...form, profile_name: e.target.value })} required />
+        <div className="field-hint">A label for this profile, e.g. "Mom" or "Dad's lung cancer". Only you see this.</div>
       </div>
       <div className="field">
         <label>Display name / initials</label>
         <input value={form.display_name || ''} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
+        <div className="field-hint">Optional. Shown at the top of your daily check. Initials are fine.</div>
       </div>
       <div className="field">
         <label>Date of birth</label>
         <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
+        <div className="field-hint">Optional. Stays encrypted on this computer.</div>
       </div>
       <div className="field">
         <label>Cancer type</label>
         <input value={form.cancer_type} onChange={(e) => setForm({ ...form, cancer_type: e.target.value })} required />
+        <div className="field-hint">In plain words is fine, e.g. "colon cancer" or "non-small cell lung cancer".</div>
       </div>
       <div className="field">
         <label>Subtype</label>
         <input value={form.subtype || ''} onChange={(e) => setForm({ ...form, subtype: e.target.value })} />
+        <div className="field-hint">Optional, if a doctor named one — e.g. "adenocarcinoma". Leave blank if unsure.</div>
       </div>
       <div className="field">
         <label>Stage / disease context</label>
         <input value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
+        <div className="field-hint">e.g. "Stage 4", "metastatic", or "newly diagnosed". Whatever the care team has said.</div>
       </div>
       <div className="field field-span-2">
         <label>Current therapy status</label>
         <textarea value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
+        <div className="field-hint">A sentence on where things stand now — e.g. "on chemo" or "deciding what's next".</div>
       </div>
       <div className="field">
         <label>Location</label>
         <input value={form.location_label || ''} onChange={(e) => setForm({ ...form, location_label: e.target.value })} />
+        <div className="field-hint">City and state is enough — used to flag trials within travel range.</div>
       </div>
       <div className="field">
         <label>Travel radius (miles)</label>
@@ -106,15 +170,22 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
           value={form.travel_radius_miles || 0}
           onChange={(e) => setForm({ ...form, travel_radius_miles: Number(e.target.value) })}
         />
+        <div className="field-hint">How far you would travel for a trial, roughly.</div>
       </div>
 
       <div className="section-divider field-span-2">Biomarkers / mutations</div>
+      <div className="field-hint field-span-2">
+        These come from a pathology, genetic, or molecular test report from the care team. Examples: KRAS G12C, EGFR,
+        BRAF, MSI-High, PD-L1. They matter a lot for matching — but if you don't have them yet, leave this blank and add
+        them later.
+      </div>
       {form.biomarkers.map((item, index) => (
         <div key={`bio-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
               <label>Name</label>
               <input
+                placeholder="e.g. EGFR"
                 value={item.name}
                 onChange={(e) => {
                   const biomarkers = [...form.biomarkers];
@@ -126,6 +197,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
             <div className="field">
               <label>Variant</label>
               <input
+                placeholder="e.g. Exon 19 deletion"
                 value={item.variant || ''}
                 onChange={(e) => {
                   const biomarkers = [...form.biomarkers];
@@ -137,6 +209,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
             <div className="field">
               <label>Status</label>
               <input
+                placeholder="e.g. positive"
                 value={item.status || ''}
                 onChange={(e) => {
                   const biomarkers = [...form.biomarkers];
@@ -163,12 +236,17 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
       </button>
 
       <div className="section-divider field-span-2">Therapy history</div>
+      <div className="field-hint field-span-2">
+        Treatments tried so far, most recent first if you can. The drug or treatment name is the important part — the
+        rest is optional.
+      </div>
       {form.therapy_history.map((item, index) => (
         <div key={`therapy-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
               <label>Therapy</label>
               <input
+                placeholder="e.g. carboplatin"
                 value={item.therapy_name}
                 onChange={(e) => {
                   const therapy_history = [...form.therapy_history];
@@ -180,6 +258,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
             <div className="field">
               <label>Type</label>
               <input
+                placeholder="e.g. chemotherapy"
                 value={item.therapy_type || ''}
                 onChange={(e) => {
                   const therapy_history = [...form.therapy_history];
@@ -189,8 +268,21 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
               />
             </div>
             <div className="field">
+              <label>Line of therapy</label>
+              <input
+                placeholder="e.g. 1st line"
+                value={item.line_of_therapy || ''}
+                onChange={(e) => {
+                  const therapy_history = [...form.therapy_history];
+                  therapy_history[index] = { ...item, line_of_therapy: e.target.value };
+                  setForm({ ...form, therapy_history });
+                }}
+              />
+            </div>
+            <div className="field">
               <label>Status</label>
               <input
+                placeholder="e.g. completed"
                 value={item.status || ''}
                 onChange={(e) => {
                   const therapy_history = [...form.therapy_history];
@@ -231,6 +323,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
             })
           }
         />
+        <div className="field-hint">Options you're open to, one per line — e.g. "clinical trials", "travel for treatment".</div>
       </div>
       <div className="field field-span-2">
         <label>Would not consider</label>
@@ -247,10 +340,12 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
             })
           }
         />
+        <div className="field-hint">Anything to rule out, one per line. Firstlight will flag items that conflict with these.</div>
       </div>
       <div className="field field-span-2">
         <label>Notes</label>
         <textarea value={form.notes || ''} rows={4} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+        <div className="field-hint">Anything else worth remembering. You can paste notes from a doctor's report here too.</div>
       </div>
       <div className="field-span-2">
         <button className="primary-button" disabled={saving} type="submit">

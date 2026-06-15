@@ -51,15 +51,16 @@ export function ProfilePage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Profile context</div>
-          <h1>Patient Profile</h1>
+          <div className="eyebrow">Patient details</div>
+          <h1>Patient Details</h1>
           <p className="page-lede">
-            This structured profile drives the local rules-first matching engine and shapes which findings are surfaced.
+            These details are what Firstlight uses to decide which trials and research to surface. The more you can add,
+            the better the matches — but a blank field is always safer than a guess.
           </p>
         </div>
       </div>
 
-      <Card title="Profile editor" description="Add only the facts you are confident in. Leaving uncertain fields blank is safer than guessing.">
+      <Card title="Edit details" description="Add only the facts you are confident in. Everything stays encrypted on this computer.">
         {message && <div className="callout">{message}</div>}
         {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
         <ProfileForm initialValue={profile} onSave={handleSave} submitLabel={profile ? 'Save profile' : 'Create profile'} />
