@@ -111,20 +111,44 @@ jobs:
       - name: Build backend sidecar
         run: npm run build:backend-sidecar
 
+      # artifact-signing-cli shells out to signtool.exe; the runner's Windows
+      # SDK path isn't on PATH by default and the SDK version drifts between
+      # runner images, so resolve the newest signtool dynamically and add it.
+      - name: Add Windows SDK signtool to PATH
+        shell: pwsh
+        run: |
+          $sdk = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Directory |
+            Where-Object { Test-Path "$($_.FullName)\x64\signtool.exe" } |
+            Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdk) { throw "signtool.exe not found in Windows Kits" }
+          $toolDir = Join-Path $sdk.FullName "x64"
+          Write-Host "Using signtool at: $toolDir"
+          Add-Content -Path $env:GITHUB_PATH -Value $toolDir
+
+      - name: Install artifact-signing-cli
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "signing"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest `
+            -Uri "https://github.com/Levminer/trusted-signing-cli/releases/download/0.11.0/artifact-signing-cli.exe" `
+            -OutFile (Join-Path $dir "artifact-signing-cli.exe")
+          Add-Content -Path $env:GITHUB_PATH -Value $dir
+
       - name: Build and publish Windows release
         uses: tauri-apps/tauri-action@v0
         env:
           # Update-package signing (minisign) — required for auto-update
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # --- Windows code signing (Azure Trusted Signing) ---
-          # Drops in once the cert profile exists. Add these as repo secrets and
-          # wire a signCommand in tauri.conf.json (bundle.windows.signCommand) or
-          # via the trusted-signing action. Until then the .exe is unsigned and
-          # SmartScreen will warn on first run.
-          # AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          # AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          # AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          # --- Windows code signing (Azure Artifact / Trusted Signing) ---
+          # artifact-signing-cli reads these to authenticate as the CI service
+          # principal (Artifact Signing Certificate Profile Signer role). The
+          # signCommand lives in src-tauri/updater.release.json so only release
+          # builds sign; dev/CI-verification builds stay unsigned.
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: apps/desktop

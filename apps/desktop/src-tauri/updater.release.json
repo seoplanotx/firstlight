@@ -1,5 +1,8 @@
 {
   "bundle": {
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": true,
+    "windows": {
+      "signCommand": "artifact-signing-cli -e https://eus.codesigning.azure.net -a tc012592 -c firstlight -d Firstlight %1"
+    }
   }
 }
