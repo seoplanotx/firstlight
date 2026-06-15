@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useBlocker } from 'react-router-dom';
 
 import { Card } from '../components/Card';
 import { PageErrorState } from '../components/PageErrorState';
@@ -33,35 +34,30 @@ export function ProfilePage() {
     void load();
   }, []);
 
-  // Guard against losing unsaved edits — both on window close/reload and on
-  // in-app navigation (NavLink renders #/ anchors, so we intercept clicks).
+  // Block in-app navigation (sidebar links and Back/Forward) while edits are
+  // pending. useBlocker covers every router navigation, including history POP.
+  const blocker = useBlocker(() => dirtyRef.current);
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    if (window.confirm(LEAVE_PROMPT)) {
+      dirtyRef.current = false;
+      blocker.proceed();
+    } else {
+      blocker.reset();
+    }
+  }, [blocker]);
+
+  // beforeunload still guards full document unload (window close / reload),
+  // which the router blocker does not see.
   useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent) {
       if (!dirtyRef.current) return;
       event.preventDefault();
       event.returnValue = LEAVE_PROMPT;
     }
-
-    function handleCapturedClick(event: MouseEvent) {
-      if (!dirtyRef.current) return;
-      const target = event.target as HTMLElement | null;
-      const anchor = target?.closest?.('a[href^="#/"]') as HTMLAnchorElement | null;
-      if (!anchor) return;
-      if (anchor.getAttribute('href') === '#/profile') return;
-      if (!window.confirm(LEAVE_PROMPT)) {
-        event.preventDefault();
-        event.stopPropagation();
-      } else {
-        dirtyRef.current = false;
-      }
-    }
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('click', handleCapturedClick, true);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('click', handleCapturedClick, true);
-    };
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   async function handleSave(payload: PatientProfile) {
