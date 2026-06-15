@@ -5,6 +5,7 @@ import { PageErrorState } from '../components/PageErrorState';
 import { OpenRouterSetup } from '../features/ai/OpenRouterSetup';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
+import { setLanguageMode, useLanguageMode } from '../lib/languageMode';
 import type { AppSettings, SourceConfig } from '../lib/types';
 
 export function SettingsPage() {
@@ -14,6 +15,7 @@ export function SettingsPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const languageMode = useLanguageMode();
 
   async function load() {
     setLoading(true);
@@ -91,11 +93,22 @@ export function SettingsPage() {
 
       <Card
         title="General settings"
-        description="Automatic runs are local and only happen while Firstlight remains open on this Mac."
+        description="Automatic checks are local and only happen while Firstlight stays open on this computer."
       >
         <div className="form-grid">
           <div className="field">
-            <label>Automatic run time while open</label>
+            <label>Wording</label>
+            <select value={languageMode} onChange={(e) => setLanguageMode(e.target.value as 'plain' | 'clinical')}>
+              <option value="plain">Plain language (recommended)</option>
+              <option value="clinical">Clinical terms</option>
+            </select>
+            <div className="field-hint">
+              Plain language keeps labels everyday and friendly. Clinical terms show standard medical wording if you
+              prefer it.
+            </div>
+          </div>
+          <div className="field">
+            <label>Automatic check time while open</label>
             <input
               type="time"
               value={settings.daily_run_time}
@@ -189,7 +202,7 @@ export function SettingsPage() {
 
       <Card
         title="AI provider — OpenRouter"
-        description="Bring your own OpenRouter API key. It powers Mode 2 summaries and briefing questions, is encrypted, and never leaves this Mac."
+        description="Bring your own OpenRouter API key. It powers Mode 2 summaries and briefing questions, is encrypted, and never leaves this computer."
       >
         <OpenRouterSetup />
       </Card>

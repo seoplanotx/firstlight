@@ -103,7 +103,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       {
         label: 'Complete',
         title: 'Finish setup and open the dashboard.',
-        description: 'After setup, start with a manual run and use while-open scheduling only when this Mac is active.'
+        description: 'After setup, start with a manual check and use while-open scheduling only when this computer is on.'
       }
     ],
     []
@@ -162,7 +162,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       if (result.overall_ok && result.items.some((item) => !item.ok && !item.blocking)) {
         setNotice('Setup can continue. Resolve warnings later if you choose.');
       } else if (result.overall_ok) {
-        setNotice('This Mac is ready for local monitoring and report generation.');
+        setNotice('This computer is ready for local monitoring and report generation.');
       }
     } catch (error) {
       setHealth(null);
@@ -344,8 +344,8 @@ export function OnboardingWizard({ onCompleted }: Props) {
               </div>
 
               <div className="callout">
-                Automatic runs are local and truthful in this release: they only happen while Firstlight stays open on this
-                Mac. You can always start a manual run from the dashboard.
+                Automatic checks are local and truthful in this release: they only happen while Firstlight stays open on
+                this computer. You can always start a manual check from the dashboard.
               </div>
 
               <div className="section-divider">Enabled real sources</div>
@@ -519,8 +519,8 @@ export function OnboardingWizard({ onCompleted }: Props) {
               </p>
               <p>Reports will be saved in the local Firstlight reports folder.</p>
               <div className="callout">
-                Start with a manual run once the dashboard opens. Automatic runs only happen while Firstlight stays open on
-                this Mac.
+                Start with a manual check once the dashboard opens. Automatic checks only happen while Firstlight stays
+                open on this computer.
               </div>
               {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
               <button className="primary-button" disabled={busy} onClick={finalize}>

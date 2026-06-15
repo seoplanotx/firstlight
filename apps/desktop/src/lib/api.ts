@@ -5,6 +5,7 @@ import type {
   Dashboard,
   DataDeletionSummary,
   Finding,
+  FindingAction,
   HealthResponse,
   MonitoringRun,
   OnboardingState,
@@ -112,13 +113,16 @@ export const api = {
     request<MonitoringRun>('/runs/trigger', { method: 'POST', body: JSON.stringify(payload || {}) }),
   getRuns: () => request<MonitoringRun[]>('/runs'),
 
-  getFindings: (params?: { finding_type?: string; q?: string; profile_id?: number }) => {
+  getFindings: (params?: { finding_type?: string; q?: string; profile_id?: number; include_dismissed?: boolean }) => {
     const query = new URLSearchParams();
     if (params?.finding_type) query.set('finding_type', params.finding_type);
     if (params?.q) query.set('q', params.q);
     if (typeof params?.profile_id === 'number') query.set('profile_id', String(params.profile_id));
+    if (params?.include_dismissed) query.set('include_dismissed', 'true');
     return request<{ total: number; items: Finding[] }>(`/findings${query.toString() ? `?${query.toString()}` : ''}`);
   },
+  setFindingAction: (findingId: number, action: FindingAction) =>
+    request<Finding>(`/findings/${findingId}/action`, { method: 'POST', body: JSON.stringify({ action }) }),
 
   getReports: () => request<ReportExport[]>('/reports'),
   generateReport: (payload: Record<string, unknown>) =>

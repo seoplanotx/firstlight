@@ -1,17 +1,17 @@
 import { NavLink } from 'react-router-dom';
 
 const primaryItems = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/findings', label: 'Findings Feed' },
-  { to: '/trials', label: 'Trial Matches' },
-  { to: '/updates', label: 'Literature Updates' },
-  { to: '/reports', label: 'Reports' }
+  { to: '/', label: 'Today' },
+  { to: '/findings', label: "What's New" },
+  { to: '/trials', label: 'Trials to Consider' },
+  { to: '/updates', label: 'Research Updates' },
+  { to: '/reports', label: 'Reports for the Doctor' }
 ];
 
 const secondaryItems = [
-  { to: '/profile', label: 'Patient Profile' },
+  { to: '/profile', label: 'Patient Details' },
   { to: '/settings', label: 'Settings' },
-  { to: '/support', label: 'About / Support' }
+  { to: '/support', label: 'About / Help' }
 ];
 
 export function Sidebar() {
@@ -24,7 +24,7 @@ export function Sidebar() {
         </div>
 
         <div className="sidebar-nav-group">
-          <div className="sidebar-section-label">Monitor</div>
+          <div className="sidebar-section-label">Each day</div>
           <nav className="sidebar-nav">
             {primaryItems.map((item) => (
               <NavLink
@@ -56,9 +56,10 @@ export function Sidebar() {
         </div>
 
         <div className="sidebar-trust">
-          <div className="sidebar-trust-label">Trust guardrails</div>
+          <div className="sidebar-trust-label">Your privacy</div>
           <p className="sidebar-trust-copy">
-            Everything stays on this Mac. Findings are informational and still need clinician review.
+            Everything stays on this computer. What Firstlight finds is information to review with your care team — never
+            medical advice.
           </p>
         </div>
       </div>

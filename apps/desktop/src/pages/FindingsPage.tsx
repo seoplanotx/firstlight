@@ -6,24 +6,25 @@ import { FindingSummaryCard } from '../components/FindingSummaryCard';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import { formatFindingTypeLabel } from '../lib/findingPresentation';
-import type { Finding } from '../lib/types';
+import type { Finding, FindingAction } from '../lib/types';
 
 export function FindingsPage() {
   const [items, setItems] = useState<Finding[]>([]);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
+  const [includeDismissed, setIncludeDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
     setErrorMessage('');
     try {
-      const result = await api.getFindings();
+      const result = await api.getFindings({ include_dismissed: includeDismissed });
       setItems(result.items);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Could not load findings.'));
+      setErrorMessage(getErrorMessage(error, 'Could not load what we found.'));
     } finally {
       setLoading(false);
     }
@@ -31,11 +32,29 @@ export function FindingsPage() {
 
   useEffect(() => {
     void load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [includeDismissed]);
+
+  async function handleAction(findingId: number, action: FindingAction) {
+    setPendingId(findingId);
+    try {
+      await api.setFindingAction(findingId, action);
+      await load();
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
+    } finally {
+      setPendingId(null);
+    }
+  }
 
   const visible = useMemo(() => {
     return items.filter((item) => {
-      const matchesType = filter ? item.type === filter : true;
+      const matchesFilter =
+        filter === 'discuss'
+          ? item.user_action === 'discuss'
+          : filter
+            ? item.type === filter
+            : true;
       const matchesQuery = query
         ? [
             item.title,
@@ -51,42 +70,36 @@ export function FindingsPage() {
             .toLowerCase()
             .includes(query.toLowerCase())
         : true;
-      return matchesType && matchesQuery;
+      return matchesFilter && matchesQuery;
     });
   }, [items, query, filter]);
 
   const filterOptions = useMemo(
     () => [
-      { value: '', label: 'All findings' },
-      { value: 'clinical_trials', label: 'Clinical trials' },
-      { value: 'literature', label: 'Literature' }
+      { value: '', label: 'Everything' },
+      { value: 'clinical_trials', label: 'Trials' },
+      { value: 'literature', label: 'Research' },
+      { value: 'discuss', label: 'To discuss' }
     ],
     []
   );
 
-  const visibleMetrics = useMemo(
-    () => ({
-      highRelevance: visible.filter((item) => item.relevance_label === 'High relevance').length,
-      newItems: visible.filter((item) => item.status === 'new').length,
-      changedItems: visible.filter((item) => item.status === 'changed').length
-    }),
-    [visible]
-  );
+  const discussCount = useMemo(() => items.filter((item) => item.user_action === 'discuss').length, [items]);
 
-  if (loading) return <div className="loading-block">Loading findings...</div>;
+  if (loading) return <div className="loading-block">Loading…</div>;
   if (errorMessage && items.length === 0) {
-    return <PageErrorState title="Findings unavailable" message={errorMessage} onRetry={load} />;
+    return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
 
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Source-backed feed</div>
-          <h1>Findings Feed</h1>
+          <div className="eyebrow">Everything Firstlight found</div>
+          <h1>What's New</h1>
           <p className="page-lede">
-            Search across titles, summaries, trial metadata, and evidence snippets without changing the underlying stored
-            results.
+            Search and skim everything Firstlight has found. Mark anything you want to raise at the next visit, and set
+            aside the things that are not relevant.
           </p>
         </div>
         <div className="page-header-actions">
@@ -96,14 +109,10 @@ export function FindingsPage() {
 
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
-      <Card
-        title="Filter the feed"
-        description="Search stays local and runs against the currently stored source-backed findings."
-        className="filter-card"
-      >
+      <Card title="Find something specific" description="Search stays on this computer and runs over what Firstlight has already found.">
         <div className="toolbar toolbar-wide">
           <input
-            placeholder="Search findings, evidence, sponsors, phases, or summaries"
+            placeholder="Search by trial, drug, sponsor, phase, or any words in the summary"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -117,36 +126,32 @@ export function FindingsPage() {
               type="button"
             >
               {option.label}
+              {option.value === 'discuss' && discussCount > 0 ? ` (${discussCount})` : ''}
             </button>
           ))}
         </div>
-        <div className="mini-stats-grid">
-          <div className="mini-stat">
-            <span className="mini-stat-label">High relevance</span>
-            <strong>{visibleMetrics.highRelevance}</strong>
+        <label className="toggle-row dismissed-toggle">
+          <input type="checkbox" checked={includeDismissed} onChange={(e) => setIncludeDismissed(e.target.checked)} />
+          <div>
+            <strong>Show items I set aside</strong>
+            <div className="muted">Items you marked "not relevant" are hidden by default. Turn this on to review or restore them.</div>
           </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">New</span>
-            <strong>{visibleMetrics.newItems}</strong>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">Changed</span>
-            <strong>{visibleMetrics.changedItems}</strong>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">Category</span>
-            <strong>{filter ? formatFindingTypeLabel(filter) : 'Mixed'}</strong>
-          </div>
-        </div>
+        </label>
       </Card>
 
-      <Card title="Results" description="Each record keeps the source, evidence excerpt, and explicit rationale together.">
+      <Card title="Results" description="Each item keeps its source, evidence excerpt, and the plain reason it came up.">
         {visible.length === 0 ? (
-          <EmptyState title="No findings" message="Run monitoring or change filters to see surfaced items." />
+          <EmptyState title="Nothing here" message="Run a check or change the filters to see items." />
         ) : (
           <div className="finding-list">
             {visible.map((item) => (
-              <FindingSummaryCard key={item.id} finding={item} showWhy />
+              <FindingSummaryCard
+                key={item.id}
+                finding={item}
+                showWhy
+                onAction={(action) => handleAction(item.id, action)}
+                actionPending={pendingId === item.id}
+              />
             ))}
           </div>
         )}
