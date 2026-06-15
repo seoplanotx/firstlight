@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.routes.bootstrap import get_bootstrap
 from app.api.routes.onboarding import complete_onboarding
+from app.core.release import APP_VERSION
 from app.db.base import Base
 from app.models import AppSettings, OnboardingState
 from app.schemas.health import HealthCheckItem, HealthCheckResponse
@@ -102,7 +103,7 @@ class OnboardingFlowTests(unittest.TestCase):
 
             self.assertTrue(state.is_completed)
             self.assertTrue(bootstrap.onboarding_completed)
-            self.assertEqual(bootstrap.app_version, "0.1.0")
+            self.assertEqual(bootstrap.app_version, APP_VERSION)
             self.assertEqual(bootstrap.active_profile_id, profile.id)
             self.assertEqual(bootstrap.logs_dir, "/tmp/oncowatch-data/logs")
             self.assertEqual(bootstrap.monitoring_mode, "while_open")
