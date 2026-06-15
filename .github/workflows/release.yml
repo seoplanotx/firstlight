@@ -200,6 +200,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Mirror the version-stamped installers to stable, version-less filenames
+      # on the same release. The landing page links to these via the
+      # /releases/latest/download/<name> redirect, so its download buttons
+      # always resolve to the newest release without ever needing an edit.
+      - name: Mirror installers to version-less download aliases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          mkdir -p alias
+          gh release download "$RELEASE_TAG" --pattern "*_aarch64.dmg" --dir alias
+          gh release download "$RELEASE_TAG" --pattern "*_x64-setup.exe" --dir alias
+          cp alias/*_aarch64.dmg "alias/Firstlight-latest-macos.dmg"
+          cp alias/*_x64-setup.exe "alias/Firstlight-latest-windows-setup.exe"
+          gh release upload "$RELEASE_TAG" \
+            "alias/Firstlight-latest-macos.dmg" \
+            "alias/Firstlight-latest-windows-setup.exe" \
+            --clobber
+
       - name: Publish the release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
