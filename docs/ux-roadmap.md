@@ -20,7 +20,8 @@ areas: **profile entry guidance** (the profile drives all matching) and the
   the window closes/reloads or the user navigates to another in-app page with edits pending.
 
 ### Findings & triage workflow — `apps/desktop/src/pages/FindingsPage.tsx`
-- **Sort control**: Most relevant (default), Newest, Recently updated.
+- **Sort control**: Most relevant (default, preserves the backend
+  `rank_findings_for_briefing` ranking) and Newest (by content date).
 - **Action confirmation + Undo**: setting an item aside or adding it to the doctor list
   shows a `role="status"` confirmation with a working Undo for several seconds.
 - **Query-aware empty state**: echoes the active search/filters and offers a one-click

@@ -1,11 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 test('first launch onboarding reaches the dashboard and support surface', async ({ page }) => {
+  // Inputs wired to a <datalist> (e.g. Cancer type) expose the ARIA combobox
+  // role rather than textbox, so target the underlying control directly.
   const fieldTextbox = (label: string) =>
     page
       .locator('.field')
       .filter({ has: page.getByText(label, { exact: true }) })
-      .getByRole('textbox');
+      .locator('input, textarea')
+      .first();
 
   await page.goto('/');
 

@@ -8,7 +8,7 @@ import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import type { Finding, FindingAction } from '../lib/types';
 
-type SortKey = 'relevance' | 'newest' | 'updated';
+type SortKey = 'relevance' | 'newest';
 
 const UNDO_TIMEOUT_MS = 8000;
 
@@ -118,15 +118,13 @@ export function FindingsPage() {
       return matchesFilter && matchesQuery;
     });
 
-    const sorted = [...filtered];
-    if (sortKey === 'relevance') {
-      sorted.sort((a, b) => b.score - a.score || findingTimestamp(b) - findingTimestamp(a));
-    } else if (sortKey === 'newest') {
-      sorted.sort((a, b) => findingTimestamp(b) - findingTimestamp(a));
-    } else {
-      sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    // 'relevance' (default) preserves the backend ranking from
+    // rank_findings_for_briefing, which weighs status, relevance label, trial
+    // recruitment, and freshness before score — richer than score alone.
+    if (sortKey === 'newest') {
+      return [...filtered].sort((a, b) => findingTimestamp(b) - findingTimestamp(a));
     }
-    return sorted;
+    return filtered;
   }, [items, query, filter, sortKey]);
 
   const filterOptions = useMemo(
@@ -191,7 +189,6 @@ export function FindingsPage() {
             <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
               <option value="relevance">Most relevant</option>
               <option value="newest">Newest</option>
-              <option value="updated">Recently updated</option>
             </select>
           </label>
         </div>
