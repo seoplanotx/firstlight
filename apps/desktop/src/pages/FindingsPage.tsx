@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
@@ -8,14 +8,40 @@ import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import type { Finding, FindingAction } from '../lib/types';
 
+type SortKey = 'relevance' | 'newest' | 'updated';
+
+const UNDO_TIMEOUT_MS = 8000;
+
+const ACTION_CONFIRMATIONS: Record<FindingAction, string> = {
+  discuss: 'Added to your list for the doctor.',
+  dismissed: 'Set aside.',
+  none: 'Moved back to your list.'
+};
+
+function findingTimestamp(item: Finding): number {
+  return new Date(item.published_at || item.retrieved_at).getTime();
+}
+
 export function FindingsPage() {
   const [items, setItems] = useState<Finding[]>([]);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('relevance');
   const [includeDismissed, setIncludeDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [pendingId, setPendingId] = useState<number | null>(null);
+  const [undo, setUndo] = useState<{ id: number; previous: FindingAction; message: string } | null>(null);
+  const undoTimer = useRef<number | null>(null);
+
+  function clearUndoTimer() {
+    if (undoTimer.current !== null) {
+      window.clearTimeout(undoTimer.current);
+      undoTimer.current = null;
+    }
+  }
+
+  useEffect(() => clearUndoTimer, []);
 
   async function load() {
     setLoading(true);
@@ -35,11 +61,18 @@ export function FindingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeDismissed]);
 
-  async function handleAction(findingId: number, action: FindingAction) {
+  async function applyAction(findingId: number, action: FindingAction, previous: FindingAction, offerUndo: boolean) {
     setPendingId(findingId);
     try {
       await api.setFindingAction(findingId, action);
       await load();
+      clearUndoTimer();
+      if (offerUndo && previous !== action) {
+        setUndo({ id: findingId, previous, message: ACTION_CONFIRMATIONS[action] });
+        undoTimer.current = window.setTimeout(() => setUndo(null), UNDO_TIMEOUT_MS);
+      } else {
+        setUndo(null);
+      }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
     } finally {
@@ -47,8 +80,20 @@ export function FindingsPage() {
     }
   }
 
+  function handleAction(finding: Finding, action: FindingAction) {
+    void applyAction(finding.id, action, finding.user_action, true);
+  }
+
+  function handleUndo() {
+    if (!undo) return;
+    const target = undo;
+    setUndo(null);
+    clearUndoTimer();
+    void applyAction(target.id, target.previous, 'none', false);
+  }
+
   const visible = useMemo(() => {
-    return items.filter((item) => {
+    const filtered = items.filter((item) => {
       const matchesFilter =
         filter === 'discuss'
           ? item.user_action === 'discuss'
@@ -72,7 +117,17 @@ export function FindingsPage() {
         : true;
       return matchesFilter && matchesQuery;
     });
-  }, [items, query, filter]);
+
+    const sorted = [...filtered];
+    if (sortKey === 'relevance') {
+      sorted.sort((a, b) => b.score - a.score || findingTimestamp(b) - findingTimestamp(a));
+    } else if (sortKey === 'newest') {
+      sorted.sort((a, b) => findingTimestamp(b) - findingTimestamp(a));
+    } else {
+      sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    }
+    return sorted;
+  }, [items, query, filter, sortKey]);
 
   const filterOptions = useMemo(
     () => [
@@ -85,6 +140,12 @@ export function FindingsPage() {
   );
 
   const discussCount = useMemo(() => items.filter((item) => item.user_action === 'discuss').length, [items]);
+  const isFiltered = Boolean(query || filter);
+
+  function clearSearch() {
+    setQuery('');
+    setFilter('');
+  }
 
   if (loading) return <div className="loading-block">Loading…</div>;
   if (errorMessage && items.length === 0) {
@@ -109,6 +170,15 @@ export function FindingsPage() {
 
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
+      {undo && (
+        <div className="callout undo-callout" role="status">
+          <span>{undo.message}</span>
+          <button className="link-button" type="button" onClick={handleUndo}>
+            Undo
+          </button>
+        </div>
+      )}
+
       <Card title="Find something specific" description="Search stays on this computer and runs over what Firstlight has already found.">
         <div className="toolbar toolbar-wide">
           <input
@@ -116,6 +186,14 @@ export function FindingsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          <label className="toolbar-sort">
+            <span className="muted">Sort by</span>
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+              <option value="relevance">Most relevant</option>
+              <option value="newest">Newest</option>
+              <option value="updated">Recently updated</option>
+            </select>
+          </label>
         </div>
         <div className="filter-chip-row">
           {filterOptions.map((option) => (
@@ -141,7 +219,23 @@ export function FindingsPage() {
 
       <Card title="Results" description="Each item keeps its source, evidence excerpt, and the plain reason it came up.">
         {visible.length === 0 ? (
-          <EmptyState title="Nothing here" message="Run a check or change the filters to see items." />
+          isFiltered ? (
+            <EmptyState
+              title="No matches"
+              message={
+                query
+                  ? `Nothing matched “${query}”${filter ? ' with these filters' : ''}. Try different words or clear the search.`
+                  : 'Nothing matched the current filters.'
+              }
+              action={
+                <button className="secondary-button" type="button" onClick={clearSearch}>
+                  Clear search and filters
+                </button>
+              }
+            />
+          ) : (
+            <EmptyState title="Nothing here yet" message="Run a check from Today to see what Firstlight finds." />
+          )
         ) : (
           <div className="finding-list">
             {visible.map((item) => (
@@ -149,7 +243,7 @@ export function FindingsPage() {
                 key={item.id}
                 finding={item}
                 showWhy
-                onAction={(action) => handleAction(item.id, action)}
+                onAction={(action) => handleAction(item, action)}
                 actionPending={pendingId === item.id}
               />
             ))}
