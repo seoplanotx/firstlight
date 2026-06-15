@@ -135,6 +135,38 @@ jobs:
             -OutFile (Join-Path $dir "artifact-signing-cli.exe")
           Add-Content -Path $env:GITHUB_PATH -Value $dir
 
+      # artifact-signing-cli loads the Azure code-signing dlib through signtool,
+      # which needs the .NET 8 runtime present on the machine.
+      - name: Setup .NET 8 (artifact-signing-cli dependency)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Diagnostic: Tauri swallows the sign command's stderr, so exercise the CLI
+      # directly against a copied binary to surface the real Azure error. Never
+      # fails the job; it only prints what the signer is actually doing.
+      - name: Diagnose artifact-signing-cli
+        shell: pwsh
+        continue-on-error: true
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          RUST_LOG: trace
+          RUST_BACKTRACE: full
+        run: |
+          $test = Join-Path $env:RUNNER_TEMP "sign-test.exe"
+          Copy-Item "dist-sidecar/oncowatch-backend-x86_64-pc-windows-msvc.exe" $test -Force
+          Write-Host "=== signtool location ==="
+          (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+          Write-Host "=== installed .NET runtimes ==="
+          dotnet --list-runtimes
+          Write-Host "=== artifact-signing-cli --help ==="
+          artifact-signing-cli --help 2>&1 | Out-String | Write-Host
+          Write-Host "=== attempt direct sign ==="
+          artifact-signing-cli -e https://eus.codesigning.azure.net -a tc012592 -c firstlight -d Firstlight $test 2>&1 | Out-String | Write-Host
+          Write-Host "EXITCODE=$LASTEXITCODE"
+
       - name: Build and publish Windows release
         uses: tauri-apps/tauri-action@v0
         env:
