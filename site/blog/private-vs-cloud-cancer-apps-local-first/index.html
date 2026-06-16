@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private vs Cloud Cancer Apps: Why Local-First Matters</title>
+  <meta name="description" content="Most health apps send your data to the cloud. Here's what that means for a loved one's cancer information, why consumer apps aren't covered by HIPAA, and why local-first design matters.">
+  <link rel="canonical" href="https://firstlighthq.com/blog/private-vs-cloud-cancer-apps-local-first/">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#166156">
+  <meta property="og:title" content="Private vs cloud cancer apps: why local-first matters for medical data">
+  <meta property="og:description" content="What it means when a health app sends your data to the cloud, why consumer apps aren't covered by HIPAA, and why local-first design matters.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://firstlighthq.com/blog/private-vs-cloud-cancer-apps-local-first/">
+  <meta property="og:site_name" content="Firstlight">
+  <meta property="og:image" content="https://firstlighthq.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Private vs cloud cancer apps: why local-first matters for medical data">
+  <meta name="twitter:description" content="Why local-first design matters for a loved one's cancer information.">
+  <meta name="twitter:image" content="https://firstlighthq.com/og-image.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "headline": "Private vs cloud cancer apps: why local-first matters for medical data",
+        "description": "What it means when a health app sends your data to the cloud, why consumer apps aren't covered by HIPAA, and why local-first design matters.",
+        "image": "https://firstlighthq.com/og-image.png",
+        "datePublished": "2026-06-16",
+        "dateModified": "2026-06-16",
+        "author": { "@type": "Person", "name": "Tucker Coffey" },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Firstlight",
+          "url": "https://firstlighthq.com/",
+          "logo": "https://firstlighthq.com/og-image.png"
+        },
+        "mainEntityOfPage": "https://firstlighthq.com/blog/private-vs-cloud-cancer-apps-local-first/"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://firstlighthq.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://firstlighthq.com/blog/" },
+          { "@type": "ListItem", "position": 3, "name": "Private vs cloud cancer apps", "item": "https://firstlighthq.com/blog/private-vs-cloud-cancer-apps-local-first/" }
+        ]
+      }
+    ]
+  }
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZF9CJZ0RR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-LZF9CJZ0RR');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="wordmark" href="/" aria-label="Firstlight home">Firstlight</a>
+      <nav aria-label="Main">
+        <a href="/#story">Why Firstlight</a>
+        <a href="/#how">How it works</a>
+        <a href="/#privacy">Privacy</a>
+        <a href="/blog/">Blog</a>
+        <a href="https://github.com/seoplanotx/firstlight" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <article class="post">
+      <div class="container narrow">
+
+        <p class="breadcrumb"><a href="/">Home</a><span class="sep">/</span><a href="/blog/">Blog</a><span class="sep">/</span>Private vs cloud apps</p>
+
+        <header class="post-header">
+          <p class="post-date">June 16, 2026 · Perspective</p>
+          <h1>Private vs cloud cancer apps: why local-first matters for medical data</h1>
+          <p class="post-lede">
+            A loved one's cancer details are some of the most sensitive information a family will ever hold.
+            Most apps quietly send that data to someone else's servers. Here's what that means — and why
+            "local-first" is worth caring about.
+          </p>
+          <p class="post-meta">By Tucker Coffey · 6 min read</p>
+        </header>
+
+        <div class="post-body">
+          <p>
+            When you type a diagnosis, biomarkers, and treatment history into most health apps, that information
+            doesn't stay on your phone or laptop. It travels to the company's cloud — where it's stored, processed,
+            and, depending on the fine print, sometimes analyzed or shared. For a recipe app, who cares. For your
+            mother's cancer profile, it's worth a pause.
+          </p>
+
+          <h2>"Cloud" means someone else's computer</h2>
+          <p>
+            Cloud-based apps keep your data on servers the company controls. That enables convenient sync across
+            devices — but it also means your loved one's medical details now live somewhere you can't see, governed
+            by a privacy policy that can change, subject to that company's security, its business model, and the
+            risk of a breach. Once data leaves your device, you're trusting a chain of parties you'll never meet.
+          </p>
+
+          <h2>HIPAA probably doesn't cover the app you're using</h2>
+          <p>
+            This surprises people: HIPAA generally applies to healthcare providers, insurers, and their business
+            associates — <strong>not</strong> to most consumer apps you download yourself. A symptom tracker or a
+            "cancer research" app from the app store usually isn't a HIPAA-covered entity. Its handling of your data
+            is governed mainly by its own privacy policy and general consumer law, not the protections you'd assume
+            apply to medical information.
+          </p>
+          <blockquote>
+            <p>
+              The safest data is the data that never leaves your device in the first place. You can't lose, leak, or
+              monetize what you never collected centrally.
+            </p>
+          </blockquote>
+
+          <h2>What "local-first" actually means</h2>
+          <p>
+            Local-first software keeps your data on <em>your</em> machine as the source of truth. The profile, the
+            findings, the reports — they live in a database on your own computer, not on a company server. There's no
+            account to create, nothing to sync to a third party, and no central pile of patient data to breach.
+          </p>
+          <p>
+            It's a deliberate trade: you give up effortless multi-device cloud sync in exchange for the strongest
+            possible privacy posture. For deeply personal medical information, that's a trade many families are glad
+            to make.
+          </p>
+
+          <h2>Why open source makes the promise checkable</h2>
+          <p>
+            "We respect your privacy" is a sentence in nearly every privacy policy, including from companies that
+            later turned out to sell data. Open-source software is different: the code is public, so the privacy
+            claims can be <em>verified</em> rather than trusted. Anyone — a developer friend, a security researcher —
+            can confirm what the app does and doesn't send anywhere.
+          </p>
+
+          <h2>Questions to ask any health app</h2>
+          <ul>
+            <li>Does my data leave my device? If so, to where, and can I turn that off?</li>
+            <li>Do I have to create an account? (An account usually means cloud storage.)</li>
+            <li>What does the privacy policy say about sharing, selling, or analyzing my data?</li>
+            <li>Is the code open for inspection, or do I have to take the claims on faith?</li>
+            <li>If the company shuts down or is acquired, what happens to my data?</li>
+          </ul>
+
+          <div class="post-note">
+            <strong>A note.</strong> This is general information about software and privacy, not legal or medical
+            advice. Privacy practices vary by app and change over time — always read the current privacy policy of
+            anything you use for sensitive information.
+          </div>
+
+          <div class="post-cta">
+            <h2>Firstlight is local-first by design</h2>
+            <p>
+              No account, no cloud, no Firstlight server. Your loved one's profile and reports stay in a local,
+              encrypted database on your own device — and because Firstlight is open source under AGPL-3.0, you can
+              verify that for yourself. Free, private, forever.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary" data-download="macos" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-macos.dmg" rel="noopener">Download for macOS</a>
+              <a class="btn btn-primary" data-download="windows" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-windows-setup.exe" rel="noopener">Download for Windows</a>
+              <a class="btn btn-ghost" href="https://github.com/seoplanotx/firstlight" rel="noopener">Read the code</a>
+            </div>
+          </div>
+
+          <p class="post-foot">
+            <a href="/blog/">← Back to the blog</a>
+            &nbsp;·&nbsp;
+            <a href="/blog/staying-on-top-of-cancer-research/">Read: how to stay on top of new research →</a>
+          </p>
+        </div>
+
+      </div>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p class="footer-memory">In memory of Judy Coffey.</p>
+      <p>
+        Free and open source under <a href="https://github.com/seoplanotx/firstlight/blob/main/LICENSE" rel="noopener">AGPL-3.0</a>
+        &nbsp;·&nbsp; <a href="https://github.com/seoplanotx/firstlight" rel="noopener">GitHub</a>
+        &nbsp;·&nbsp; <a href="/">Home</a>
+      </p>
+      <p class="footer-fine">© 2026 Tucker Coffey. Firstlight is an information tool, not medical advice.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('a[data-download]').forEach(function (a) {
+      a.addEventListener('click', function () {
+        if (typeof gtag === 'function') {
+          gtag('event', 'app_download', { os: a.getAttribute('data-download'), link_url: a.href });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
