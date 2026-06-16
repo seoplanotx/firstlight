@@ -482,6 +482,176 @@ section {
   max-width: 62ch;
 }
 
+/* ---------- Blog ---------- */
+
+.blog-hero {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0 clamp(2rem, 5vw, 3rem);
+  border-bottom: 1px solid var(--line);
+}
+.blog-hero .eyebrow { margin-bottom: 1rem; }
+.blog-hero h1 {
+  font-size: clamp(2rem, 1.4rem + 3vw, 3rem);
+  margin: 0 0 1rem;
+}
+.blog-hero .lede {
+  margin: 0;
+  text-align: left;
+  max-width: 44em;
+}
+
+.breadcrumb {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin: 0 0 1.5rem;
+}
+.breadcrumb a { color: var(--ink-soft); text-decoration: none; }
+.breadcrumb a:hover { color: var(--ink); }
+.breadcrumb .sep { margin: 0 0.5rem; color: var(--line-strong); }
+
+/* post listing */
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-card {
+  padding: 1.9rem 0;
+  border-top: 1px solid var(--line);
+}
+.post-card:last-child { border-bottom: 1px solid var(--line); }
+.post-card .post-date {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.5rem;
+}
+.post-card h2 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin: 0 0 0.6rem;
+}
+.post-card h2 a { color: var(--ink); text-decoration: none; }
+.post-card h2 a:hover { color: var(--accent); }
+.post-card p { margin: 0 0 0.75rem; color: var(--ink-soft); max-width: 62ch; }
+.post-card .read-more {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+.post-card .read-more:hover { text-decoration: underline; }
+
+/* single post */
+.post {
+  padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(3rem, 7vw, 4.5rem);
+}
+.post-header { margin-bottom: 2.25rem; }
+.post-header .post-date {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+}
+.post-header h1 {
+  font-size: clamp(1.9rem, 1.3rem + 2.6vw, 2.75rem);
+  line-height: 1.12;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+.post-header .post-lede {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.post-meta {
+  margin-top: 1.4rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+.post-body {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  line-height: 1.72;
+  color: var(--ink);
+}
+.post-body > p { margin: 0 0 1.35rem; }
+.post-body h2 {
+  font-size: clamp(1.4rem, 1.2rem + 1vw, 1.7rem);
+  margin: 2.5rem 0 1rem;
+  line-height: 1.2;
+}
+.post-body h3 {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  margin: 2rem 0 0.75rem;
+}
+.post-body ul, .post-body ol {
+  margin: 0 0 1.35rem;
+  padding-left: 1.4rem;
+}
+.post-body li { margin-bottom: 0.6rem; }
+.post-body a { text-decoration: underline; text-underline-offset: 2px; }
+.post-body strong { font-weight: 600; }
+.post-body blockquote {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 2px solid var(--accent);
+  background: var(--bg-shade);
+  border-radius: var(--radius);
+  font-style: italic;
+  color: var(--ink);
+}
+.post-body blockquote p:last-child { margin-bottom: 0; }
+.post-note {
+  margin: 2.5rem 0 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--horizon);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.post-note strong { color: var(--ink); }
+
+/* in-post product CTA */
+.post-cta {
+  margin: 3rem 0 0;
+  padding: clamp(1.75rem, 4vw, 2.5rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius);
+  font-family: var(--sans);
+}
+.post-cta h2 {
+  font-size: 1.4rem;
+  margin: 0 0 0.6rem;
+}
+.post-cta p {
+  margin: 0 0 1.4rem;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  max-width: 52ch;
+}
+.post-cta .cta-row { justify-content: flex-start; }
+
+/* prev/next + back */
+.post-foot {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.post-foot a { text-decoration: none; }
+.post-foot a:hover { text-decoration: underline; }
+
 /* ---------- Feedback ---------- */
 
 .feedback {
