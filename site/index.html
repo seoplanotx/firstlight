@@ -8,6 +8,18 @@
   <meta property="og:title" content="Firstlight — Know what's new for the person you love">
   <meta property="og:description" content="A local-first desktop app that monitors oncology research and prepares source-backed reports to bring to your oncologist.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://firstlighthq.com/">
+  <link rel="canonical" href="https://firstlighthq.com/">
+  <meta name="robots" content="index, follow">
+  <meta name="google-site-verification" content="XQ65NO_ndCEge0EyjQ0aLmoE6Lr1qexDEY1mhj0LaL4">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZF9CJZ0RR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-LZF9CJZ0RR');
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,8 +52,8 @@
           and prepares a source-backed report you can bring to your oncology team.
         </p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-macos.dmg" rel="noopener">Download for macOS</a>
-          <a class="btn btn-primary" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-windows-setup.exe" rel="noopener">Download for Windows</a>
+          <a class="btn btn-primary" data-download="macos" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-macos.dmg" rel="noopener">Download for macOS</a>
+          <a class="btn btn-primary" data-download="windows" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-windows-setup.exe" rel="noopener">Download for Windows</a>
           <a class="btn btn-ghost" href="https://github.com/seoplanotx/firstlight" rel="noopener">View on GitHub</a>
         </div>
         <p class="hero-note">Your data never leaves your device. No account, no cloud, no cost.</p>
@@ -180,14 +192,50 @@
       </div>
     </section>
 
+    <!-- Feedback / collaboration -->
+    <section class="feedback" id="feedback">
+      <div class="container narrow">
+        <h2>Help shape Firstlight</h2>
+        <p class="section-lede narrow-lede">
+          A feature you wish it had, a source it should watch, or an offer to help build it —
+          this goes straight to me. Firstlight is open source and built for families; your input matters.
+        </p>
+        <form id="feedback-form" class="feedback-form" novalidate>
+          <div class="field-row">
+            <label class="field">
+              <span>Name</span>
+              <input type="text" name="name" autocomplete="name" maxlength="120" required>
+            </label>
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" maxlength="200" required>
+            </label>
+          </div>
+          <label class="field">
+            <span>What's on your mind?</span>
+            <textarea name="message" rows="5" maxlength="4000" required placeholder="A feature request, a source to add, a question, or a way you'd like to help."></textarea>
+          </label>
+          <!-- honeypot: hidden from humans, bots fill it -->
+          <div class="hp-field" aria-hidden="true">
+            <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <input type="hidden" name="ts" id="feedback-ts">
+          <div class="feedback-actions">
+            <button type="submit" class="btn btn-primary" id="feedback-submit">Send it</button>
+            <p class="feedback-status" id="feedback-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <!-- Closing CTA -->
     <section class="closing">
       <div class="container narrow closing-inner">
         <h2>Tomorrow morning, with your coffee</h2>
         <p>Set it up tonight. By morning, you'll know what's new.</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-macos.dmg" rel="noopener">Download for macOS</a>
-          <a class="btn btn-primary" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-windows-setup.exe" rel="noopener">Download for Windows</a>
+          <a class="btn btn-primary" data-download="macos" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-macos.dmg" rel="noopener">Download for macOS</a>
+          <a class="btn btn-primary" data-download="windows" href="https://github.com/seoplanotx/firstlight/releases/latest/download/Firstlight-latest-windows-setup.exe" rel="noopener">Download for Windows</a>
           <a class="btn btn-ghost" href="https://github.com/seoplanotx/firstlight" rel="noopener">View on GitHub</a>
         </div>
       </div>
@@ -205,6 +253,71 @@
       <p class="footer-fine">© 2026 Tucker Coffey. Firstlight is an information tool, not medical advice.</p>
     </div>
   </footer>
+
+  <script>
+    // Track app downloads in GA4
+    document.querySelectorAll('a[data-download]').forEach(function (a) {
+      a.addEventListener('click', function () {
+        if (typeof gtag === 'function') {
+          gtag('event', 'app_download', {
+            os: a.getAttribute('data-download'),
+            link_url: a.href
+          });
+        }
+      });
+    });
+
+    // Feedback form: timestamp trap + async submit
+    (function () {
+      var form = document.getElementById('feedback-form');
+      if (!form) return;
+      var ts = document.getElementById('feedback-ts');
+      if (ts) ts.value = String(Date.now());
+      var status = document.getElementById('feedback-status');
+      var submit = document.getElementById('feedback-submit');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        status.textContent = '';
+        status.className = 'feedback-status';
+        submit.disabled = true;
+        submit.textContent = 'Sending…';
+
+        var data = {
+          name: form.name.value.trim(),
+          email: form.email.value.trim(),
+          message: form.message.value.trim(),
+          website: form.website.value,
+          ts: ts ? ts.value : ''
+        };
+
+        fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(function (r) {
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+        }).then(function (res) {
+          if (res.ok) {
+            form.reset();
+            if (ts) ts.value = String(Date.now());
+            status.textContent = 'Thank you — your message reached me. I read every one.';
+            status.className = 'feedback-status is-success';
+            if (typeof gtag === 'function') gtag('event', 'feedback_submit');
+          } else {
+            status.textContent = (res.body && res.body.error) || 'Something went wrong. Please email seoplanotx@gmail.com directly.';
+            status.className = 'feedback-status is-error';
+          }
+        }).catch(function () {
+          status.textContent = 'Network error. Please email seoplanotx@gmail.com directly.';
+          status.className = 'feedback-status is-error';
+        }).finally(function () {
+          submit.disabled = false;
+          submit.textContent = 'Send it';
+        });
+      });
+    })();
+  </script>
 
 </body>
 </html>

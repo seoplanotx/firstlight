@@ -453,6 +453,98 @@ section {
   margin-top: 1rem !important;
 }
 
+/* ---------- Feedback ---------- */
+
+.feedback {
+  background: var(--bg-shade);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.feedback-form {
+  margin-top: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.field {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+.field-row .field { margin-bottom: 1.25rem; }
+.field > span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.45rem;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.8rem;
+  line-height: 1.5;
+}
+.field textarea { resize: vertical; min-height: 7rem; }
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+/* honeypot — visually and structurally hidden from humans */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.feedback-form .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+.feedback-form .btn-primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+.feedback-form .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.feedback-status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.feedback-status.is-success { color: var(--accent); }
+.feedback-status.is-error { color: #b3402f; }
+@media (prefers-color-scheme: dark) {
+  .feedback-status.is-error { color: #e8836f; }
+  .feedback-form .btn-primary { color: var(--bg-deep); }
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 960px) {
@@ -480,9 +572,11 @@ section {
 
   .steps,
   .source-grid,
-  .privacy-grid {
+  .privacy-grid,
+  .field-row {
     grid-template-columns: 1fr;
   }
+  .field-row { gap: 0; }
   .steps li:nth-child(even),
   .source-grid li:nth-child(even) {
     border-left: 0;
