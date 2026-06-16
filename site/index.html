@@ -3,15 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firstlight — Know what's new for the person you love</title>
-  <meta name="description" content="Firstlight is a free, open-source desktop app that quietly monitors oncology research — clinical trials, literature, and drug updates — and turns what may matter into a source-backed report for your oncology team. Local-first. Your data stays on your device.">
-  <meta property="og:title" content="Firstlight — Know what's new for the person you love">
-  <meta property="og:description" content="A local-first desktop app that monitors oncology research and prepares source-backed reports to bring to your oncologist.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://firstlighthq.com/">
+  <title>Firstlight — Private Cancer Research Tracker for Families</title>
+  <meta name="description" content="Free desktop app that monitors cancer research — new clinical trials, studies, and FDA drug updates — and builds source-backed reports for your oncologist. Private and local-first.">
   <link rel="canonical" href="https://firstlighthq.com/">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="XQ65NO_ndCEge0EyjQ0aLmoE6Lr1qexDEY1mhj0LaL4">
+  <!-- Favicons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#166156">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Firstlight — Private Cancer Research Tracker for Families">
+  <meta property="og:description" content="A free, local-first desktop app that monitors oncology research and prepares source-backed reports to bring to your oncologist.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://firstlighthq.com/">
+  <meta property="og:site_name" content="Firstlight">
+  <meta property="og:image" content="https://firstlighthq.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Firstlight — know what's new for the person you love.">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Firstlight — Private Cancer Research Tracker for Families">
+  <meta name="twitter:description" content="A free, local-first desktop app that monitors oncology research and prepares source-backed reports to bring to your oncologist.">
+  <meta name="twitter:image" content="https://firstlighthq.com/og-image.png">
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Firstlight",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "macOS, Windows",
+        "description": "Free, open-source, local-first desktop app that monitors oncology research — clinical trials, studies, and drug updates — and builds source-backed reports for your oncology team.",
+        "url": "https://firstlighthq.com/",
+        "downloadUrl": "https://github.com/seoplanotx/firstlight/releases/latest",
+        "softwareLicense": "https://www.gnu.org/licenses/agpl-3.0.en.html",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      },
+      {
+        "@type": "Organization",
+        "name": "Firstlight",
+        "url": "https://firstlighthq.com/",
+        "logo": "https://firstlighthq.com/og-image.png",
+        "sameAs": ["https://github.com/seoplanotx/firstlight"]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is Firstlight free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Firstlight is free and open source under the AGPL-3.0 license. There is no account to create and no subscription." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does my data leave my device?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Firstlight is local-first. The patient profile, findings, and reports live in a local database on your computer. There is no Firstlight server." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Firstlight give medical advice?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Firstlight is an information monitoring and summarization tool. It does not practice medicine, diagnose, or determine treatment. Every finding requires review by your clinical team." }
+          },
+          {
+            "@type": "Question",
+            "name": "What sources does Firstlight watch?",
+            "acceptedAnswer": { "@type": "Answer", "text": "ClinicalTrials.gov, PubMed, FDA drug updates, and Europe PMC preprints. Every finding links back to its source with a citation you can check." }
+          },
+          {
+            "@type": "Question",
+            "name": "What platforms does Firstlight support?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Firstlight runs on macOS and Windows as a desktop application." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZF9CJZ0RR"></script>
   <script>
@@ -189,6 +262,35 @@
           </ul>
           <p class="safety-final">Every finding requires review by your clinical team.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" id="faq">
+      <div class="container narrow">
+        <h2>Frequently asked questions</h2>
+        <dl class="faq-list">
+          <div class="faq-item">
+            <dt>Is Firstlight free?</dt>
+            <dd>Yes. Firstlight is free and open source under the AGPL-3.0 license. There is no account to create and no subscription.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Does my data leave my device?</dt>
+            <dd>No. Firstlight is local-first. The patient profile, findings, and reports live in a local database on your computer. There is no Firstlight server.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Does Firstlight give medical advice?</dt>
+            <dd>No. Firstlight is an information monitoring and summarization tool. It does not practice medicine, diagnose, or determine treatment. Every finding requires review by your clinical team.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>What sources does Firstlight watch?</dt>
+            <dd>ClinicalTrials.gov, PubMed, FDA drug updates, and Europe PMC preprints. Every finding links back to its source with a citation you can check.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>What platforms does Firstlight support?</dt>
+            <dd>Firstlight runs on macOS and Windows as a desktop application.</dd>
+          </div>
+        </dl>
       </div>
     </section>
 

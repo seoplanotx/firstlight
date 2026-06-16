@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Firstlight">
+  <rect width="64" height="64" rx="14" fill="#212722"/>
+  <circle cx="32" cy="40" r="13" fill="#c98a2b"/>
+  <rect x="0" y="40" width="64" height="24" fill="#212722"/>
+  <line x1="9" y1="40" x2="55" y2="40" stroke="#5eb3a4" stroke-width="3" stroke-linecap="round"/>
+  <g stroke="#c98a2b" stroke-width="2.6" stroke-linecap="round">
+    <line x1="32" y1="12" x2="32" y2="19"/>
+    <line x1="15" y1="19" x2="19" y2="23"/>
+    <line x1="49" y1="19" x2="45" y2="23"/>
+  </g>
+</svg>

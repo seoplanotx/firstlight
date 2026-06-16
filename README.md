@@ -2,6 +2,8 @@
 
 *formerly OncoWatch*
 
+**Website: [firstlighthq.com](https://firstlighthq.com)** &nbsp;·&nbsp; Free download for macOS & Windows
+
 **Firstlight** is a local-first desktop application that helps cancer patients and families monitor relevant new oncology information, organize what may matter, and bring structured, source-backed summaries to their oncology team.
 
 > **Safety disclaimer**

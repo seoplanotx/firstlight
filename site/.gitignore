@@ -3,3 +3,6 @@
 .clip.mjs
 .screenshot.mjs
 .clip-*.png
+.og-image.html
+.render-assets.mjs
+.favicon-32.png
