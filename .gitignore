@@ -28,3 +28,6 @@ backend/oncowatch-backend.spec
 *.log
 *.sqlite3
 *.db
+
+# Internal strategy docs — keep local, never commit
+SEO-PLAN.md
