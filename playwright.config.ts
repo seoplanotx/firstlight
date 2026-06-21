@@ -5,6 +5,10 @@ const frontendPort = 1421;
 
 export default defineConfig({
   testDir: './e2e',
+  // ui-polish.spec.ts is a local screenshot/visual harness: it re-runs the full
+  // onboarding flow and would pollute the shared CI backend state (one DB, no
+  // per-spec reset), breaking the real onboarding smoke test. Keep it local-only.
+  testIgnore: process.env.CI ? ['**/ui-polish.spec.ts'] : [],
   timeout: 120_000,
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
