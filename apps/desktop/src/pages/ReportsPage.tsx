@@ -94,7 +94,7 @@ export function ReportsPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Local reports</div>
+          <div className="eyebrow">Generated on this computer</div>
           <h1>Reports</h1>
           <p className="page-lede">
             Generate clinician-friendly PDF briefings locally and review the latest structured summary before downloading.

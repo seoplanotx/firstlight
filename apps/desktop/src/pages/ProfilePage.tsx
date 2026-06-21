@@ -82,7 +82,7 @@ export function ProfilePage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Patient details</div>
+          <div className="eyebrow">Configure</div>
           <h1>Patient Details</h1>
           <p className="page-lede">
             These details are what Firstlight uses to decide which trials and research to surface. The more you can add,

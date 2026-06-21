@@ -79,7 +79,7 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">About and support</div>
+          <div className="eyebrow">Version, privacy &amp; recovery</div>
           <h1>About / Support</h1>
           <p className="page-lede">
             Local product details, storage locations, privacy notes, your data controls, and the quickest recovery

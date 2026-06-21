@@ -12,7 +12,7 @@ test('first launch onboarding reaches the dashboard and support surface', async 
 
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'Build a steady trial and literature briefing routine.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A steady trial and literature briefing routine.' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Start setup' }).click();
 

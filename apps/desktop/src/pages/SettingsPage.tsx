@@ -8,6 +8,13 @@ import { getErrorMessage } from '../lib/errors';
 import { setLanguageMode, useLanguageMode } from '../lib/languageMode';
 import type { AppSettings, SourceConfig } from '../lib/types';
 
+const SOURCE_BLURBS: Record<string, string> = {
+  clinicaltrials_gov: 'Government registry of clinical trials',
+  openfda_drug_updates: 'FDA drug approvals and label changes',
+  europepmc_preprints: 'Early-release research preprints',
+  pubmed_literature: 'Peer-reviewed medical literature',
+};
+
 export function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [sources, setSources] = useState<SourceConfig[]>([]);
@@ -213,26 +220,18 @@ export function SettingsPage() {
       >
         <div className="stack">
           {sources.map((source) => (
-            <div className="toggle-row" key={source.id}>
-              <label className="toggle-row">
-                <input
-                  type="checkbox"
-                  checked={source.enabled}
-                  onChange={(e) =>
-                    setSources((current) =>
-                      current.map((item) => (item.id === source.id ? { ...item, enabled: e.target.checked } : item))
-                    )
-                  }
-                />
-                <div>
-                  <strong>{source.name}</strong>
-                  <div className="muted">{source.connector_key}</div>
-                </div>
-              </label>
-              <button className="ghost-button" onClick={() => void saveSource(source)} disabled={busy}>
-                Save
-              </button>
-            </div>
+            <label className="toggle-row source-toggle" key={source.id}>
+              <input
+                type="checkbox"
+                checked={source.enabled}
+                disabled={busy}
+                onChange={(e) => void saveSource({ ...source, enabled: e.target.checked })}
+              />
+              <div>
+                <strong>{source.name}</strong>
+                <div className="muted">{SOURCE_BLURBS[source.connector_key] ?? source.name}</div>
+              </div>
+            </label>
           ))}
         </div>
       </Card>

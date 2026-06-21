@@ -52,7 +52,7 @@ export function UpdatesPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Research updates</div>
+          <div className="eyebrow">From PubMed &amp; Europe PMC</div>
           <h1>Research Updates</h1>
           <p className="page-lede">
             New research from PubMed and Europe PMC in one calm list, each with a short excerpt and the reason it came up.

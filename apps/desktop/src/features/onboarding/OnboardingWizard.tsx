@@ -219,29 +219,22 @@ export function OnboardingWizard({ onCompleted }: Props) {
         </div>
         <div className="onboarding-sidebar-copy">
           <div className="eyebrow">Private setup</div>
-          <h1>Build a steady trial and literature briefing routine.</h1>
-          <p>
-            Profiles, reports, and logs stay on this computer. Findings stay conservative and still need clinician review.
-          </p>
+          <h1>A steady trial and literature briefing routine.</h1>
+          <p>Everything stays on this computer. Findings still need clinician review.</p>
         </div>
         <ol className="step-list">
           {steps.map((item, index) => (
-            <li key={item.label} className={index === step ? 'step-item active' : 'step-item'}>
+            <li
+              key={item.label}
+              className={
+                index === step ? 'step-item active' : index < step ? 'step-item done' : 'step-item'
+              }
+            >
               <span>{index + 1}</span>
-              <div>
-                <strong>{item.label}</strong>
-                <div>{item.description}</div>
-              </div>
+              <strong>{item.label}</strong>
             </li>
           ))}
         </ol>
-        <div className="onboarding-note">
-          <strong>Public v1 scope</strong>
-          <p>
-            This release tracks real ClinicalTrials.gov and PubMed results. It does not surface demo feeds, treatment
-            advice, or eligibility decisions.
-          </p>
-        </div>
       </div>
 
       <div className="onboarding-content">
@@ -265,12 +258,8 @@ export function OnboardingWizard({ onCompleted }: Props) {
           >
             <div className="stack">
               <p>
-                Firstlight helps patients and families monitor oncology information that <strong>may be relevant</strong>{' '}
-                so they can bring structured, source-backed notes to a doctor visit.
-              </p>
-              <p>
-                This public release focuses on ClinicalTrials.gov trial matching, PubMed literature monitoring, and local
-                PDF briefings.
+                Firstlight monitors trials and research that <strong>may be relevant</strong> so you can bring
+                structured, source-backed notes to a doctor visit.
               </p>
               <div className="mini-stats-grid onboarding-highlights">
                 <div className="mini-stat">

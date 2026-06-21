@@ -390,10 +390,10 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         Add therapy
       </button>
 
-      <div className="field field-span-2">
+      <div className="field">
         <label>Would consider</label>
         <textarea
-          rows={3}
+          rows={2}
           value={considerText}
           onChange={(e) =>
             setForm({
@@ -407,10 +407,10 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         />
         <div className="field-hint">Options you're open to, one per line — e.g. "clinical trials", "travel for treatment".</div>
       </div>
-      <div className="field field-span-2">
+      <div className="field">
         <label>Would not consider</label>
         <textarea
-          rows={3}
+          rows={2}
           value={avoidText}
           onChange={(e) =>
             setForm({
@@ -426,7 +426,7 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
       </div>
       <div className="field field-span-2">
         <label>Notes</label>
-        <textarea value={form.notes || ''} rows={4} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+        <textarea value={form.notes || ''} rows={3} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <div className="field-hint">Anything else worth remembering. You can paste notes from a doctor's report here too.</div>
       </div>
       <div className="field-span-2">
