@@ -69,6 +69,22 @@ def validate_clinician_questions(questions: list[str]) -> list[str]:
     return validated[:5]
 
 
+_CASE_FRAMING_MAX_CHARS = 320
+
+
+def validate_case_framing(text: str | None) -> str:
+    """Keep only a short, cautious one-line case framing; fail closed on advice language."""
+
+    if not text:
+        return ""
+    cleaned = " ".join(str(text).split()).strip("-• ").strip()
+    if len(cleaned) <= 5 or len(cleaned) > _CASE_FRAMING_MAX_CHARS:
+        return ""
+    if any(pattern.search(cleaned) for pattern in _UNSAFE_QUESTION_PATTERNS):
+        return ""
+    return cleaned
+
+
 class OpenRouterClient:
     def __init__(self, api_key: str, model: str | None = None) -> None:
         self.api_key = api_key
@@ -135,3 +151,48 @@ class OpenRouterClient:
                 return validate_clinician_questions(lines)
         except Exception:
             return []
+
+    def generate_case_framing(self, *, case_packet: dict[str, Any]) -> str:
+        assert_deidentified_packet(case_packet)
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are writing a single neutral one-line case framing for a local oncology "
+                    "monitoring app. Use only the de-identified case context provided. Do not infer "
+                    "identity. Do not give treatment advice, claim eligibility, recommend, rank, or "
+                    "judge appropriateness. Summarize the case and what was flagged for clinician "
+                    "review in one short, plain sentence."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "deidentified_case_packet": case_packet,
+                        "instruction": (
+                            "Write ONE short sentence (max 40 words) framing this case for the "
+                            "patient's oncology team to review. No advice, no eligibility, no ranking."
+                        ),
+                    },
+                    sort_keys=True,
+                    default=str,
+                ),
+            },
+        ]
+        try:
+            with httpx.Client(timeout=45.0) as client:
+                response = client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers,
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "temperature": 0.2,
+                    },
+                )
+                response.raise_for_status()
+                content = response.json()["choices"][0]["message"]["content"]
+                return validate_case_framing(str(content))
+        except Exception:
+            return ""

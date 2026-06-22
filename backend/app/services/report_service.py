@@ -38,8 +38,15 @@ def _styles():
     return styles
 
 
+REPORT_TITLES = {
+    "daily_summary": "Daily Summary Report",
+    "full_review": "Full Oncology Review Report",
+    "appointment_prep": "Appointment Prep Sheet",
+}
+
+
 def _report_title(report_type: str) -> str:
-    return "Daily Summary Report" if report_type == "daily_summary" else "Full Oncology Review Report"
+    return REPORT_TITLES.get(report_type, "Full Oncology Review Report")
 
 
 def _deterministic_questions(profile: PatientProfile, findings: list[Finding]) -> list[str]:
@@ -194,6 +201,107 @@ def _append_appendix(story: list[Any], styles: Any, items: list[Finding]) -> Non
         story.append(Spacer(1, 4))
 
 
+APPOINTMENT_PREP_TOP_ITEMS = 6
+
+
+def _trimmed_profile_rows(profile: PatientProfile) -> list[list[str]]:
+    return [row for row in _profile_rows(profile) if row[0] != "Display name" and row[1] not in (None, "", "—")]
+
+
+def _prep_finding_status_line(finding: Finding) -> str:
+    parts: list[str] = []
+    status_label = {"new": "New", "changed": "Changed", "unchanged": "Tracked"}.get(finding.status, finding.status.title())
+    parts.append(status_label)
+    if finding.relevance_label:
+        parts.append(finding.relevance_label)
+    if finding.external_identifier:
+        parts.append(finding.external_identifier)
+    record_facts = (
+        finding.match_debug.get("normalized_facts", {}).get("record", {})
+        if isinstance(finding.match_debug, dict)
+        else {}
+    )
+    if finding.type == "clinical_trials":
+        recruitment_bucket = record_facts.get("recruitment_bucket")
+        if recruitment_bucket:
+            parts.append(f"Recruitment: {str(recruitment_bucket).replace('_', ' ')}")
+    return " • ".join(parts)
+
+
+def build_appointment_prep_bytes(
+    profile: PatientProfile,
+    findings: list[Finding],
+    *,
+    briefing: dict[str, Any],
+) -> bytes:
+    styles = _styles()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="Firstlight Appointment Prep Sheet")
+    story: list[Any] = []
+
+    story.append(Paragraph("Firstlight — Appointment Prep Sheet", styles["Title"]))
+    story.append(Paragraph(f"Generated: {utcnow().strftime('%Y-%m-%d %H:%M UTC')}", styles["BodySmall"]))
+    story.append(Paragraph(DISCLAIMER, styles["BodySmall"]))
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("Case snapshot", styles["SectionTitle"]))
+    snapshot_table = Table(_trimmed_profile_rows(profile), colWidths=[150, 360])
+    snapshot_table.setStyle(
+        TableStyle(
+            [
+                ("BOX", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+    story.append(snapshot_table)
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Top things to raise", styles["SectionTitle"]))
+    top_items = rank_findings_for_briefing(findings)[:APPOINTMENT_PREP_TOP_ITEMS]
+    if not top_items:
+        story.append(Paragraph("No monitored findings are stored for this profile yet.", styles["BodyText"]))
+    else:
+        for finding in top_items:
+            story.append(Paragraph(finding.title, styles["Heading3"]))
+            story.append(Paragraph(_prep_finding_status_line(finding), styles["BodySmall"]))
+            if finding.why_it_surfaced:
+                first_reason = finding.why_it_surfaced.split("\n")[0]
+                story.append(Paragraph(f"<b>Why it surfaced:</b> {first_reason}", styles["BodySmall"]))
+            story.append(Spacer(1, 6))
+    story.append(Spacer(1, 6))
+
+    story.append(Paragraph("Questions for your oncology team", styles["SectionTitle"]))
+    for question in _deterministic_questions(profile, findings):
+        story.append(Paragraph(f"• {question}", styles["BodyText"]))
+    story.append(Spacer(1, 8))
+
+    story.append(Paragraph("Information to bring or confirm", styles["SectionTitle"]))
+    blockers = briefing.get("blockers") or []
+    if not blockers:
+        story.append(
+            Paragraph("No missing details were flagged on the highest-priority findings.", styles["BodyText"])
+        )
+    else:
+        story.append(
+            Paragraph(
+                "Details that would help your team assess fit:",
+                styles["SectionIntro"],
+            )
+        )
+        for blocker in blockers:
+            examples = blocker.get("examples") or []
+            example_text = f" (e.g. {', '.join(examples)})" if examples else ""
+            story.append(Paragraph(f"• {blocker['label']}{example_text}", styles["BodyText"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph(DISCLAIMER, styles["BodySmall"]))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
 def build_report_bytes(
     profile: PatientProfile,
     findings: list[Finding],
@@ -201,6 +309,9 @@ def build_report_bytes(
     *,
     briefing: dict[str, Any],
 ) -> bytes:
+    if report_type == "appointment_prep":
+        return build_appointment_prep_bytes(profile, findings, briefing=briefing)
+
     styles = _styles()
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="Firstlight Report")

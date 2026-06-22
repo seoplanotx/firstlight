@@ -9,6 +9,16 @@ import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import type { BriefingFindingSection, BriefingBlocker, ReportExport } from '../lib/types';
 
+const REPORT_TYPE_LABELS: Record<string, string> = {
+  daily_summary: 'Daily Summary Report',
+  full_review: 'Full Oncology Review Report',
+  appointment_prep: 'Appointment Prep Sheet'
+};
+
+function reportTypeLabel(reportType: string): string {
+  return REPORT_TYPE_LABELS[reportType] || 'Full Oncology Review Report';
+}
+
 export function ReportsPage() {
   const [reports, setReports] = useState<ReportExport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +49,7 @@ export function ReportsPage() {
     setNotice('');
     try {
       await api.generateReport({ report_type: reportType });
-      setNotice(
-        reportType === 'daily_summary'
-          ? 'Daily summary generated locally.'
-          : 'Full oncology review generated locally.'
-      );
+      setNotice(`${reportTypeLabel(reportType)} generated locally.`);
       await load();
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not generate the report.'));
@@ -108,7 +114,8 @@ export function ReportsPage() {
       <Card title="Make a report" description="Reports are made on this computer from the active profile and what Firstlight has found.">
         <p className="muted">
           A report is a clean PDF you can print or email to the care team. The daily summary is short; the full review
-          includes everything with an evidence appendix.
+          includes everything with an evidence appendix; the appointment prep sheet is a one-page summary to bring to a
+          visit.
         </p>
         <div className="button-row">
           <button className="primary-button" disabled={busy} onClick={() => void generate('daily_summary')}>
@@ -116,6 +123,9 @@ export function ReportsPage() {
           </button>
           <button className="secondary-button" disabled={busy} onClick={() => void generate('full_review')}>
             Make full oncology review
+          </button>
+          <button className="secondary-button" disabled={busy} onClick={() => void generate('appointment_prep')}>
+            Make appointment prep sheet
           </button>
         </div>
       </Card>
@@ -130,7 +140,7 @@ export function ReportsPage() {
               preview.
             </div>
             <div>
-              <strong>{latestReport.report_type === 'daily_summary' ? 'Daily Summary Report' : 'Full Oncology Review Report'}</strong>
+              <strong>{reportTypeLabel(latestReport.report_type)}</strong>
               <div className="muted">{new Date(latestReport.generated_at).toLocaleString()}</div>
             </div>
           </div>
@@ -170,7 +180,7 @@ export function ReportsPage() {
               <article className="finding-item" key={report.id}>
                 <div className="finding-topline">
                   <div>
-                    <strong>{report.report_type === 'daily_summary' ? 'Daily Summary Report' : 'Full Oncology Review Report'}</strong>
+                    <strong>{reportTypeLabel(report.report_type)}</strong>
                     <div className="muted">{new Date(report.generated_at).toLocaleString()}</div>
                   </div>
                   <button className="secondary-button" onClick={() => void download(report.id, report.report_type)}>

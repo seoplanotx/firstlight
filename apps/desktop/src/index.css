@@ -224,7 +224,7 @@ code {
   padding: 7px 10px;
   border-left: 2px solid transparent;
   border-radius: 0 var(--radius) var(--radius) 0;
-  color: var(--ink-soft);
+  color: #3c433d;
   font-size: 0.9rem;
   transition: color 0.15s ease, background 0.15s ease, scale 0.1s ease;
 }
@@ -1100,6 +1100,88 @@ code {
   white-space: pre-line;
 }
 
+/* ---------- Clinician summary: editorial chart header (de-boxed) ---------- */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 32px;
+  row-gap: 20px;
+}
+
+.chart-grid.chart-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chart-row {
+  min-width: 0;
+}
+
+.chart-row.chart-row-wide {
+  grid-column: 1 / -1;
+}
+
+.chart-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+
+.chart-value {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-line;
+}
+
+.chart-value.chart-value-soft {
+  color: var(--ink-soft);
+}
+
+.chart-divider {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 22px 0;
+}
+
+.chart-row.chart-row-caution .chart-value {
+  border-left: 2px solid var(--amber-line);
+  padding-left: 14px;
+}
+
+.chart-row.chart-row-caution .chart-label {
+  color: var(--amber);
+}
+
+/* De-boxed rationale: label + colored rule instead of nested cards */
+.rationale-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.rationale-col {
+  min-width: 0;
+}
+
+.rationale-col .support-card-label {
+  margin-bottom: 4px;
+}
+
+.rationale-col-caution {
+  border-left: 2px solid var(--amber-line);
+  padding-left: 14px;
+}
+
+.rationale-col-caution .support-card-label {
+  color: var(--amber);
+}
+
 .finding-footer {
   margin-top: 10px;
   display: flex;
@@ -1562,7 +1644,9 @@ code {
   .briefing-metrics,
   .detail-grid,
   .form-grid,
-  .row-card-grid {
+  .row-card-grid,
+  .chart-grid,
+  .rationale-split {
     grid-template-columns: 1fr;
   }
 

@@ -11,7 +11,13 @@ from sqlalchemy.orm import sessionmaker
 from app.db.base import Base
 from app.models import AppSettings, Biomarker, Finding, FindingEvidence, MonitoringRun, PatientProfile
 from app.services.llm_service import validate_clinician_questions
-from app.services.report_service import _deterministic_questions, write_report
+from app.services.report_service import (
+    _report_title,
+    _trimmed_profile_rows,
+    build_report_bytes,
+    _deterministic_questions,
+    write_report,
+)
 
 
 def build_profile() -> PatientProfile:
@@ -205,6 +211,46 @@ class ReportServiceTests(unittest.TestCase):
 
         self.assertTrue(questions)
         self.assertEqual(validate_clinician_questions(questions), questions)
+
+    def test_report_title_maps_appointment_prep(self) -> None:
+        self.assertEqual(_report_title("appointment_prep"), "Appointment Prep Sheet")
+        self.assertEqual(_report_title("daily_summary"), "Daily Summary Report")
+        self.assertEqual(_report_title("unknown_type"), "Full Oncology Review Report")
+
+    def test_trimmed_profile_rows_drop_display_name_and_empties(self) -> None:
+        profile = build_profile()
+        rows = _trimmed_profile_rows(profile)
+        labels = [row[0] for row in rows]
+        self.assertNotIn("Display name", labels)
+        for row in rows:
+            self.assertNotIn(row[1], (None, "", "—"))
+
+    def test_appointment_prep_report_renders_pdf_bytes(self) -> None:
+        profile = build_profile()
+        finding = build_finding(
+            profile_id=1,
+            monitoring_run_id=1,
+            title="New recruiting EGFR trial",
+            external_identifier="NCT-NEW-OPEN",
+            finding_type="clinical_trials",
+            status="new",
+            score=91.0,
+            relevance_label="High relevance",
+            recruitment_bucket="open",
+            freshness_bucket="very_recent",
+        )
+
+        briefing = {
+            "new_count": 1,
+            "changed_count": 0,
+            "blockers": [
+                {"label": "Performance status", "finding_count": 1, "examples": ["New recruiting EGFR trial"]}
+            ],
+        }
+        pdf_bytes = build_report_bytes(profile, [finding], "appointment_prep", briefing=briefing)
+
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+        self.assertGreater(len(pdf_bytes), 1000)
 
 
 if __name__ == "__main__":

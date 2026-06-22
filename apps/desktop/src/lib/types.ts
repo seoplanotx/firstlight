@@ -233,6 +233,78 @@ export type ReportExport = {
   summary_json: ReportSummary;
 };
 
+export type ReportType = 'daily_summary' | 'full_review' | 'appointment_prep';
+
+export type CaseBiomarker = {
+  name: string;
+  variant?: string | null;
+  status?: string | null;
+};
+
+export type CaseTherapyLine = {
+  therapy_name: string;
+  therapy_type?: string | null;
+  line_of_therapy?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+};
+
+export type CaseHeader = {
+  cancer_type: string;
+  subtype?: string | null;
+  stage_or_context?: string | null;
+  current_therapy_status?: string | null;
+  location_label?: string | null;
+  travel_radius_miles?: number | null;
+  biomarkers: CaseBiomarker[];
+  lines_of_therapy: CaseTherapyLine[];
+  would_consider: string[];
+  would_not_consider: string[];
+};
+
+export type CaseFramingGeneration = {
+  mode: string;
+  status: string;
+  provider?: string | null;
+  model?: string | null;
+  message?: string | null;
+};
+
+export type CaseFraming = {
+  text: string;
+  generation: CaseFramingGeneration;
+};
+
+export type CondensedFinding = {
+  id: number;
+  type: string;
+  title: string;
+  source_name: string;
+  source_url?: string | null;
+  identifier: string;
+  relevance_label: string;
+  score: number;
+  status: string;
+  recruitment_bucket?: string | null;
+  freshness_bucket?: string | null;
+  why_it_surfaced?: string | null;
+  why_it_may_not_fit?: string | null;
+  matching_gaps: string[];
+  user_action: string;
+};
+
+export type ClinicianSummary = {
+  generated_at: string;
+  case_header: CaseHeader;
+  case_framing: CaseFraming;
+  trial_findings: CondensedFinding[];
+  research_findings: CondensedFinding[];
+  discussion_questions: string[];
+  data_gaps: BriefingBlocker[];
+  disclaimer: string;
+};
+
 export type AuditEvent = {
   timestamp: string;
   action: string;

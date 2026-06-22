@@ -8,6 +8,7 @@ import { API_BASE, api } from './lib/api';
 import { useBackgroundMonitoring } from './lib/backgroundMonitoring';
 import { getErrorMessage } from './lib/errors';
 import type { BootstrapInfo, OnboardingState } from './lib/types';
+import { ClinicianSummaryPage } from './pages/ClinicianSummaryPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FindingsPage } from './pages/FindingsPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -106,6 +107,7 @@ function MainRouter({ bootstrap }: { bootstrap: BootstrapInfo }) {
             { path: 'findings', element: <FindingsPage /> },
             { path: 'trials', element: <TrialMatchesPage /> },
             { path: 'updates', element: <UpdatesPage /> },
+            { path: 'clinician', element: <ClinicianSummaryPage /> },
             { path: 'reports', element: <ReportsPage /> },
             { path: 'settings', element: <SettingsPage /> },
             { path: 'support', element: <SupportPage bootstrap={bootstrap} /> }

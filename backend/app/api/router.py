@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     bootstrap,
+    clinician_summary,
     data,
     dashboard,
     findings,
@@ -25,4 +26,7 @@ api_router.include_router(findings.router, prefix="/findings", tags=["findings"]
 api_router.include_router(runs.router, prefix="/runs", tags=["runs"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
+api_router.include_router(
+    clinician_summary.router, prefix="/clinician-summary", tags=["clinician-summary"]
+)
 api_router.include_router(data.router, prefix="/data", tags=["data"])

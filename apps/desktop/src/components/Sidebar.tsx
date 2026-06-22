@@ -5,6 +5,7 @@ const primaryItems = [
   { to: '/findings', label: "What's New" },
   { to: '/trials', label: 'Trials to Consider' },
   { to: '/updates', label: 'Research Updates' },
+  { to: '/clinician', label: 'Summary for the Doctor' },
   { to: '/reports', label: 'Reports for the Doctor' }
 ];
 

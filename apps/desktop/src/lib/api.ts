@@ -2,6 +2,7 @@ import type {
   AppSettings,
   AuditEvent,
   BootstrapInfo,
+  ClinicianSummary,
   Dashboard,
   DataDeletionSummary,
   Finding,
@@ -123,6 +124,11 @@ export const api = {
   },
   setFindingAction: (findingId: number, action: FindingAction) =>
     request<Finding>(`/findings/${findingId}/action`, { method: 'POST', body: JSON.stringify({ action }) }),
+
+  getClinicianSummary: (profileId?: number) =>
+    request<ClinicianSummary>(
+      `/clinician-summary${typeof profileId === 'number' ? `?profile_id=${profileId}` : ''}`
+    ),
 
   getReports: () => request<ReportExport[]>('/reports'),
   generateReport: (payload: Record<string, unknown>) =>
