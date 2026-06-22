@@ -1,6 +1,6 @@
 [package]
 name = "oncowatch"
-version = "0.2.4"
+version = "0.2.5"
 description = "OncoWatch desktop shell"
 authors = ["OncoWatch"]
 edition = "2021"
