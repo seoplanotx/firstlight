@@ -2,9 +2,9 @@
   "manifest_version": "0.2",
   "name": "firstlight",
   "display_name": "Firstlight",
-  "version": "0.2.5",
-  "description": "Ask Claude about the oncology research your local Firstlight app surfaced — read-only and de-identified.",
-  "long_description": "Firstlight is a free, open-source, local-first desktop app that monitors oncology research (ClinicalTrials.gov, PubMed, openFDA, Europe PMC) for one patient's case and prepares source-backed summaries for their oncology team.\n\nThis extension gives Claude read-only access to what Firstlight found — findings with match rationale and cautions, a de-identified case outline, the clinician summary, and monitoring history — through a local, consent-gated connection. Identifying details (name, date of birth, contacts, exact location, doctor or hospital names, notes) never cross the boundary: Firstlight's fail-closed de-identification layer enforces it in code.\n\nRequires the Firstlight desktop app to be running. Turn on access and generate a connection code in Firstlight → Settings → Claude Desktop connection.\n\nFirstlight is an information monitoring tool, not medical advice: it never determines treatment, trial eligibility, or medical appropriateness, and every finding requires clinician review.",
+  "version": "0.3.0",
+  "description": "Ask Claude about the oncology research your local Firstlight app surfaced \u2014 read-only and de-identified.",
+  "long_description": "Firstlight is a free, open-source, local-first desktop app that monitors oncology research (ClinicalTrials.gov, PubMed, openFDA, Europe PMC) for one patient's case and prepares source-backed summaries for their oncology team.\n\nThis extension gives Claude read-only access to what Firstlight found \u2014 findings with match rationale and cautions, a de-identified case outline, the clinician summary, and monitoring history \u2014 through a local, consent-gated connection. Identifying details (name, date of birth, contacts, exact location, doctor or hospital names, notes) never cross the boundary: Firstlight's fail-closed de-identification layer enforces it in code.\n\nRequires the Firstlight desktop app to be running. Turn on access and generate a connection code in Firstlight \u2192 Settings \u2192 Claude Desktop connection.\n\nFirstlight is an information monitoring tool, not medical advice: it never determines treatment, trial eligibility, or medical appropriateness, and every finding requires clinician review.",
   "author": {
     "name": "Tucker Coffey",
     "url": "https://firstlighthq.com"
@@ -22,7 +22,9 @@
     "entry_point": "dist/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/dist/index.js"],
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
       "env": {
         "FIRSTLIGHT_MCP_TOKEN": "${user_config.access_token}",
         "FIRSTLIGHT_API_PORT": "${user_config.port}"
@@ -55,13 +57,21 @@
       "description": "List recent monitoring runs: when sources were checked and what was new or changed."
     }
   ],
-  "keywords": ["health", "oncology", "cancer", "research", "clinical-trials", "local-first", "privacy"],
+  "keywords": [
+    "health",
+    "oncology",
+    "cancer",
+    "research",
+    "clinical-trials",
+    "local-first",
+    "privacy"
+  ],
   "license": "Apache-2.0",
   "user_config": {
     "access_token": {
       "type": "string",
       "title": "Firstlight connection code",
-      "description": "Generate this in Firstlight → Settings → Claude Desktop connection, then paste it here.",
+      "description": "Generate this in Firstlight \u2192 Settings \u2192 Claude Desktop connection, then paste it here.",
       "sensitive": true,
       "required": true
     },
@@ -74,7 +84,10 @@
     }
   },
   "compatibility": {
-    "platforms": ["darwin", "win32"],
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
     "runtimes": {
       "node": ">=18"
     }
