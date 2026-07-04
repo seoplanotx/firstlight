@@ -29,5 +29,9 @@ backend/oncowatch-backend.spec
 *.sqlite3
 *.db
 
+# Packaged Claude Desktop extension bundles
+*.mcpb
+
 # Internal strategy docs — keep local, never commit
 SEO-PLAN.md
+outreach/

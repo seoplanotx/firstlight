@@ -2,6 +2,10 @@
 
 *formerly OncoWatch*
 
+[![CI](https://github.com/seoplanotx/firstlight/actions/workflows/ci.yml/badge.svg)](https://github.com/seoplanotx/firstlight/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/seoplanotx/firstlight)](https://github.com/seoplanotx/firstlight/releases/latest)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)](LICENSE)
+
 **Website: [firstlighthq.com](https://firstlighthq.com)** &nbsp;·&nbsp; Free download for macOS & Windows
 
 **Firstlight** is a local-first desktop application that helps cancer patients and families monitor relevant new oncology information, organize what may matter, and bring structured, source-backed summaries to their oncology team.
@@ -9,6 +13,8 @@
 > **Safety disclaimer**
 >
 > Firstlight is an information monitoring and summarization tool. It does not determine treatment, trial eligibility, or medical appropriateness. It is not a diagnostic system and not a substitute for an oncologist. Every finding requires clinician review.
+>
+> How these guarantees are enforced in code — and how to verify them yourself — is documented in [SAFETY.md](SAFETY.md).
 
 ## Why "Firstlight"?
 
@@ -82,6 +88,15 @@ Firstlight supports two privacy modes:
 
 See `docs/privacy-modes.md` for the de-identification boundary and allowed/blocked AI payload categories.
 
+### Use with Claude Desktop (optional)
+
+Firstlight ships a [Claude Desktop extension](packages/mcp-server/) — a local,
+read-only MCP connection you switch on in Settings. Claude can then answer
+questions about the findings Firstlight surfaced, using only public source
+data and a de-identified case outline; identifying details never cross the
+boundary (enforced in code — see [SAFETY.md](SAFETY.md) and
+[docs/mcp-extension.md](docs/mcp-extension.md)).
+
 ### Connector strategy
 The public release ships with four live connectors:
 - `clinicaltrials_gov` – live ClinicalTrials.gov trial search
@@ -143,6 +158,8 @@ Useful local checks:
 ```bash
 npm run lint
 npm run build:frontend
+npm run test:frontend
+npm run test:privacy      # de-identification + LLM guardrail suite (see SAFETY.md)
 npm run check:rust
 npm run test:e2e
 ```
@@ -188,6 +205,7 @@ ONCOWATCH_ENV=development
 ONCOWATCH_BACKEND_HOST=127.0.0.1
 ONCOWATCH_BACKEND_PORT=17845
 ONCOWATCH_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+ONCOWATCH_ANTHROPIC_BASE_URL=https://api.anthropic.com
 ```
 
 ## PDF export
@@ -223,6 +241,8 @@ Default language stays cautious:
 - requires clinician review
 - insufficient information to determine fit
 
+The full safety design — the de-identification boundary, the fail-closed output validators, encryption at rest — is documented in [SAFETY.md](SAFETY.md), including how to verify it with `npm run test:privacy`.
+
 ## License
 
 Firstlight is open source under the **GNU Affero General Public License v3.0 (AGPL-3.0-only)** — see [LICENSE](LICENSE).
@@ -234,6 +254,8 @@ What that means in practice:
 - This keeps Firstlight — and every derivative of it — open for the families it was built for.
 
 Copyright © 2026 Tucker Coffey.
+
+One exception: the Claude Desktop extension in [`packages/mcp-server/`](packages/mcp-server/) is licensed **Apache-2.0** so it can be adopted and redistributed without AGPL obligations.
 
 **Commercial licensing:** organizations that want to build on Firstlight without AGPL obligations (for example, a hosted or proprietary offering) can contact the copyright holder about a separate commercial license.
 
