@@ -84,6 +84,10 @@ def main() -> None:
         "keyring",
         "--copy-metadata",
         "keyring",
+        # The anthropic SDK reads its own version from package metadata at
+        # import time; without the metadata the frozen app dies on import.
+        "--copy-metadata",
+        "anthropic",
         "--paths",
         str(BACKEND_DIR),
         str(BACKEND_DIR / "app" / "serve.py"),
