@@ -7,6 +7,7 @@ from app.api.routes import (
     dashboard,
     findings,
     health,
+    mcp_gateway,
     onboarding,
     profiles,
     reports,
@@ -30,3 +31,4 @@ api_router.include_router(
     clinician_summary.router, prefix="/clinician-summary", tags=["clinician-summary"]
 )
 api_router.include_router(data.router, prefix="/data", tags=["data"])
+api_router.include_router(mcp_gateway.router, prefix="/mcp", tags=["mcp"])

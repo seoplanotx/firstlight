@@ -12,16 +12,21 @@ from app.models.settings import ApiProviderConfig, AppSettings, SourceConfig
 from app.schemas.settings import (
     ApiProviderConfigUpsert,
     AppSettingsUpdate,
-    OpenRouterTestResponse,
+    ProviderTestResponse,
     SourceConfigUpdate,
 )
 from app.services.deidentification_service import (
     PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
     PRIVACY_MODE_LOCAL_ONLY,
 )
-from app.services.llm_service import OpenRouterClient
+from app.services.llm_service import FIRST_PARTY_ANTHROPIC_MODELS, create_llm_client
 from app.services.scheduler_service import configure_scheduler_from_settings
 
+
+ALLOWED_AI_PROVIDERS = {
+    "openrouter": "OpenRouter",
+    "anthropic": "Anthropic (Claude)",
+}
 
 FALLBACK_MODELS = [
     "anthropic/claude-sonnet-4.6",
@@ -29,6 +34,11 @@ FALLBACK_MODELS = [
     "google/gemini-2.5-pro",
     "meta-llama/llama-4-maverick",
 ]
+
+FALLBACK_MODELS_BY_PROVIDER = {
+    "openrouter": FALLBACK_MODELS,
+    "anthropic": FIRST_PARTY_ANTHROPIC_MODELS,
+}
 
 
 def get_settings(session: Session) -> AppSettings:
@@ -74,6 +84,10 @@ def update_settings(session: Session, payload: AppSettingsUpdate) -> AppSettings
     settings.default_report_length = payload.default_report_length
     settings.demo_profile_enabled = False
     settings.privacy_mode = payload.privacy_mode
+    if payload.active_ai_provider is not None:
+        if payload.active_ai_provider not in ALLOWED_AI_PROVIDERS:
+            raise ValueError("Unknown AI provider selection.")
+        settings.active_ai_provider = payload.active_ai_provider
     settings.deidentified_ai_disclosure_acknowledged = (
         payload.deidentified_ai_disclosure_acknowledged
         if payload.privacy_mode == PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST
@@ -142,23 +156,31 @@ def get_provider_api_key(provider: ApiProviderConfig | None) -> str | None:
     return decrypt_secret(provider.encrypted_api_key)
 
 
-def test_openrouter(session: Session, api_key: str, model: str | None = None) -> OpenRouterTestResponse:
-    client = OpenRouterClient(api_key=api_key)
+def get_active_provider(session: Session) -> tuple[str, ApiProviderConfig | None]:
+    """Return the selected provider key plus its stored config (if any)."""
+
+    settings = get_settings(session)
+    provider_key = settings.active_ai_provider or "openrouter"
+    if provider_key not in ALLOWED_AI_PROVIDERS:
+        provider_key = "openrouter"
+    return provider_key, get_provider_config(session, provider_key)
+
+
+def test_provider(session: Session, provider_key: str, api_key: str, model: str | None = None) -> ProviderTestResponse:
+    client = create_llm_client(provider_key, api_key=api_key, model=model)
     ok, message, models = client.test_api_key()
-    return OpenRouterTestResponse(ok=ok, message=message, discovered_models=models[:20])
+    return ProviderTestResponse(ok=ok, message=message, discovered_models=models[:20])
 
 
-def list_openrouter_models(session: Session, api_key: str | None = None) -> list[str]:
+def list_provider_models(session: Session, provider_key: str, api_key: str | None = None) -> list[str]:
     if api_key:
-        client = OpenRouterClient(api_key=api_key)
-        ok, _, models = client.test_api_key()
+        ok, _, models = create_llm_client(provider_key, api_key=api_key).test_api_key()
         if ok and models:
             return models
-    provider = get_provider_config(session)
+    provider = get_provider_config(session, provider_key)
     stored_key = get_provider_api_key(provider)
     if stored_key:
-        client = OpenRouterClient(api_key=stored_key)
-        ok, _, models = client.test_api_key()
+        ok, _, models = create_llm_client(provider_key, api_key=stored_key).test_api_key()
         if ok and models:
             return models
-    return FALLBACK_MODELS
+    return FALLBACK_MODELS_BY_PROVIDER.get(provider_key, FALLBACK_MODELS)

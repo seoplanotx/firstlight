@@ -17,9 +17,9 @@ from app.services.findings_service import (
     trial_priority_key,
 )
 from app.services.heartbeat_service import deterministic_briefing_questions
-from app.services.llm_service import OpenRouterClient, validate_case_framing
+from app.services.llm_service import create_llm_client, validate_case_framing
 from app.services.report_service import DISCLAIMER
-from app.services.settings_service import get_provider_api_key, get_provider_config, get_settings
+from app.services.settings_service import get_active_provider, get_provider_api_key, get_settings
 from app.utils.dates import utcnow
 
 TRIAL_LIMIT = 12
@@ -138,7 +138,7 @@ def _case_framing(
             },
         }
 
-    provider = get_provider_config(session, "openrouter")
+    provider_key, provider = get_active_provider(session)
     api_key = get_provider_api_key(provider)
     if provider is None or not provider.is_configured or not provider.selected_model or not api_key:
         return {
@@ -146,7 +146,7 @@ def _case_framing(
             "generation": {
                 "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
                 "status": "ai_unavailable",
-                "provider": "openrouter",
+                "provider": provider_key,
                 "model": provider.selected_model if provider else None,
             },
         }
@@ -158,9 +158,9 @@ def _case_framing(
             task="clinician_summary",
         )
         text = validate_case_framing(
-            OpenRouterClient(api_key=api_key, model=provider.selected_model).generate_case_framing(
-                case_packet=case_packet
-            )
+            create_llm_client(
+                provider_key, api_key=api_key, model=provider.selected_model
+            ).generate_case_framing(case_packet=case_packet)
         )
     except Exception as exc:
         return {
@@ -168,7 +168,7 @@ def _case_framing(
             "generation": {
                 "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
                 "status": "ai_failed",
-                "provider": "openrouter",
+                "provider": provider_key,
                 "model": provider.selected_model,
                 "message": str(exc),
             },
@@ -180,7 +180,7 @@ def _case_framing(
             "generation": {
                 "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
                 "status": "ai_failed",
-                "provider": "openrouter",
+                "provider": provider_key,
                 "model": provider.selected_model,
                 "message": "AI provider returned no usable case framing; deterministic fallback was used.",
             },
@@ -191,7 +191,7 @@ def _case_framing(
         "generation": {
             "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
             "status": "ai_generated",
-            "provider": "openrouter",
+            "provider": provider_key,
             "model": provider.selected_model,
         },
     }

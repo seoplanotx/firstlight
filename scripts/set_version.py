@@ -35,6 +35,8 @@ def main() -> int:
 
     update_json(ROOT / "package.json", version)
     update_json(ROOT / "apps/desktop/package.json", version)
+    update_json(ROOT / "packages/mcp-server/package.json", version)
+    update_json(ROOT / "packages/mcp-server/manifest.json", version)
     update_pattern(ROOT / "apps/desktop/src-tauri/Cargo.toml", r'^version = ".*"$', f'version = "{version}"')
     update_pattern(ROOT / "apps/desktop/src-tauri/tauri.conf.json", r'"version": ".*"', f'"version": "{version}"')
     update_pattern(ROOT / "backend/pyproject.toml", r'^version = ".*"$', f'version = "{version}"')

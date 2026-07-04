@@ -10,8 +10,9 @@ class RuntimeSettings:
     backend_host: str = field(default_factory=lambda: os.getenv("ONCOWATCH_BACKEND_HOST", "127.0.0.1"))
     backend_port: int = field(default_factory=lambda: int(os.getenv("ONCOWATCH_BACKEND_PORT", "17845")))
     openrouter_base_url: str = field(default_factory=lambda: os.getenv("ONCOWATCH_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"))
+    anthropic_base_url: str = field(default_factory=lambda: os.getenv("ONCOWATCH_ANTHROPIC_BASE_URL", "https://api.anthropic.com"))
     app_title_header: str = "Firstlight"
-    app_referer_header: str = "https://github.com/oncowatch/oncowatch"
+    app_referer_header: str = "https://github.com/seoplanotx/firstlight"
 
     @property
     def api_base_url(self) -> str:

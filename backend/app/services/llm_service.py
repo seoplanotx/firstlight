@@ -4,6 +4,7 @@ import json
 import re
 from typing import Any
 
+import anthropic
 import httpx
 
 from app.core.config import settings
@@ -85,11 +86,102 @@ def validate_case_framing(text: str | None) -> str:
     return cleaned
 
 
-class OpenRouterClient:
+# First-party Anthropic model IDs (console.anthropic.com); OpenRouter uses its
+# own aggregator IDs like "anthropic/claude-sonnet-4.6".
+FIRST_PARTY_ANTHROPIC_MODELS = [
+    "claude-sonnet-4-6",
+    "claude-opus-4-8",
+    "claude-haiku-4-5",
+]
+
+_QUESTIONS_SYSTEM_PROMPT = (
+    "You are generating cautious clinician-discussion questions for a local oncology monitoring app. "
+    "Use only the de-identified case context provided. Do not infer identity. "
+    "Do not give treatment advice. Do not claim eligibility. Keep each question plain, short, and respectful."
+)
+_QUESTIONS_INSTRUCTION = "Generate 5 short questions the patient or clinician could review at an oncology visit."
+_FRAMING_SYSTEM_PROMPT = (
+    "You are writing a single neutral one-line case framing for a local oncology "
+    "monitoring app. Use only the de-identified case context provided. Do not infer "
+    "identity. Do not give treatment advice, claim eligibility, recommend, rank, or "
+    "judge appropriateness. Summarize the case and what was flagged for clinician "
+    "review in one short, plain sentence."
+)
+_FRAMING_INSTRUCTION = (
+    "Write ONE short sentence (max 40 words) framing this case for the "
+    "patient's oncology team to review. No advice, no eligibility, no ranking."
+)
+_COMPLETION_MAX_TOKENS = 1024
+
+
+class _BaseLLMClient:
+    """Shared prompts and safety gates for every AI provider.
+
+    The de-identification assertion on input and the fail-closed output
+    validators live here, so no provider implementation can skip them —
+    providers only implement transport (`_complete`, `test_api_key`).
+    """
+
+    provider_key = ""
+
     def __init__(self, api_key: str, model: str | None = None) -> None:
         self.api_key = api_key
-        self.model = model or "anthropic/claude-sonnet-4.6"
+        self.model = model or self.default_model()
+
+    @classmethod
+    def default_model(cls) -> str:
+        raise NotImplementedError
+
+    def test_api_key(self) -> tuple[bool, str, list[str]]:
+        raise NotImplementedError
+
+    def _complete(self, *, system: str, user_payload: str) -> str:
+        raise NotImplementedError
+
+    def generate_clinician_questions(self, *, case_packet: dict[str, Any]) -> list[str]:
+        assert_deidentified_packet(case_packet)
+        user_payload = json.dumps(
+            {
+                "deidentified_case_packet": case_packet,
+                "instruction": _QUESTIONS_INSTRUCTION,
+            },
+            sort_keys=True,
+            default=str,
+        )
+        try:
+            content = self._complete(system=_QUESTIONS_SYSTEM_PROMPT, user_payload=user_payload)
+            lines = [line.strip("-• ").strip() for line in str(content).splitlines() if line.strip()]
+            return validate_clinician_questions(lines)
+        except Exception:
+            return []
+
+    def generate_case_framing(self, *, case_packet: dict[str, Any]) -> str:
+        assert_deidentified_packet(case_packet)
+        user_payload = json.dumps(
+            {
+                "deidentified_case_packet": case_packet,
+                "instruction": _FRAMING_INSTRUCTION,
+            },
+            sort_keys=True,
+            default=str,
+        )
+        try:
+            content = self._complete(system=_FRAMING_SYSTEM_PROMPT, user_payload=user_payload)
+            return validate_case_framing(str(content))
+        except Exception:
+            return ""
+
+
+class OpenRouterClient(_BaseLLMClient):
+    provider_key = "openrouter"
+
+    def __init__(self, api_key: str, model: str | None = None) -> None:
+        super().__init__(api_key, model)
         self.base_url = settings.openrouter_base_url
+
+    @classmethod
+    def default_model(cls) -> str:
+        return "anthropic/claude-sonnet-4.6"
 
     @property
     def _headers(self) -> dict[str, str]:
@@ -111,88 +203,75 @@ class OpenRouterClient:
         except Exception as exc:
             return False, f"Could not validate the API key: {exc}", []
 
-    def generate_clinician_questions(self, *, case_packet: dict[str, Any]) -> list[str]:
-        assert_deidentified_packet(case_packet)
+    def _complete(self, *, system: str, user_payload: str) -> str:
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are generating cautious clinician-discussion questions for a local oncology monitoring app. "
-                    "Use only the de-identified case context provided. Do not infer identity. "
-                    "Do not give treatment advice. Do not claim eligibility. Keep each question plain, short, and respectful."
-                ),
-            },
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "deidentified_case_packet": case_packet,
-                        "instruction": "Generate 5 short questions the patient or clinician could review at an oncology visit.",
-                    },
-                    sort_keys=True,
-                    default=str,
-                ),
-            },
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_payload},
         ]
-        try:
-            with httpx.Client(timeout=45.0) as client:
-                response = client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers=self._headers,
-                    json={
-                        "model": self.model,
-                        "messages": messages,
-                        "temperature": 0.2,
-                    },
-                )
-                response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
-                lines = [line.strip("-• ").strip() for line in str(content).splitlines() if line.strip()]
-                return validate_clinician_questions(lines)
-        except Exception:
-            return []
+        with httpx.Client(timeout=45.0) as client:
+            response = client.post(
+                f"{self.base_url}/chat/completions",
+                headers=self._headers,
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": 0.2,
+                },
+            )
+            response.raise_for_status()
+            return str(response.json()["choices"][0]["message"]["content"])
 
-    def generate_case_framing(self, *, case_packet: dict[str, Any]) -> str:
-        assert_deidentified_packet(case_packet)
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are writing a single neutral one-line case framing for a local oncology "
-                    "monitoring app. Use only the de-identified case context provided. Do not infer "
-                    "identity. Do not give treatment advice, claim eligibility, recommend, rank, or "
-                    "judge appropriateness. Summarize the case and what was flagged for clinician "
-                    "review in one short, plain sentence."
-                ),
-            },
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "deidentified_case_packet": case_packet,
-                        "instruction": (
-                            "Write ONE short sentence (max 40 words) framing this case for the "
-                            "patient's oncology team to review. No advice, no eligibility, no ranking."
-                        ),
-                    },
-                    sort_keys=True,
-                    default=str,
-                ),
-            },
-        ]
+
+class AnthropicClient(_BaseLLMClient):
+    """First-party Anthropic API client for console.anthropic.com keys."""
+
+    provider_key = "anthropic"
+
+    def __init__(self, api_key: str, model: str | None = None) -> None:
+        super().__init__(api_key, model)
+        self.base_url = settings.anthropic_base_url
+
+    @classmethod
+    def default_model(cls) -> str:
+        return FIRST_PARTY_ANTHROPIC_MODELS[0]
+
+    def _client(self) -> anthropic.Anthropic:
+        return anthropic.Anthropic(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=45.0,
+            max_retries=1,
+        )
+
+    def test_api_key(self) -> tuple[bool, str, list[str]]:
         try:
-            with httpx.Client(timeout=45.0) as client:
-                response = client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers=self._headers,
-                    json={
-                        "model": self.model,
-                        "messages": messages,
-                        "temperature": 0.2,
-                    },
-                )
-                response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
-                return validate_case_framing(str(content))
-        except Exception:
-            return ""
+            models = [item.id for item in self._client().models.list()]
+            return True, "API key looks valid.", models
+        except anthropic.AuthenticationError:
+            return (
+                False,
+                "Anthropic rejected this API key. Check it at console.anthropic.com/settings/keys.",
+                [],
+            )
+        except Exception as exc:
+            return False, f"Could not validate the API key: {exc}", []
+
+    def _complete(self, *, system: str, user_payload: str) -> str:
+        # The Messages API requires max_tokens; newer Claude models reject
+        # sampling parameters like temperature, so none are sent.
+        response = self._client().messages.create(
+            model=self.model,
+            max_tokens=_COMPLETION_MAX_TOKENS,
+            system=system,
+            messages=[{"role": "user", "content": user_payload}],
+        )
+        parts = [block.text for block in response.content if getattr(block, "type", "") == "text"]
+        return "\n".join(parts)
+
+
+def create_llm_client(provider_key: str, *, api_key: str, model: str | None = None) -> _BaseLLMClient:
+    if provider_key == OpenRouterClient.provider_key:
+        return OpenRouterClient(api_key=api_key, model=model)
+    if provider_key == AnthropicClient.provider_key:
+        return AnthropicClient(api_key=api_key, model=model)
+    raise ValueError(f"Unknown AI provider: {provider_key}")

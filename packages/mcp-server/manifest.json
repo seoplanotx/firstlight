@@ -1,0 +1,82 @@
+{
+  "manifest_version": "0.2",
+  "name": "firstlight",
+  "display_name": "Firstlight",
+  "version": "0.2.5",
+  "description": "Ask Claude about the oncology research your local Firstlight app surfaced — read-only and de-identified.",
+  "long_description": "Firstlight is a free, open-source, local-first desktop app that monitors oncology research (ClinicalTrials.gov, PubMed, openFDA, Europe PMC) for one patient's case and prepares source-backed summaries for their oncology team.\n\nThis extension gives Claude read-only access to what Firstlight found — findings with match rationale and cautions, a de-identified case outline, the clinician summary, and monitoring history — through a local, consent-gated connection. Identifying details (name, date of birth, contacts, exact location, doctor or hospital names, notes) never cross the boundary: Firstlight's fail-closed de-identification layer enforces it in code.\n\nRequires the Firstlight desktop app to be running. Turn on access and generate a connection code in Firstlight → Settings → Claude Desktop connection.\n\nFirstlight is an information monitoring tool, not medical advice: it never determines treatment, trial eligibility, or medical appropriateness, and every finding requires clinician review.",
+  "author": {
+    "name": "Tucker Coffey",
+    "url": "https://firstlighthq.com"
+  },
+  "homepage": "https://firstlighthq.com",
+  "documentation": "https://github.com/seoplanotx/firstlight/blob/main/docs/mcp-extension.md",
+  "support": "https://github.com/seoplanotx/firstlight/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seoplanotx/firstlight"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "FIRSTLIGHT_MCP_TOKEN": "${user_config.access_token}",
+        "FIRSTLIGHT_API_PORT": "${user_config.port}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "get_firstlight_status",
+      "description": "Check the local Firstlight app: version, profile presence, monitoring status, enabled sources."
+    },
+    {
+      "name": "list_recent_findings",
+      "description": "List research findings Firstlight surfaced (trials, literature, drug updates) with rationale, cautions, and sources."
+    },
+    {
+      "name": "get_finding",
+      "description": "Get one finding in full detail: evidence, why it surfaced, why it may not fit, known gaps."
+    },
+    {
+      "name": "get_deidentified_case_context",
+      "description": "Get the de-identified case outline (cancer type, coarse stage, biomarkers, state-level location)."
+    },
+    {
+      "name": "get_latest_clinician_summary",
+      "description": "Get the clinician-facing summary: prioritized findings, discussion questions, data gaps."
+    },
+    {
+      "name": "list_monitoring_runs",
+      "description": "List recent monitoring runs: when sources were checked and what was new or changed."
+    }
+  ],
+  "keywords": ["health", "oncology", "cancer", "research", "clinical-trials", "local-first", "privacy"],
+  "license": "Apache-2.0",
+  "user_config": {
+    "access_token": {
+      "type": "string",
+      "title": "Firstlight connection code",
+      "description": "Generate this in Firstlight → Settings → Claude Desktop connection, then paste it here.",
+      "sensitive": true,
+      "required": true
+    },
+    "port": {
+      "type": "number",
+      "title": "Firstlight local port",
+      "description": "Leave at 17845 unless you changed Firstlight's backend port.",
+      "default": 17845,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": {
+      "node": ">=18"
+    }
+  }
+}

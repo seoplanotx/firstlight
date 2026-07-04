@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 PrivacyMode = Literal["local_only", "deidentified_ai_assist"]
+AIProvider = Literal["openrouter", "anthropic"]
 
 
 class SourceConfigRead(BaseModel):
@@ -43,6 +44,7 @@ class AppSettingsRead(BaseModel):
     demo_profile_enabled: bool
     privacy_mode: PrivacyMode = "local_only"
     deidentified_ai_disclosure_acknowledged: bool = False
+    active_ai_provider: AIProvider = "openrouter"
     last_health_check_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
@@ -56,6 +58,9 @@ class AppSettingsUpdate(BaseModel):
     demo_profile_enabled: bool = False
     privacy_mode: PrivacyMode = "local_only"
     deidentified_ai_disclosure_acknowledged: bool = False
+    # None-defaulted on purpose: a PUT that omits this field must not reset the
+    # user's provider selection back to a default.
+    active_ai_provider: AIProvider | None = None
 
 
 class ApiProviderConfigRead(BaseModel):
@@ -75,18 +80,18 @@ class ApiProviderConfigRead(BaseModel):
 
 
 class ApiProviderConfigUpsert(BaseModel):
-    provider_key: str = "openrouter"
+    provider_key: AIProvider = "openrouter"
     display_name: str = "OpenRouter"
     selected_model: str | None = None
     api_key: str | None = None
 
 
-class OpenRouterTestRequest(BaseModel):
+class ProviderTestRequest(BaseModel):
     api_key: str
     model: str | None = None
 
 
-class OpenRouterTestResponse(BaseModel):
+class ProviderTestResponse(BaseModel):
     ok: bool
     message: str
     discovered_models: list[str] = Field(default_factory=list)

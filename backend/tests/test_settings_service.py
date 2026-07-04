@@ -7,7 +7,14 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
 from app.schemas.settings import AppSettingsUpdate
-from app.services.settings_service import get_settings, update_settings
+from app.services.llm_service import FIRST_PARTY_ANTHROPIC_MODELS
+from app.services.settings_service import (
+    FALLBACK_MODELS,
+    FALLBACK_MODELS_BY_PROVIDER,
+    get_active_provider,
+    get_settings,
+    update_settings,
+)
 
 
 class SettingsPrivacyModeTests(unittest.TestCase):
@@ -57,6 +64,43 @@ class SettingsPrivacyModeTests(unittest.TestCase):
                         deidentified_ai_disclosure_acknowledged=False,
                     ),
                 )
+
+
+class ActiveAiProviderTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.engine = create_engine("sqlite:///:memory:", future=True)
+        Base.metadata.create_all(bind=self.engine)
+        self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)
+
+    def tearDown(self) -> None:
+        self.engine.dispose()
+
+    def test_active_provider_defaults_to_openrouter(self) -> None:
+        with self.session_factory() as session:
+            settings = get_settings(session)
+            self.assertEqual(settings.active_ai_provider, "openrouter")
+            provider_key, provider = get_active_provider(session)
+        self.assertEqual(provider_key, "openrouter")
+        self.assertIsNone(provider)
+
+    def test_active_provider_can_switch_to_anthropic(self) -> None:
+        with self.session_factory() as session:
+            saved = update_settings(session, AppSettingsUpdate(active_ai_provider="anthropic"))
+            self.assertEqual(saved.active_ai_provider, "anthropic")
+            provider_key, _ = get_active_provider(session)
+            self.assertEqual(provider_key, "anthropic")
+
+    def test_update_without_provider_field_does_not_reset_selection(self) -> None:
+        with self.session_factory() as session:
+            update_settings(session, AppSettingsUpdate(active_ai_provider="anthropic"))
+            saved = update_settings(session, AppSettingsUpdate(daily_run_time="09:15"))
+            self.assertEqual(saved.active_ai_provider, "anthropic")
+            self.assertEqual(saved.daily_run_time, "09:15")
+
+    def test_fallback_model_lists_are_provider_specific(self) -> None:
+        self.assertEqual(FALLBACK_MODELS_BY_PROVIDER["openrouter"], FALLBACK_MODELS)
+        self.assertEqual(FALLBACK_MODELS_BY_PROVIDER["anthropic"], FIRST_PARTY_ANTHROPIC_MODELS)
+        self.assertIn("claude-sonnet-4-6", FIRST_PARTY_ANTHROPIC_MODELS)
 
 
 if __name__ == "__main__":

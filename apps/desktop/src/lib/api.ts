@@ -1,4 +1,5 @@
 import type {
+  AIProvider,
   AppSettings,
   AuditEvent,
   BootstrapInfo,
@@ -8,6 +9,8 @@ import type {
   Finding,
   FindingAction,
   HealthResponse,
+  McpAccessStatus,
+  McpEnableResponse,
   MonitoringRun,
   OnboardingState,
   PatientProfile,
@@ -94,15 +97,20 @@ export const api = {
   getSettings: () => request<AppSettings>('/settings'),
   updateSettings: (payload: Partial<AppSettings>) =>
     request<AppSettings>('/settings', { method: 'PUT', body: JSON.stringify(payload) }),
-  getProviderConfig: () => request<ProviderConfig | null>('/settings/provider/openrouter'),
-  saveProviderConfig: (payload: Record<string, unknown>) =>
-    request<ProviderConfig>('/settings/provider/openrouter/save', { method: 'POST', body: JSON.stringify(payload) }),
-  testOpenRouterKey: (payload: Record<string, unknown>) =>
-    request<{ ok: boolean; message: string; discovered_models: string[] }>('/settings/provider/openrouter/test', {
+  getProviderConfig: (provider: AIProvider = 'openrouter') =>
+    request<ProviderConfig | null>(`/settings/provider/${provider}`),
+  saveProviderConfig: (provider: AIProvider, payload: Record<string, unknown>) =>
+    request<ProviderConfig>(`/settings/provider/${provider}/save`, { method: 'POST', body: JSON.stringify(payload) }),
+  testProviderKey: (provider: AIProvider, payload: Record<string, unknown>) =>
+    request<{ ok: boolean; message: string; discovered_models: string[] }>(`/settings/provider/${provider}/test`, {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-  getOpenRouterModels: () => request<string[]>('/settings/provider/openrouter/models'),
+  getProviderModels: (provider: AIProvider = 'openrouter') => request<string[]>(`/settings/provider/${provider}/models`),
+
+  getMcpAccess: () => request<McpAccessStatus>('/settings/mcp'),
+  enableMcpAccess: () => request<McpEnableResponse>('/settings/mcp/enable', { method: 'POST' }),
+  disableMcpAccess: () => request<McpAccessStatus>('/settings/mcp/disable', { method: 'POST' }),
 
   getSources: () => request<SourceConfig[]>('/sources'),
   updateSource: (id: number, payload: Partial<SourceConfig>) =>

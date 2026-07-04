@@ -4,7 +4,7 @@ import { Card } from '../../components/Card';
 import { api } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import type { AppSettings, HealthResponse, PatientProfile, SourceConfig } from '../../lib/types';
-import { OpenRouterSetup } from '../ai/OpenRouterSetup';
+import { AIProviderSetup } from '../ai/AIProviderSetup';
 import { ProfileForm } from '../profile/ProfileForm';
 
 type Props = {
@@ -58,8 +58,13 @@ export function OnboardingWizard({ onCompleted }: Props) {
         setSettings(appSettings);
         setSources(sourceConfigs);
         try {
-          const provider = await api.getProviderConfig();
-          setProviderConfigured(Boolean(provider?.is_configured));
+          const [anthropicConfig, openrouterConfig] = await Promise.all([
+            api.getProviderConfig('anthropic'),
+            api.getProviderConfig('openrouter')
+          ]);
+          setProviderConfigured(
+            Boolean(anthropicConfig?.is_configured) || Boolean(openrouterConfig?.is_configured)
+          );
         } catch {
           // AI provider config is optional during onboarding.
         }
@@ -93,7 +98,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       {
         label: 'AI Assist',
         title: 'Choose how much AI helps, if at all.',
-        description: 'Optional. Plain-language summaries use your own OpenRouter key. Local-only mode needs no key.'
+        description: 'Optional. Plain-language summaries use your own AI key — Anthropic (Claude) or OpenRouter. Local-only mode needs no key.'
       },
       {
         label: 'Health Check',
@@ -134,7 +139,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
         return;
       }
       if (!providerConfigured) {
-        setErrorMessage('Save a tested OpenRouter key below, or switch to local-only for now.');
+        setErrorMessage('Save a tested AI provider key below, or switch to local-only for now.');
         return;
       }
     }
@@ -375,7 +380,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
         {step === 3 && (
           <Card
             title="AI assist (optional)"
-            description="Firstlight works fully without AI. Adding your own OpenRouter key unlocks plain-language summaries and briefing questions."
+            description="Firstlight works fully without AI. Adding your own key — Anthropic (Claude) or OpenRouter — unlocks plain-language summaries and briefing questions."
           >
             <div className="stack">
               <div className="field">
@@ -395,7 +400,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
                   }}
                 >
                   <option value="local_only">Local-only — no AI, no key needed</option>
-                  <option value="deidentified_ai_assist">AI assist — de-identified summaries via OpenRouter</option>
+                  <option value="deidentified_ai_assist">AI assist — de-identified summaries via your AI provider</option>
                 </select>
               </div>
 
@@ -424,8 +429,8 @@ export function OnboardingWizard({ onCompleted }: Props) {
                       </div>
                     </div>
                   </label>
-                  <div className="section-divider">Connect OpenRouter</div>
-                  <OpenRouterSetup onConfigured={() => setProviderConfigured(true)} />
+                  <div className="section-divider">Connect an AI provider</div>
+                  <AIProviderSetup onConfigured={() => setProviderConfigured(true)} />
                 </>
               )}
 
@@ -503,7 +508,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
               <p>
                 AI assist:{' '}
                 {settings.privacy_mode === 'deidentified_ai_assist'
-                  ? 'on, using your OpenRouter key with de-identified context.'
+                  ? 'on, using your AI provider key with de-identified context.'
                   : 'off — everything stays local. Turn it on later in Settings.'}
               </p>
               <p>Reports will be saved in the local Firstlight reports folder.</p>

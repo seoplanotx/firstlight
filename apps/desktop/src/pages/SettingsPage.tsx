@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { Card } from '../components/Card';
 import { PageErrorState } from '../components/PageErrorState';
-import { OpenRouterSetup } from '../features/ai/OpenRouterSetup';
+import { AIProviderSetup } from '../features/ai/AIProviderSetup';
+import { ClaudeDesktopConnection } from '../features/ai/ClaudeDesktopConnection';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import { setLanguageMode, useLanguageMode } from '../lib/languageMode';
@@ -208,10 +209,17 @@ export function SettingsPage() {
       </Card>
 
       <Card
-        title="AI provider — OpenRouter"
-        description="Bring your own OpenRouter API key. It powers Mode 2 summaries and briefing questions, is encrypted, and never leaves this computer."
+        title="AI provider"
+        description="Bring your own API key — Anthropic (Claude) directly, or OpenRouter. It powers Mode 2 summaries and briefing questions, is encrypted, and never leaves this computer."
       >
-        <OpenRouterSetup />
+        <AIProviderSetup />
+      </Card>
+
+      <Card
+        title="Claude Desktop connection"
+        description="Optional: let Claude Desktop read your Firstlight findings through a local, read-only connection you control."
+      >
+        <ClaudeDesktopConnection />
       </Card>
 
       <Card

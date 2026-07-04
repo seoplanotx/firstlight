@@ -11,8 +11,8 @@ from app.services.deidentification_service import (
     PRIVACY_MODE_LOCAL_ONLY,
     build_deidentified_case_packet,
 )
-from app.services.llm_service import OpenRouterClient, validate_clinician_questions
-from app.services.settings_service import get_provider_api_key, get_provider_config, get_settings
+from app.services.llm_service import create_llm_client, validate_clinician_questions
+from app.services.settings_service import get_active_provider, get_provider_api_key, get_settings
 
 HEARTBEAT_WORKFLOW_NAME = "heartbeat_briefing"
 HEARTBEAT_WORKFLOW_VERSION = "v1"
@@ -74,13 +74,13 @@ def _ai_questions(
             "model": None,
         }
 
-    provider = get_provider_config(session, "openrouter")
+    provider_key, provider = get_active_provider(session)
     api_key = get_provider_api_key(provider)
     if provider is None or not provider.is_configured or not provider.selected_model or not api_key:
         return fallback_questions, {
             "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
             "status": "ai_unavailable",
-            "provider": "openrouter",
+            "provider": provider_key,
             "model": provider.selected_model if provider else None,
         }
 
@@ -91,15 +91,15 @@ def _ai_questions(
             task="clinician_questions",
         )
         questions = validate_clinician_questions(
-            OpenRouterClient(api_key=api_key, model=provider.selected_model).generate_clinician_questions(
-                case_packet=case_packet
-            )
+            create_llm_client(
+                provider_key, api_key=api_key, model=provider.selected_model
+            ).generate_clinician_questions(case_packet=case_packet)
         )
     except Exception as exc:
         return fallback_questions, {
             "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
             "status": "ai_failed",
-            "provider": "openrouter",
+            "provider": provider_key,
             "model": provider.selected_model,
             "message": str(exc),
         }
@@ -108,7 +108,7 @@ def _ai_questions(
         return fallback_questions, {
             "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
             "status": "ai_failed",
-            "provider": "openrouter",
+            "provider": provider_key,
             "model": provider.selected_model,
             "message": "AI provider returned no usable clinician-review questions; deterministic fallback was used.",
         }
@@ -116,7 +116,7 @@ def _ai_questions(
     return questions[:5], {
         "mode": PRIVACY_MODE_DEIDENTIFIED_AI_ASSIST,
         "status": "ai_generated",
-        "provider": "openrouter",
+        "provider": provider_key,
         "model": provider.selected_model,
     }
 

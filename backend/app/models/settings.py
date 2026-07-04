@@ -49,6 +49,12 @@ class AppSettings(Base, TimestampMixin):
     privacy_mode: Mapped[str] = mapped_column(String(40), default="local_only")
     deidentified_ai_disclosure_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
     last_health_check_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Claude Desktop (MCP) gateway access: off by default; the connection code
+    # is stored encrypted like provider API keys and never returned after issue.
+    mcp_access_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    mcp_access_token_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Which configured AI provider Mode 2 uses: "openrouter" or "anthropic".
+    active_ai_provider: Mapped[str] = mapped_column(String(40), default="openrouter", nullable=False)
 
 
 class ApiProviderConfig(Base, TimestampMixin):

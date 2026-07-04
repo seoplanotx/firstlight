@@ -153,7 +153,8 @@ class HeartbeatServiceTests(unittest.TestCase):
             finding = build_finding(profile.id)
 
             with patch("app.services.heartbeat_service.get_provider_api_key", return_value="test-key"), patch(
-                "app.services.heartbeat_service.OpenRouterClient", FakeOpenRouterClient
+                "app.services.heartbeat_service.create_llm_client",
+                lambda provider_key, *, api_key, model=None: FakeOpenRouterClient(api_key=api_key, model=model),
             ):
                 metadata = build_heartbeat_metadata(
                     session,
@@ -206,7 +207,8 @@ class HeartbeatServiceTests(unittest.TestCase):
             session.refresh(profile)
 
             with patch("app.services.heartbeat_service.get_provider_api_key", return_value="test-key"), patch(
-                "app.services.heartbeat_service.OpenRouterClient", UnsafeOpenRouterClient
+                "app.services.heartbeat_service.create_llm_client",
+                lambda provider_key, *, api_key, model=None: UnsafeOpenRouterClient(api_key=api_key, model=model),
             ):
                 metadata = build_heartbeat_metadata(
                     session,

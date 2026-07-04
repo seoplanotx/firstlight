@@ -17,12 +17,15 @@
 - `PUT /api/profiles/{profile_id}` — update profile
 
 ## Settings / provider
-- `GET /api/settings` — app settings
-- `PUT /api/settings` — update app settings
-- `GET /api/settings/provider/openrouter` — provider config
-- `POST /api/settings/provider/openrouter/save` — save provider config
-- `POST /api/settings/provider/openrouter/test` — validate API key
-- `GET /api/settings/provider/openrouter/models` — get model list / fallback list
+- `GET /api/settings` — app settings (includes `active_ai_provider`)
+- `PUT /api/settings` — update app settings (omitting `active_ai_provider` leaves the selection unchanged)
+- `GET /api/settings/provider/{provider_key}` — provider config (`openrouter` or `anthropic`; unknown keys 422)
+- `POST /api/settings/provider/{provider_key}/save` — save provider config (key encrypted at rest)
+- `POST /api/settings/provider/{provider_key}/test` — validate API key against the provider
+- `GET /api/settings/provider/{provider_key}/models` — model list (live when a key is stored, else per-provider fallback)
+- `GET /api/settings/mcp` — Claude Desktop (MCP) access status (`enabled`, `has_token`; never the token itself)
+- `POST /api/settings/mcp/enable` — enable access and return the connection code (shown once; re-calling rotates it)
+- `POST /api/settings/mcp/disable` — disable access and clear the stored token
 
 ## Sources
 - `GET /api/sources` — list source configs
@@ -43,3 +46,17 @@
 - `GET /api/reports` — report history
 - `POST /api/reports/generate` — generate report
 - `GET /api/reports/{report_id}/download` — download report PDF
+
+## MCP gateway (Claude Desktop extension)
+Read-only, consent-gated namespace used exclusively by the Firstlight Desktop
+Extension (`packages/mcp-server`). Every route requires the user-enabled flag
+(else `403`) and `Authorization: Bearer <connection code>` (else `401`).
+Payloads are privacy projections — public source data plus non-identifying
+rationale; case context only as the de-identified packet. See
+`docs/mcp-extension.md`.
+- `GET /api/mcp/status` — app/monitoring status snapshot
+- `GET /api/mcp/findings` — findings projection (`finding_type`, `query`, `limit` filters)
+- `GET /api/mcp/findings/{finding_id}` — one finding projection
+- `GET /api/mcp/case-context` — de-identified case packet only
+- `GET /api/mcp/clinician-summary` — clinician summary with de-identified case context
+- `GET /api/mcp/runs` — recent monitoring runs (no error text or internals)

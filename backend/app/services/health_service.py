@@ -9,8 +9,13 @@ from app.connectors.registry import connector_registry
 from app.core.paths import get_app_paths
 from app.schemas.health import HealthCheckItem, HealthCheckResponse
 from app.services.report_service import can_render_test_pdf
-from app.services.llm_service import OpenRouterClient
-from app.services.settings_service import get_provider_api_key, get_provider_config, list_source_configs
+from app.services.llm_service import create_llm_client
+from app.services.settings_service import (
+    ALLOWED_AI_PROVIDERS,
+    get_active_provider,
+    get_provider_api_key,
+    list_source_configs,
+)
 
 
 def run_health_check(session: Session) -> HealthCheckResponse:
@@ -114,14 +119,16 @@ def run_health_check(session: Session) -> HealthCheckResponse:
             )
         )
 
-    provider = get_provider_config(session)
+    provider_key, provider = get_active_provider(session)
     api_key = get_provider_api_key(provider)
     if api_key and provider and provider.selected_model:
-        ok, message, _ = OpenRouterClient(api_key=api_key, model=provider.selected_model).test_api_key()
+        ok, message, _ = create_llm_client(
+            provider_key, api_key=api_key, model=provider.selected_model
+        ).test_api_key()
         items.append(
             HealthCheckItem(
-                key="openrouter",
-                label="OpenRouter",
+                key="ai_provider",
+                label=ALLOWED_AI_PROVIDERS.get(provider_key, provider_key),
                 ok=ok,
                 message=message,
                 severity="warning",

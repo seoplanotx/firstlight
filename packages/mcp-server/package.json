@@ -1,0 +1,27 @@
+{
+  "name": "@firstlight/mcp-server",
+  "version": "0.2.5",
+  "private": true,
+  "description": "Firstlight extension for Claude Desktop — read-only MCP access to the research findings your local Firstlight app surfaced",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/index.js",
+    "test": "vitest run",
+    "pack": "npm run build && mcpb pack . firstlight.mcpb"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@anthropic-ai/mcpb": "^1.0.0",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

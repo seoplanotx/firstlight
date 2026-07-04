@@ -50,6 +50,8 @@ export type OnboardingState = {
 
 export type PrivacyMode = 'local_only' | 'deidentified_ai_assist';
 
+export type AIProvider = 'openrouter' | 'anthropic';
+
 export type AppSettings = {
   id?: number;
   default_profile_id?: number | null;
@@ -62,6 +64,7 @@ export type AppSettings = {
   demo_profile_enabled: boolean;
   privacy_mode: PrivacyMode;
   deidentified_ai_disclosure_acknowledged: boolean;
+  active_ai_provider?: AIProvider;
   last_health_check_at?: string | null;
 };
 
@@ -332,4 +335,14 @@ export type BootstrapInfo = {
   monitoring_mode: string;
   privacy_summary: string;
   product_scope: string;
+};
+
+export type McpAccessStatus = {
+  enabled: boolean;
+  has_token: boolean;
+};
+
+export type McpEnableResponse = {
+  enabled: boolean;
+  connection_code: string;
 };

@@ -10,7 +10,8 @@
     "npm": "10.x"
   },
   "workspaces": [
-    "apps/desktop"
+    "apps/desktop",
+    "packages/mcp-server"
   ],
   "scripts": {
     "dev": "concurrently -k \"npm run dev:backend\" \"npm run dev:desktop\"",
@@ -26,6 +27,9 @@
     "test:e2e": "playwright test",
     "test:frontend": "npm --workspace apps/desktop run test",
     "test:backend": "cd backend && PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v",
+    "test:privacy": "cd backend && PYTHONDONTWRITEBYTECODE=1 python -m unittest tests.test_deidentification_service tests.test_llm_service tests.test_heartbeat_service tests.test_clinician_summary_service tests.test_mcp_gateway -v",
+    "test:mcp": "npm --workspace packages/mcp-server run test",
+    "build:mcpb": "npm --workspace packages/mcp-server run pack",
     "set:version": "python scripts/set_version.py"
   },
   "devDependencies": {

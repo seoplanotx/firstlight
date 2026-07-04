@@ -1,0 +1,7 @@
+node_modules
+src
+*.test.ts
+tsconfig.json
+vitest.config.*
+firstlight.mcpb
+.mcpbignore
