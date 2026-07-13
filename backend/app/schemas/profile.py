@@ -76,3 +76,17 @@ class PatientProfileRead(PatientProfileBase):
     therapy_history: list[TherapyHistoryEntryRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+
+class ProfileExtractRequest(BaseModel):
+    text: str = Field(min_length=1)
+
+
+class ProfileExtractResponse(BaseModel):
+    cancer_type: str | None = None
+    subtype: str | None = None
+    stage_or_context: str | None = None
+    biomarkers: list[BiomarkerCreate] = Field(default_factory=list)
+    therapy_history: list[TherapyHistoryEntryCreate] = Field(default_factory=list)
+    notes: str | None = None
+    warnings: list[str] = Field(default_factory=list)

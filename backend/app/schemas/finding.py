@@ -10,6 +10,11 @@ class FindingActionUpdate(BaseModel):
     action: Literal["none", "discuss", "dismissed"]
 
 
+class FindingActionBulkUpdate(BaseModel):
+    finding_ids: list[int] = Field(default_factory=list, min_length=1)
+    action: Literal["none", "discuss", "dismissed"]
+
+
 class FindingEvidenceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

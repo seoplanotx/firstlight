@@ -10,8 +10,11 @@ import type { PatientProfile } from '../lib/types';
 vi.mock('../lib/api', () => ({
   api: {
     getActiveProfile: vi.fn(),
+    getProfiles: vi.fn(),
     updateProfile: vi.fn(),
-    createProfile: vi.fn()
+    createProfile: vi.fn(),
+    activateProfile: vi.fn(),
+    extractProfileFromText: vi.fn()
   }
 }));
 
@@ -44,13 +47,13 @@ describe('ProfilePage unsaved-changes guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedApi.getActiveProfile.mockResolvedValue(profile);
+    mockedApi.getProfiles.mockResolvedValue([profile]);
   });
 
   it('blocks router navigation (including Back/Forward) when edits are pending and the user cancels', async () => {
     const router = renderInRouter();
     await screen.findByDisplayValue('breast cancer');
 
-    // Make the form dirty.
     await userEvent.type(screen.getByLabelText('Cancer type'), ' (HER2+)');
 
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -59,7 +62,6 @@ describe('ProfilePage unsaved-changes guard', () => {
     });
 
     expect(confirmSpy).toHaveBeenCalled();
-    // Navigation was blocked — still on the profile route.
     expect(screen.queryByText('Other page')).not.toBeInTheDocument();
   });
 
@@ -72,7 +74,6 @@ describe('ProfilePage unsaved-changes guard', () => {
       await router.navigate('/other');
     });
 
-    // Clean form: no prompt, navigation proceeds.
     expect(confirmSpy).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText('Other page')).toBeInTheDocument());
   });

@@ -67,7 +67,18 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
             return run
 
         registry = connector_registry()
-        source_configs = session.query(SourceConfig).filter(SourceConfig.enabled.is_(True)).all()
+        # Public product only: never run demo/contributor-only connectors even if
+        # a stale row was left enabled in an old database.
+        from app.core.release import PUBLIC_SOURCE_KEYS
+
+        source_configs = (
+            session.query(SourceConfig)
+            .filter(
+                SourceConfig.enabled.is_(True),
+                SourceConfig.connector_key.in_(tuple(PUBLIC_SOURCE_KEYS)),
+            )
+            .all()
+        )
 
         new_count = 0
         changed_count = 0

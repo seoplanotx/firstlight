@@ -30,7 +30,11 @@
     "test:privacy": "cd backend && PYTHONDONTWRITEBYTECODE=1 python -m unittest tests.test_deidentification_service tests.test_llm_service tests.test_heartbeat_service tests.test_clinician_summary_service tests.test_mcp_gateway -v",
     "test:mcp": "npm --workspace packages/mcp-server run test",
     "build:mcpb": "npm --workspace packages/mcp-server run pack",
-    "set:version": "python scripts/set_version.py"
+    "set:version": "python scripts/set_version.py",
+    "check:packaged-smoke": "bash scripts/packaged_smoke_checklist.sh",
+    "check:node": "node scripts/check_node_version.mjs",
+    "pretest:frontend": "npm run check:node",
+    "pretest:e2e": "npm run check:node"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

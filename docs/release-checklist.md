@@ -88,3 +88,8 @@ Until steps 1–5 are done, releases are install-only (no in-app update).
 - keep the previous signed DMG and Windows installer available for rollback
 - include support notes covering log collection, the activity log, and the
   in-app data export/delete controls
+
+## Related docs
+- Auto-update setup: `docs/auto-update-setup.md`
+- Packaged smoke: `docs/packaged-smoke-checklist.md`
+- Improvement tracker: `docs/IMPROVEMENT-CHECKLIST.md`

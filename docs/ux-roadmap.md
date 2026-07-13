@@ -53,3 +53,6 @@ areas: **profile entry guidance** (the profile drives all matching) and the
   person.
 - **Deeper accessibility pass**: link underlines for WCAG, `aria-label`s on icon/link
   buttons, table semantics for detail grids, and focus trapping in the onboarding wizard.
+
+## Implementation tracker
+See `docs/IMPROVEMENT-CHECKLIST.md` for the ranked shipping checklist (bulk triage, source health, multi-profile, document-assisted profile, auto-update, packaged smoke).

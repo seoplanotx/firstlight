@@ -132,6 +132,28 @@ export const api = {
   },
   setFindingAction: (findingId: number, action: FindingAction) =>
     request<Finding>(`/findings/${findingId}/action`, { method: 'POST', body: JSON.stringify({ action }) }),
+  setFindingActionsBulk: (findingIds: number[], action: FindingAction) =>
+    request<{ total: number; items: Finding[] }>('/findings/actions/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ finding_ids: findingIds, action })
+    }),
+  activateProfile: (id: number) => request<PatientProfile>(`/profiles/${id}/activate`, { method: 'POST' }),
+  extractProfileFromText: (text: string) =>
+    request<{
+      cancer_type?: string | null;
+      subtype?: string | null;
+      stage_or_context?: string | null;
+      biomarkers: Array<{ name: string; variant?: string | null; status?: string | null; notes?: string | null }>;
+      therapy_history: Array<{
+        therapy_name: string;
+        therapy_type?: string | null;
+        line_of_therapy?: string | null;
+        status?: string | null;
+        notes?: string | null;
+      }>;
+      notes?: string | null;
+      warnings: string[];
+    }>('/profiles/extract-from-text', { method: 'POST', body: JSON.stringify({ text }) }),
 
   getClinicianSummary: (profileId?: number) =>
     request<ClinicianSummary>(

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,12 +14,25 @@ from app.utils.dates import utcnow
 router = APIRouter()
 
 
+def _demo_content_allowed() -> bool:
+    return os.getenv("ONCOWATCH_ALLOW_DEMO_CONTENT") == "1"
+
+
 @router.get("/state", response_model=OnboardingStateRead)
 def get_state(db: Session = Depends(get_db)) -> OnboardingStateRead:
     state = db.scalar(select(OnboardingState))
     if state is None:
-        state = OnboardingState(is_completed=False, current_step="welcome", show_demo_profile_option=True)
+        state = OnboardingState(
+            is_completed=False,
+            current_step="welcome",
+            show_demo_profile_option=_demo_content_allowed(),
+        )
         db.add(state)
+        db.commit()
+        db.refresh(state)
+    else:
+        # Public product never offers demo profiles unless explicitly enabled.
+        state.show_demo_profile_option = _demo_content_allowed()
         db.commit()
         db.refresh(state)
     return state
@@ -50,5 +65,10 @@ def complete_onboarding(payload: OnboardingCompleteRequest, db: Session = Depend
 
 @router.post("/demo-profile", response_model=DemoProfileResponse)
 def create_onboarding_demo_profile(db: Session = Depends(get_db)) -> DemoProfileResponse:
+    if not _demo_content_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail="Demo profiles are disabled in the public product. Set ONCOWATCH_ALLOW_DEMO_CONTENT=1 for contributor demos only.",
+        )
     profile = create_demo_profile(db)
     return DemoProfileResponse(profile_id=profile.id)

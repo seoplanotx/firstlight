@@ -7,7 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import type { Dashboard, FindingAction } from '../lib/types';
+import type { Dashboard, FindingAction, SourceConfig } from '../lib/types';
 
 const SOURCE_NAMES: Record<string, string> = {
   clinicaltrials_gov: 'ClinicalTrials.gov',
@@ -27,6 +27,7 @@ function jumpToSection(anchorId: string) {
 export function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [personName, setPersonName] = useState<string>('');
+  const [sourceConfigs, setSourceConfigs] = useState<SourceConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
@@ -40,10 +41,11 @@ export function DashboardPage() {
       const result = await api.getDashboard();
       setData(result);
       try {
-        const profile = await api.getActiveProfile();
+        const [profile, sources] = await Promise.all([api.getActiveProfile(), api.getSources()]);
         setPersonName(profile?.display_name || profile?.profile_name || '');
+        setSourceConfigs(sources);
       } catch {
-        // The dashboard still works without a personalized greeting.
+        // The dashboard still works without a personalized greeting or persistent source rows.
       }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not load the dashboard.'));
@@ -304,11 +306,26 @@ export function DashboardPage() {
 
           <Card
             title="Where we looked"
-            description="Each source Firstlight checked in the most recent run, and whether it responded."
+            description="Each source Firstlight checked in the most recent run, and whether it responded. Persistent source health from Settings is shown if a source has never completed a run yet."
             className="side-panel-card"
           >
-            {sourceStatuses.length === 0 ? (
+            {sourceStatuses.length === 0 && sourceConfigs.length === 0 ? (
               <EmptyState title="Nothing checked yet" message="Run a check to see how each source responded." />
+            ) : sourceStatuses.length === 0 ? (
+              <div className="headline-list">
+                {sourceConfigs.map((source) => (
+                  <article className="headline-item" key={source.id}>
+                    <strong>{source.name}</strong>
+                    <div className={source.last_error ? 'callout callout-danger' : 'muted'}>
+                      {source.last_error
+                        ? `Last issue: ${source.last_error}`
+                        : source.last_successful_sync_at
+                          ? `Last success: ${new Date(source.last_successful_sync_at).toLocaleString()}`
+                          : 'No check recorded yet'}
+                    </div>
+                  </article>
+                ))}
+              </div>
             ) : (
               <div className="headline-list">
                 {sourceStatuses.map((source) => (

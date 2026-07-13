@@ -352,6 +352,17 @@ def set_finding_action(session: Session, finding_id: int, action: str) -> Findin
     return get_finding(session, finding_id)
 
 
+def set_finding_actions_bulk(session: Session, finding_ids: list[int], action: str) -> list[Finding]:
+    if not finding_ids:
+        return []
+    findings = session.scalars(select(Finding).where(Finding.id.in_(tuple(finding_ids)))).all()
+    for finding in findings:
+        finding.user_action = action
+    session.commit()
+    ids = [finding.id for finding in findings]
+    return [finding for finding_id in ids if (finding := get_finding(session, finding_id)) is not None]
+
+
 def upsert_finding(
     session: Session,
     *,

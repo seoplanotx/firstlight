@@ -224,7 +224,7 @@ export function SettingsPage() {
 
       <Card
         title="Real sources"
-        description="This public release keeps the source list honest: real public registries and literature sources only."
+        description="This public release keeps the source list honest: real public registries and literature sources only. Health status is stored from the last successful or failed check."
       >
         <div className="stack">
           {sources.map((source) => (
@@ -238,6 +238,12 @@ export function SettingsPage() {
               <div>
                 <strong>{source.name}</strong>
                 <div className="muted">{SOURCE_BLURBS[source.connector_key] ?? source.name}</div>
+                <div className={source.last_error ? 'callout callout-danger' : 'muted'}>
+                  {source.last_successful_sync_at
+                    ? `Last success: ${new Date(source.last_successful_sync_at).toLocaleString()}`
+                    : 'No successful check stored yet'}
+                  {source.last_error ? ` · Last issue: ${source.last_error}` : ''}
+                </div>
               </div>
             </label>
           ))}

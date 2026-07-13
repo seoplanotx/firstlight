@@ -35,3 +35,4 @@ backend/oncowatch-backend.spec
 # Internal strategy docs — keep local, never commit
 SEO-PLAN.md
 outreach/
+.secrets/

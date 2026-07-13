@@ -8,7 +8,9 @@ import type { Finding } from '../lib/types';
 vi.mock('../lib/api', () => ({
   api: {
     getFindings: vi.fn(),
-    setFindingAction: vi.fn()
+    getSources: vi.fn(),
+    setFindingAction: vi.fn(),
+    setFindingActionsBulk: vi.fn()
   }
 }));
 
@@ -65,8 +67,18 @@ function findingTitles(container: HTMLElement): string[] {
 describe('FindingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // The backend returns items already ranked (rank_findings_for_briefing).
+    window.localStorage.clear();
     mockedApi.getFindings.mockResolvedValue({ total: 2, items: [highScoreOlder, lowScoreRecent] });
+    mockedApi.getSources.mockResolvedValue([
+      {
+        id: 1,
+        category: 'clinical_trials',
+        name: 'ClinicalTrials.gov',
+        connector_key: 'clinicaltrials_gov',
+        enabled: true,
+        settings_json: {}
+      }
+    ]);
     mockedApi.setFindingAction.mockResolvedValue(buildFinding());
   });
 
@@ -74,11 +86,9 @@ describe('FindingsPage', () => {
     const { container } = render(<FindingsPage />);
     await screen.findByText('High score, older');
 
-    // Default 'Most relevant' keeps the order the API returned.
     expect(findingTitles(container)).toEqual(['High score, older', 'Low score, newer']);
 
-    // 'Newest' orders by content date (newest first).
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'newest');
+    await userEvent.selectOptions(screen.getByDisplayValue('Most relevant'), 'newest');
     expect(findingTitles(container)).toEqual(['Low score, newer', 'High score, older']);
   });
 

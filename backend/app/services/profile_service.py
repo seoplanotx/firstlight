@@ -126,6 +126,22 @@ def update_profile(session: Session, profile_id: int, payload: PatientProfileUpd
     return get_profile(session, profile_id)  # type: ignore[return-value]
 
 
+def set_active_profile(session: Session, profile_id: int) -> PatientProfile:
+    profile = get_profile(session, profile_id)
+    if profile is None:
+        raise ValueError("Profile not found")
+
+    settings = session.scalar(select(AppSettings))
+    if settings is None:
+        settings = AppSettings(daily_run_time="08:30")
+        session.add(settings)
+        session.flush()
+    settings.default_profile_id = profile_id
+    session.commit()
+    record_audit_event("profile_activated", {"profile_id": profile_id})
+    return get_profile(session, profile_id)  # type: ignore[return-value]
+
+
 DEMO_PROFILE_NAME = "Sample EGFR NSCLC"
 
 

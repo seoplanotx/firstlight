@@ -40,7 +40,10 @@ export function FindingSummaryCard({
     .join('  ·  ');
   const supportingItems = [
     { label: 'Location context', value: finding.location_summary || 'Location details not stored.' },
-    { label: 'Match score', value: String(finding.score) },
+    {
+      label: mode === 'plain' ? 'How strong is this match?' : 'Relevance',
+      value: formatRelevanceLabel(finding.relevance_label, mode)
+    },
     {
       label: mode === 'plain' ? 'Still missing' : 'Missing information',
       value: finding.matching_gaps.length ? finding.matching_gaps.join(' ') : 'No structured gaps stored.'
