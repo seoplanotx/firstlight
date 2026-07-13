@@ -93,3 +93,8 @@ Until steps 1–5 are done, releases are install-only (no in-app update).
 - Auto-update setup: `docs/auto-update-setup.md`
 - Packaged smoke: `docs/packaged-smoke-checklist.md`
 - Improvement tracker: `docs/IMPROVEMENT-CHECKLIST.md`
+
+## Website
+- update `site/whats-new/index.html` with a plain-language entry for the release
+  (family-facing words, no dev jargon), bump `site/sitemap.xml` lastmod, and
+  redeploy the site (`vercel --prod` from `site/`)
