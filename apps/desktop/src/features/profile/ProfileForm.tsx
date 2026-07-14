@@ -12,6 +12,12 @@ type ProfileFormProps = {
   submitLabel?: string;
   /** Fired whenever the form deviates from (or returns to) its last-saved state. */
   onDirtyChange?: (dirty: boolean) => void;
+  /**
+   * 'essentials' shows only the fields needed to begin (name, cancer type,
+   * location). Everything else lives on the "improve matching later" path and is
+   * reachable afterward from Patient Details. Defaults to the full editor.
+   */
+  variant?: 'full' | 'essentials';
 };
 
 function blankBiomarker(): Biomarker {
@@ -84,7 +90,14 @@ function computeStrength(form: PatientProfile): StrengthLevel {
   };
 }
 
-export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile', onDirtyChange }: ProfileFormProps) {
+export function ProfileForm({
+  initialValue,
+  onSave,
+  submitLabel = 'Save profile',
+  onDirtyChange,
+  variant = 'full'
+}: ProfileFormProps) {
+  const essentials = variant === 'essentials';
   const [form, setForm] = useState<PatientProfile>(initialValue || defaultProfile);
   const [saving, setSaving] = useState(false);
   const [cancerError, setCancerError] = useState('');
@@ -135,16 +148,23 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
-      <div className={`profile-strength profile-strength-${strength.tone} field-span-2`}>
-        <div className="profile-strength-head">
-          <strong>Match strength: {strength.label}</strong>
-          <span className="muted">More detail finds better matches — but leaving something blank is always safer than guessing.</span>
+      {essentials ? (
+        <div className="callout field-span-2">
+          Start with just the basics below. You can add biomarkers, stage, therapy history, and more later from Patient
+          Details — Firstlight will remind you when those details would sharpen the matches.
         </div>
-        <div className="profile-strength-track" aria-hidden="true">
-          <div className="profile-strength-bar" style={{ width: `${Math.round(strength.ratio * 100)}%` }} />
+      ) : (
+        <div className={`profile-strength profile-strength-${strength.tone} field-span-2`}>
+          <div className="profile-strength-head">
+            <strong>Match strength: {strength.label}</strong>
+            <span className="muted">More detail finds better matches — but leaving something blank is always safer than guessing.</span>
+          </div>
+          <div className="profile-strength-track" aria-hidden="true">
+            <div className="profile-strength-bar" style={{ width: `${Math.round(strength.ratio * 100)}%` }} />
+          </div>
+          <div className="muted">{strength.message}</div>
         </div>
-        <div className="muted">{strength.message}</div>
-      </div>
+      )}
 
       <div className="field">
         <label>Profile name</label>
@@ -156,11 +176,13 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         <input value={form.display_name || ''} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
         <div className="field-hint">Optional. Shown at the top of your daily check. Initials are fine.</div>
       </div>
-      <div className="field">
-        <label>Date of birth</label>
-        <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
-        <div className="field-hint">Optional. Stays encrypted on this computer.</div>
-      </div>
+      {!essentials && (
+        <div className="field">
+          <label>Date of birth</label>
+          <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
+          <div className="field-hint">Optional. Stays encrypted on this computer.</div>
+        </div>
+      )}
       <div className="field">
         <label htmlFor="profile-cancer-type">Cancer type</label>
         <input
@@ -191,45 +213,53 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
           </div>
         )}
       </div>
-      <div className="field">
-        <label>Subtype</label>
-        <input value={form.subtype || ''} onChange={(e) => setForm({ ...form, subtype: e.target.value })} />
-        <div className="field-hint">Optional, if a doctor named one — e.g. "adenocarcinoma". Leave blank if unsure.</div>
-      </div>
-      <div className="field">
-        <label>Stage / disease context</label>
-        <input value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
-        <div className="field-hint">e.g. "Stage 4", "metastatic", or "newly diagnosed". Whatever the care team has said.</div>
-      </div>
-      <details className="form-help field-span-2">
-        <summary>Not sure about subtype or stage?</summary>
-        <p>
-          These are optional. The <strong>subtype</strong> is a more specific name a pathologist may have used (for
-          example "adenocarcinoma" or "squamous cell"). The <strong>stage</strong> describes how far the cancer has
-          spread (for example "Stage 4" or "metastatic"). Both usually appear near the top of a pathology or imaging
-          report. If you are not certain, leave them blank — that is safer than guessing.
-        </p>
-      </details>
-      <div className="field field-span-2">
-        <label>Current therapy status</label>
-        <textarea value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
-        <div className="field-hint">A sentence on where things stand now — e.g. "on chemo" or "deciding what's next".</div>
-      </div>
+      {!essentials && (
+        <>
+          <div className="field">
+            <label>Subtype</label>
+            <input value={form.subtype || ''} onChange={(e) => setForm({ ...form, subtype: e.target.value })} />
+            <div className="field-hint">Optional, if a doctor named one — e.g. "adenocarcinoma". Leave blank if unsure.</div>
+          </div>
+          <div className="field">
+            <label>Stage / disease context</label>
+            <input value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
+            <div className="field-hint">e.g. "Stage 4", "metastatic", or "newly diagnosed". Whatever the care team has said.</div>
+          </div>
+          <details className="form-help field-span-2">
+            <summary>Not sure about subtype or stage?</summary>
+            <p>
+              These are optional. The <strong>subtype</strong> is a more specific name a pathologist may have used (for
+              example "adenocarcinoma" or "squamous cell"). The <strong>stage</strong> describes how far the cancer has
+              spread (for example "Stage 4" or "metastatic"). Both usually appear near the top of a pathology or imaging
+              report. If you are not certain, leave them blank — that is safer than guessing.
+            </p>
+          </details>
+          <div className="field field-span-2">
+            <label>Current therapy status</label>
+            <textarea value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
+            <div className="field-hint">A sentence on where things stand now — e.g. "on chemo" or "deciding what's next".</div>
+          </div>
+        </>
+      )}
       <div className="field">
         <label>Location</label>
         <input value={form.location_label || ''} onChange={(e) => setForm({ ...form, location_label: e.target.value })} />
         <div className="field-hint">City and state is enough — used to flag trials within travel range.</div>
       </div>
-      <div className="field">
-        <label>Travel radius (miles)</label>
-        <input
-          type="number"
-          value={form.travel_radius_miles || 0}
-          onChange={(e) => setForm({ ...form, travel_radius_miles: Number(e.target.value) })}
-        />
-        <div className="field-hint">How far you would travel for a trial, roughly.</div>
-      </div>
+      {!essentials && (
+        <div className="field">
+          <label>Travel radius (miles)</label>
+          <input
+            type="number"
+            value={form.travel_radius_miles || 0}
+            onChange={(e) => setForm({ ...form, travel_radius_miles: Number(e.target.value) })}
+          />
+          <div className="field-hint">How far you would travel for a trial, roughly.</div>
+        </div>
+      )}
 
+      {!essentials && (
+      <>
       <div className="section-divider field-span-2">Biomarkers / mutations</div>
       <div className="field-hint field-span-2">
         These come from a pathology, genetic, or molecular test report from the care team. Examples: KRAS G12C, EGFR,
@@ -429,6 +459,8 @@ export function ProfileForm({ initialValue, onSave, submitLabel = 'Save profile'
         <textarea value={form.notes || ''} rows={3} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <div className="field-hint">Anything else worth remembering. You can paste notes from a doctor's report here too.</div>
       </div>
+      </>
+      )}
       <div className="field-span-2">
         <button className="primary-button" disabled={saving} type="submit">
           {saving ? 'Saving…' : submitLabel}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { RouteObject } from 'react-router-dom';
 import { Outlet, RouterProvider, createHashRouter } from 'react-router-dom';
 
 import { Layout } from './components/Layout';
@@ -8,15 +9,33 @@ import { API_BASE, api } from './lib/api';
 import { useBackgroundMonitoring } from './lib/backgroundMonitoring';
 import { getErrorMessage } from './lib/errors';
 import type { BootstrapInfo, OnboardingState } from './lib/types';
-import { ClinicianSummaryPage } from './pages/ClinicianSummaryPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { FindingsPage } from './pages/FindingsPage';
+import { DiscoveriesPage } from './pages/DiscoveriesPage';
+import { DoctorVisitPage } from './pages/DoctorVisitPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SupportPage } from './pages/SupportPage';
-import { TrialMatchesPage } from './pages/TrialMatchesPage';
-import { UpdatesPage } from './pages/UpdatesPage';
+
+// Task-based navigation. The nav shows four "Today / Discoveries / Doctor Visit"
+// destinations, but every legacy URL still resolves — old routes render inside
+// the consolidated parent with the matching tab already active, so existing
+// links, bookmarks, and in-app navigation keep working.
+export function appRouteChildren(bootstrap: BootstrapInfo): RouteObject[] {
+  return [
+    { index: true, element: <DashboardPage /> },
+    { path: 'discoveries', element: <DiscoveriesPage activeTab="all" /> },
+    { path: 'findings', element: <DiscoveriesPage activeTab="all" /> },
+    { path: 'trials', element: <DiscoveriesPage activeTab="trials" /> },
+    { path: 'updates', element: <DiscoveriesPage activeTab="research" /> },
+    { path: 'saved-findings', element: <DiscoveriesPage activeTab="saved" /> },
+    { path: 'doctor-visit', element: <DoctorVisitPage activeTab="summary" /> },
+    { path: 'clinician', element: <DoctorVisitPage activeTab="summary" /> },
+    { path: 'reports', element: <DoctorVisitPage activeTab="reports" /> },
+    { path: 'profile', element: <ProfilePage /> },
+    { path: 'settings', element: <SettingsPage /> },
+    { path: 'support', element: <SupportPage bootstrap={bootstrap} /> }
+  ];
+}
 
 const BOOT_ATTEMPTS = 6;
 const BOOT_RETRY_DELAYS_MS = [250, 400, 650, 900, 1200];
@@ -101,17 +120,7 @@ function MainRouter({ bootstrap }: { bootstrap: BootstrapInfo }) {
               <Outlet />
             </Layout>
           ),
-          children: [
-            { index: true, element: <DashboardPage /> },
-            { path: 'profile', element: <ProfilePage /> },
-            { path: 'findings', element: <FindingsPage /> },
-            { path: 'trials', element: <TrialMatchesPage /> },
-            { path: 'updates', element: <UpdatesPage /> },
-            { path: 'clinician', element: <ClinicianSummaryPage /> },
-            { path: 'reports', element: <ReportsPage /> },
-            { path: 'settings', element: <SettingsPage /> },
-            { path: 'support', element: <SupportPage bootstrap={bootstrap} /> }
-          ]
+          children: appRouteChildren(bootstrap)
         }
       ]),
     [bootstrap]

@@ -4,7 +4,6 @@ import { Card } from '../../components/Card';
 import { api } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import type { AppSettings, HealthResponse, PatientProfile, SourceConfig } from '../../lib/types';
-import { AIProviderSetup } from '../ai/AIProviderSetup';
 import { ProfileForm } from '../profile/ProfileForm';
 
 type Props = {
@@ -38,13 +37,24 @@ const blankProfile: PatientProfile = {
   therapy_history: [{ therapy_name: '', therapy_type: '', line_of_therapy: '', status: '', notes: '' }]
 };
 
+// Things people can add later to sharpen matching, surfaced on the final step so
+// skipping them during setup feels intentional, not like missing a required step.
+const IMPROVE_LATER = [
+  'Subtype and stage',
+  'Biomarkers and mutations',
+  'Therapy history',
+  'Travel preferences',
+  'AI-assisted plain-language summaries',
+  'Automatic daily check time'
+];
+
 export function OnboardingWizard({ onCompleted }: Props) {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<PatientProfile>(blankProfile);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [sources, setSources] = useState<SourceConfig[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [providerConfigured, setProviderConfigured] = useState(false);
+  const [privacyConfirmed, setPrivacyConfirmed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -57,17 +67,6 @@ export function OnboardingWizard({ onCompleted }: Props) {
         const [appSettings, sourceConfigs] = await Promise.all([api.getSettings(), api.getSources()]);
         setSettings(appSettings);
         setSources(sourceConfigs);
-        try {
-          const [anthropicConfig, openrouterConfig] = await Promise.all([
-            api.getProviderConfig('anthropic'),
-            api.getProviderConfig('openrouter')
-          ]);
-          setProviderConfigured(
-            Boolean(anthropicConfig?.is_configured) || Boolean(openrouterConfig?.is_configured)
-          );
-        } catch {
-          // AI provider config is optional during onboarding.
-        }
       } catch (error) {
         setErrorMessage(getErrorMessage(error, 'Could not load local onboarding settings.'));
       } finally {
@@ -86,19 +85,14 @@ export function OnboardingWizard({ onCompleted }: Props) {
         description: 'Firstlight focuses on real trial and literature monitoring, conservative language, and clinician review.'
       },
       {
-        label: 'Patient Profile',
-        title: 'Add the profile facts that drive matching.',
-        description: 'Only enter the facts you already know. Leaving uncertain fields blank is safer than guessing.'
+        label: 'The essentials',
+        title: 'Add just enough to begin.',
+        description: 'A name, the cancer type, and a location are all Firstlight needs to start. Everything else can wait.'
       },
       {
-        label: 'Monitoring Preferences',
-        title: 'Choose when Firstlight can run while it is open.',
-        description: 'This release keeps monitoring local and truthful: automatic runs only happen while the app stays open.'
-      },
-      {
-        label: 'AI Assist',
-        title: 'Choose how much AI helps, if at all.',
-        description: 'Optional. Plain-language summaries use your own AI key — Anthropic (Claude) or OpenRouter. Local-only mode needs no key.'
+        label: 'Sources & privacy',
+        title: 'Choose sources and confirm privacy.',
+        description: 'Pick which public sources Firstlight watches, then confirm the local-only privacy model.'
       },
       {
         label: 'Health Check',
@@ -108,7 +102,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
       {
         label: 'Complete',
         title: 'Finish setup and open the dashboard.',
-        description: 'After setup, start with a manual check and use while-open scheduling only when this computer is on.'
+        description: 'After setup, start with a manual check and add more detail whenever you are ready.'
       }
     ],
     []
@@ -120,41 +114,18 @@ export function OnboardingWizard({ onCompleted }: Props) {
     setStep(2);
   }
 
-  function continueFromPreferences() {
+  function continueFromSources() {
     setErrorMessage('');
     setNotice('');
     if (!sources.some((source) => source.enabled)) {
       setErrorMessage('Enable at least one real source before continuing.');
       return;
     }
-    setStep(3);
-  }
-
-  function continueFromAiAssist() {
-    setErrorMessage('');
-    setNotice('');
-    if (settings.privacy_mode === 'deidentified_ai_assist') {
-      if (!settings.deidentified_ai_disclosure_acknowledged) {
-        setErrorMessage('Acknowledge the AI privacy disclosure before continuing with AI assist.');
-        return;
-      }
-      if (!providerConfigured) {
-        setErrorMessage('Save a tested AI provider key below, or switch to local-only for now.');
-        return;
-      }
+    if (!privacyConfirmed) {
+      setErrorMessage('Please confirm you understand Firstlight keeps everything on this computer.');
+      return;
     }
-    setStep(4);
-  }
-
-  function skipAiAssist() {
-    setErrorMessage('');
-    setNotice('');
-    setSettings((current) => ({
-      ...current,
-      privacy_mode: 'local_only',
-      deidentified_ai_disclosure_acknowledged: false
-    }));
-    setStep(4);
+    setStep(3);
   }
 
   async function runHealth() {
@@ -293,55 +264,19 @@ export function OnboardingWizard({ onCompleted }: Props) {
 
         {step === 1 && (
           <Card
-            title="Patient profile setup"
-            description="Enter the details you already know. Leave anything blank that you are unsure about."
+            title="The essentials"
+            description="Just the basics to begin. You can add more detail any time from Patient Details."
           >
-            <ProfileForm initialValue={profile} onSave={saveProfile} submitLabel="Save and continue" />
+            <ProfileForm initialValue={profile} onSave={saveProfile} submitLabel="Save and continue" variant="essentials" />
           </Card>
         )}
 
         {step === 2 && (
           <Card
-            title="Monitoring preferences"
-            description="Choose when Firstlight can run while it is open and confirm which real sources are enabled."
+            title="Sources & privacy"
+            description="Confirm which real sources are enabled and how your information is handled."
           >
             <div className="stack">
-              <div className="form-grid">
-                <div className="field">
-                  <label>Automatic run time while Firstlight is open</label>
-                  <input
-                    type="time"
-                    value={settings.daily_run_time}
-                    onChange={(e) => setSettings({ ...settings, daily_run_time: e.target.value })}
-                  />
-                </div>
-                <div className="field">
-                  <label>Report style</label>
-                  <select
-                    value={settings.default_report_style}
-                    onChange={(e) => setSettings({ ...settings, default_report_style: e.target.value })}
-                  >
-                    <option value="clinical">Clinical</option>
-                    <option value="plain">Plain English</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Default report type</label>
-                  <select
-                    value={settings.default_report_length}
-                    onChange={(e) => setSettings({ ...settings, default_report_length: e.target.value })}
-                  >
-                    <option value="daily_summary">Short daily summary</option>
-                    <option value="full_review">Full oncology review</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="callout">
-                Automatic checks are local and truthful in this release: they only happen while Firstlight stays open on
-                this computer. You can always start a manual check from the dashboard.
-              </div>
-
               <div className="section-divider">Enabled real sources</div>
               <div className="stack">
                 {sources.map((source) => (
@@ -363,13 +298,34 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 ))}
               </div>
 
+              <div className="callout">
+                Automatic checks are local and truthful in this release: they only happen while Firstlight stays open on
+                this computer. You can start a manual check any time, and set an automatic check time later in Settings.
+              </div>
+
+              <div className="section-divider">Privacy</div>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={privacyConfirmed}
+                  onChange={(e) => setPrivacyConfirmed(e.target.checked)}
+                />
+                <div>
+                  <strong>I understand my information stays on this computer</strong>
+                  <div className="muted">
+                    Firstlight runs local-only by default and needs no account or AI key. You can turn on optional
+                    AI-assisted summaries later in Settings.
+                  </div>
+                </div>
+              </label>
+
               {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
 
               <div className="button-row">
                 <button className="ghost-button" onClick={() => setStep(1)}>
                   Back
                 </button>
-                <button className="primary-button" onClick={continueFromPreferences}>
+                <button className="primary-button" onClick={continueFromSources}>
                   Continue
                 </button>
               </div>
@@ -378,80 +334,6 @@ export function OnboardingWizard({ onCompleted }: Props) {
         )}
 
         {step === 3 && (
-          <Card
-            title="AI assist (optional)"
-            description="Firstlight works fully without AI. Adding your own key — Anthropic (Claude) or OpenRouter — unlocks plain-language summaries and briefing questions."
-          >
-            <div className="stack">
-              <div className="field">
-                <label>AI assist mode</label>
-                <select
-                  value={settings.privacy_mode}
-                  onChange={(e) => {
-                    const privacyMode = e.target.value as AppSettings['privacy_mode'];
-                    setSettings({
-                      ...settings,
-                      privacy_mode: privacyMode,
-                      deidentified_ai_disclosure_acknowledged:
-                        privacyMode === 'deidentified_ai_assist'
-                          ? settings.deidentified_ai_disclosure_acknowledged
-                          : false
-                    });
-                  }}
-                >
-                  <option value="local_only">Local-only — no AI, no key needed</option>
-                  <option value="deidentified_ai_assist">AI assist — de-identified summaries via your AI provider</option>
-                </select>
-              </div>
-
-              <div className="callout">
-                <strong>Local-only:</strong> patient context stays on this device. Firstlight uses local rules and
-                source-backed reports only. <strong>AI assist:</strong> identifying details stay local, but minimized
-                cancer context may be sent to your selected AI provider for summaries and briefing questions. You can
-                change this anytime in Settings.
-              </div>
-
-              {settings.privacy_mode === 'deidentified_ai_assist' && (
-                <>
-                  <label className="toggle-row">
-                    <input
-                      type="checkbox"
-                      checked={settings.deidentified_ai_disclosure_acknowledged}
-                      onChange={(e) =>
-                        setSettings({ ...settings, deidentified_ai_disclosure_acknowledged: e.target.checked })
-                      }
-                    />
-                    <div>
-                      <strong>I understand</strong>
-                      <div className="muted">
-                        De-identified cancer context (never names or contact details) may be sent to the AI provider I
-                        configure below.
-                      </div>
-                    </div>
-                  </label>
-                  <div className="section-divider">Connect an AI provider</div>
-                  <AIProviderSetup onConfigured={() => setProviderConfigured(true)} />
-                </>
-              )}
-
-              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
-
-              <div className="button-row">
-                <button className="ghost-button" onClick={() => setStep(2)}>
-                  Back
-                </button>
-                <button className="ghost-button" onClick={skipAiAssist}>
-                  Skip for now
-                </button>
-                <button className="primary-button" onClick={continueFromAiAssist}>
-                  Continue
-                </button>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {step === 4 && (
           <Card
             title="Health check"
             description="This checks local storage, the database, PDF generation, and the enabled real data sources."
@@ -482,12 +364,12 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 </div>
               )}
               <div className="button-row">
-                <button className="ghost-button" onClick={() => setStep(3)}>
+                <button className="ghost-button" onClick={() => setStep(2)}>
                   Back
                 </button>
                 <button
                   className="primary-button"
-                  onClick={() => setStep(5)}
+                  onClick={() => setStep(4)}
                   disabled={!health || hasBlockingHealthFailure}
                 >
                   Continue
@@ -497,24 +379,25 @@ export function OnboardingWizard({ onCompleted }: Props) {
           </Card>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <Card
             title="Setup complete"
             description="The workspace is configured locally and ready to open the main dashboard."
           >
             <div className="stack">
               <p>Firstlight is ready on this computer.</p>
-              <p>Automatic run time while the app stays open: {settings.daily_run_time}.</p>
               <p>
-                AI assist:{' '}
-                {settings.privacy_mode === 'deidentified_ai_assist'
-                  ? 'on, using your AI provider key with de-identified context.'
-                  : 'off — everything stays local. Turn it on later in Settings.'}
+                Everything stays local. Automatic checks only happen while Firstlight stays open on this computer — you
+                can set a preferred time in Settings whenever you like.
               </p>
-              <p>Reports will be saved in the local Firstlight reports folder.</p>
               <div className="callout">
-                Start with a manual check once the dashboard opens. Automatic checks only happen while Firstlight stays
-                open on this computer.
+                <strong>Improve matching later.</strong> When you are ready, add these from Patient Details to sharpen
+                the results — Firstlight will also remind you on the dashboard:
+                <ul>
+                  {IMPROVE_LATER.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </div>
               {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
               <button className="primary-button" disabled={busy} onClick={finalize}>

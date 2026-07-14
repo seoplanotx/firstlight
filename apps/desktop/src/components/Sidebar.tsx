@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 import { api } from '../lib/api';
 import type { PatientProfile } from '../lib/types';
 
+// Each primary destination owns a group of routes (including the legacy URLs that
+// still resolve), so the nav item highlights no matter which tab the user is on.
 const primaryItems = [
-  { to: '/', label: 'Today' },
-  { to: '/findings', label: "What's New" },
-  { to: '/trials', label: 'Trials to Consider' },
-  { to: '/updates', label: 'Research Updates' },
-  { to: '/clinician', label: 'Summary for the Doctor' },
-  { to: '/reports', label: 'Printable Reports' }
+  { to: '/', label: 'Today', match: ['/'] },
+  { to: '/discoveries', label: 'Discoveries', match: ['/discoveries', '/findings', '/trials', '/updates', '/saved-findings'] },
+  { to: '/doctor-visit', label: 'Doctor Visit', match: ['/doctor-visit', '/clinician', '/reports'] }
 ];
 
 const secondaryItems = [
@@ -23,6 +22,7 @@ export function Sidebar() {
   const [profiles, setProfiles] = useState<PatientProfile[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const location = useLocation();
 
   async function loadProfiles() {
     try {
@@ -85,16 +85,18 @@ export function Sidebar() {
         <div className="sidebar-nav-group">
           <div className="sidebar-section-label">Each day</div>
           <nav className="sidebar-nav">
-            {primaryItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            {primaryItems.map((item) => {
+              const isActive = item.match.includes(location.pathname);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={isActive ? 'nav-item active' : 'nav-item'}
+                >
+                  {item.label}
+                </NavLink>
+              );
+            })}
           </nav>
         </div>
 
