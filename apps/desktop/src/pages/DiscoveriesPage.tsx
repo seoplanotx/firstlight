@@ -58,7 +58,7 @@ function SavedForDiscussion() {
     }
   }
 
-  if (loading) return <div className="loading-block">Loading saved findings…</div>;
+  if (loading) return <div className="loading-block" role="status">Loading saved findings…</div>;
   if (errorMessage && items.length === 0) {
     return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
@@ -81,7 +81,7 @@ function SavedForDiscussion() {
         </div>
       </div>
 
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
         title="Saved findings"

@@ -75,12 +75,12 @@ export function ClaudeDesktopConnection() {
   }
 
   if (!status) {
-    return errorMessage ? <div className="callout callout-danger">{errorMessage}</div> : <div className="muted">Loading…</div>;
+    return errorMessage ? <div className="callout callout-danger" role="alert">{errorMessage}</div> : <div className="muted">Loading…</div>;
   }
 
   return (
     <div className="stack">
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <div className="callout">
         <strong>What Claude can see when this is on:</strong>

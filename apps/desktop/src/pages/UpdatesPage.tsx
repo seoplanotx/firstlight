@@ -43,7 +43,7 @@ export function UpdatesPage() {
     }
   }
 
-  if (loading) return <div className="loading-block">Loading research updates...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading research updates...</div>;
   if (errorMessage && items.length === 0) {
     return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
@@ -63,7 +63,7 @@ export function UpdatesPage() {
         </div>
       </div>
 
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
         title="Research"

@@ -126,7 +126,7 @@ export function ClinicianSummaryPage() {
     }
   }
 
-  if (loading) return <div className="loading-block">Building clinician summary...</div>;
+  if (loading) return <div className="loading-block" role="status">Building clinician summary...</div>;
   if (errorMessage && !summary) {
     return <PageErrorState title="Summary unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -160,8 +160,8 @@ export function ClinicianSummaryPage() {
         </div>
       </div>
 
-      {notice && <div className="callout">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {notice && <div className="callout" role="status">{notice}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
         title="Case snapshot"

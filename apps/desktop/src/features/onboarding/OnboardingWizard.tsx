@@ -254,7 +254,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
               <div className="callout">
                 It does <strong>not</strong> determine treatment, confirm eligibility, or replace an oncology team.
               </div>
-              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+              {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
               <button className="primary-button" onClick={() => setStep(1)} disabled={busy}>
                 Start setup
               </button>
@@ -277,7 +277,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
             description="Confirm which real sources are enabled and how your information is handled."
           >
             <div className="stack">
-              <div className="section-divider">Enabled real sources</div>
+              <h4 className="section-divider">Enabled real sources</h4>
               <div className="stack">
                 {sources.map((source) => (
                   <label className="toggle-row" key={source.id}>
@@ -303,7 +303,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 this computer. You can start a manual check any time, and set an automatic check time later in Settings.
               </div>
 
-              <div className="section-divider">Privacy</div>
+              <h4 className="section-divider">Privacy</h4>
               <label className="toggle-row">
                 <input
                   type="checkbox"
@@ -319,7 +319,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 </div>
               </label>
 
-              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+              {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
               <div className="button-row">
                 <button className="ghost-button" onClick={() => setStep(1)}>
@@ -342,8 +342,8 @@ export function OnboardingWizard({ onCompleted }: Props) {
               <button className="primary-button" disabled={busy} onClick={runHealth}>
                 {busy ? 'Running checks...' : 'Run health check'}
               </button>
-              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
-              {notice && <div className="callout">{notice}</div>}
+              {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+              {notice && <div className="callout" role="status">{notice}</div>}
               {health && (
                 <div className="health-grid">
                   {health.items.map((item) => {
@@ -359,7 +359,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
                 </div>
               )}
               {hasBlockingHealthFailure && (
-                <div className="callout callout-danger">
+                <div className="callout callout-danger" role="alert">
                   Resolve the blocking items before finishing setup.
                 </div>
               )}
@@ -399,7 +399,7 @@ export function OnboardingWizard({ onCompleted }: Props) {
                   ))}
                 </ul>
               </div>
-              {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+              {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
               <button className="primary-button" disabled={busy} onClick={finalize}>
                 {busy ? 'Finishing...' : 'Open dashboard'}
               </button>

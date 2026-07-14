@@ -197,7 +197,7 @@ export function ReportsPage() {
     return parts.join(' ');
   }, [savedFindings.length, questions.length, missingDetails]);
 
-  if (loading) return <div className="loading-block">Loading reports...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading reports...</div>;
   if (errorMessage && reports.length === 0 && phase === 'choose') {
     return <PageErrorState title="Reports unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -215,8 +215,8 @@ export function ReportsPage() {
         </div>
       </div>
 
-      {notice && <div className="callout">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {notice && <div className="callout" role="status">{notice}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       {phase === 'choose' && (
         <Card title="What are you preparing for?" description="Pick one to start — you can review everything before it is created.">
@@ -301,7 +301,7 @@ export function ReportsPage() {
             </div>
 
             {missingDetails.length > 0 && (
-              <div className="callout">
+              <div className="callout" role="status">
                 <strong>A heads-up before you generate.</strong> {missingDetails.join(', ')}{' '}
                 {missingDetails.length === 1 ? 'is' : 'are'} not filled in yet, which may affect trial matching. You can
                 add {missingDetails.length === 1 ? 'it' : 'them'} in <Link to="/profile">Patient Details</Link>, or

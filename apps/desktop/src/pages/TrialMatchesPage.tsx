@@ -43,7 +43,7 @@ export function TrialMatchesPage() {
     }
   }
 
-  if (loading) return <div className="loading-block">Loading trials...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading trials...</div>;
   if (errorMessage && items.length === 0) {
     return <PageErrorState title="No trials to show yet" message={errorMessage} onRetry={load} />;
   }
@@ -64,7 +64,7 @@ export function TrialMatchesPage() {
         </div>
       </div>
 
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
         title="Possible trials"

@@ -255,9 +255,9 @@ export function AIProviderSetup({ onConfigured }: Props) {
         computer, and is only used when AI assist is turned on.
       </p>
 
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
-      {testNotice && <div className="callout">{testNotice}</div>}
-      {savedNotice && <div className="callout">{savedNotice}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+      {testNotice && <div className="callout" role="status">{testNotice}</div>}
+      {savedNotice && <div className="callout" role="status">{savedNotice}</div>}
 
       <div className="button-row">
         <button type="button" className="ghost-button" disabled={busy} onClick={() => void testKey()}>

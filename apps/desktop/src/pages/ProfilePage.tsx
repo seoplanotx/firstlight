@@ -164,7 +164,7 @@ export function ProfilePage() {
     }
   }
 
-  if (loading) return <div className="loading-block">Loading patient profile...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading patient profile...</div>;
   if (errorMessage && !profile) {
     return <PageErrorState title="Profile unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -210,6 +210,8 @@ export function ProfilePage() {
       >
         <div className="stack">
           <textarea
+            id="profile-report-text"
+            aria-label="Pathology or molecular report text"
             rows={6}
             value={extractText}
             onChange={(e) => setExtractText(e.target.value)}
@@ -221,7 +223,7 @@ export function ProfilePage() {
             </button>
           </div>
           {extractWarnings.map((warning) => (
-            <div className="callout" key={warning}>
+            <div className="callout" role="status" key={warning}>
               {warning}
             </div>
           ))}
@@ -229,8 +231,8 @@ export function ProfilePage() {
       </Card>
 
       <Card title="Edit details" description="Add only the facts you are confident in. Everything stays encrypted on this computer.">
-        {message && <div className="callout">{message}</div>}
-        {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+        {message && <div className="callout" role="status">{message}</div>}
+        {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
         <ProfileForm
           key={profile?.id || 'new-profile'}
           initialValue={profile}

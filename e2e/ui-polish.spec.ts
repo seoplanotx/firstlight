@@ -24,10 +24,8 @@ test('ui polish renders and computed styles are applied', async ({ page }, testI
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await expect(page.getByText('Enabled real sources')).toBeVisible();
+  await page.getByRole('checkbox', { name: /I understand my information stays/ }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
-
-  await expect(page.getByRole('heading', { name: 'AI assist (optional)' })).toBeVisible();
-  await page.getByRole('button', { name: 'Skip for now' }).click();
 
   await page.getByRole('button', { name: 'Run health check' }).click();
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled({ timeout: 30_000 });

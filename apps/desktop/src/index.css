@@ -16,7 +16,7 @@
 
   --ink: #212722;
   --ink-soft: #5d655f;
-  --ink-faint: #899088;
+  --ink-faint: #686f68;
 
   --line: #e5e2d9;
   --line-strong: #d2cfc4;
@@ -24,8 +24,9 @@
   --accent: #166156;
   --accent-strong: #0e463e;
   --accent-wash: #ecf2ef;
+  --accent-line: #b7cdc6;
 
-  --amber: #9c6310;
+  --amber: #8a570d;
   --amber-wash: #f8efdb;
   --amber-line: #e6d3a8;
 
@@ -156,6 +157,26 @@ code {
   min-height: 100vh;
 }
 
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 12px;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent-strong);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.skip-link:focus-visible {
+  left: 12px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .sidebar {
   min-width: 0;
   background: var(--bg);
@@ -189,7 +210,7 @@ code {
   display: block;
   width: 30px;
   height: 2px;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
   background: var(--horizon);
 }
 
@@ -209,7 +230,7 @@ code {
 
 .sidebar-nav-group {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
 .sidebar-section-label {
@@ -228,7 +249,7 @@ code {
   display: flex;
   align-items: center;
   min-height: 40px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-left: 2px solid transparent;
   border-radius: 0 var(--radius) var(--radius) 0;
   color: #3c433d;
@@ -400,7 +421,7 @@ code {
 }
 
 .hero-card {
-  border-left: 2px solid var(--accent);
+  border-color: var(--accent-line);
 }
 
 .section-counter {
@@ -518,7 +539,7 @@ code {
   display: inline-flex;
   align-items: center;
   border-radius: 4px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   font-family: var(--font-mono);
   font-size: 0.7rem;
   border: 1px solid var(--line);
@@ -546,7 +567,7 @@ code {
 }
 
 .badge-info {
-  border-color: #c5d8d2;
+  border-color: var(--accent-line);
   background: var(--accent-wash);
   color: var(--accent-strong);
 }
@@ -561,8 +582,8 @@ code {
 .filter-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 6px 13px;
+  min-height: 40px;
+  padding: 8px 14px;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--line-strong);
@@ -856,7 +877,7 @@ code {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 15px 20px;
+  padding: 16px 20px;
 }
 
 .stat + .stat {
@@ -889,7 +910,7 @@ code {
 }
 
 .mini-stat {
-  padding: 11px 14px;
+  padding: 12px 14px;
 }
 
 .mini-stat + .mini-stat {
@@ -984,7 +1005,7 @@ code {
 }
 
 .headline-item {
-  padding: 9px 0;
+  padding: 8px 0;
   font-size: 0.88rem;
 }
 
@@ -1054,7 +1075,7 @@ code {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  padding: 7px 11px;
+  padding: 8px 12px;
   background: var(--surface);
   color: var(--ink);
   font-size: 0.9rem;
@@ -1141,7 +1162,7 @@ code {
 .section-divider {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--line-strong);
@@ -1178,7 +1199,7 @@ code {
   align-items: flex-start;
   justify-content: flex-start;
   gap: 12px;
-  padding: 11px 13px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1200,18 +1221,16 @@ code {
 /* ---------- Callouts ---------- */
 
 .callout {
-  padding: 11px 14px;
+  padding: 12px 14px;
   border-radius: var(--radius);
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  background: var(--surface);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-wash);
   color: var(--ink);
   font-size: 0.88rem;
 }
 
 .callout.callout-danger {
   border-color: var(--danger-line);
-  border-left-color: var(--danger);
   background: var(--danger-wash);
   color: var(--danger);
 }
@@ -1227,7 +1246,7 @@ code {
 }
 
 .help-steps {
-  padding: 13px 15px;
+  padding: 12px 16px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--bg);
@@ -1317,7 +1336,7 @@ code {
 .support-card {
   display: grid;
   gap: 4px;
-  padding: 11px 13px;
+  padding: 12px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--bg);
@@ -1343,11 +1362,10 @@ code {
 
 .evidence-callout {
   margin-top: 12px;
-  padding: 11px 14px;
+  padding: 12px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  background: var(--surface);
+  background: var(--bg-shade);
 }
 
 .evidence-label {
@@ -1415,8 +1433,10 @@ code {
 }
 
 .chart-row.chart-row-caution .chart-value {
-  border-left: 2px solid var(--amber-line);
-  padding-left: 14px;
+  background: var(--amber-wash);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius);
+  padding: 8px 12px;
 }
 
 .chart-row.chart-row-caution .chart-label {
@@ -1442,8 +1462,10 @@ code {
 }
 
 .rationale-col-caution {
-  border-left: 2px solid var(--amber-line);
-  padding-left: 14px;
+  background: var(--amber-wash);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
 }
 
 .rationale-col-caution .support-card-label {
@@ -1467,7 +1489,7 @@ code {
 
 .finding-actions button {
   font-size: 0.82rem;
-  padding: 5px 12px;
+  padding: 6px 12px;
 }
 
 .finding-item-dismissed {
@@ -1535,8 +1557,8 @@ code {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius);
   border: 1px solid var(--line-strong);
   background: var(--accent-wash);
@@ -1667,7 +1689,7 @@ code {
 .support-step {
   display: grid;
   gap: 5px;
-  padding: 13px;
+  padding: 12px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--bg);
@@ -1755,7 +1777,7 @@ code {
   grid-template-columns: 24px 1fr;
   gap: 12px;
   align-items: center;
-  padding: 9px 10px;
+  padding: 8px 10px;
   border-left: 2px solid transparent;
   color: var(--ink-faint);
 }
@@ -1805,7 +1827,7 @@ code {
 }
 
 .onboarding-note {
-  padding: 13px 14px;
+  padding: 12px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--surface);
@@ -1869,25 +1891,25 @@ code {
 }
 
 .health-item {
-  padding: 10px 13px;
+  padding: 10px 12px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
-  border-left: 2px solid var(--line-strong);
   background: var(--surface);
   font-size: 0.88rem;
 }
 
 .health-item.ok {
-  border-left-color: var(--ok);
+  border-color: var(--ok-line);
+  background: var(--ok-wash);
 }
 
 .health-item.error {
-  border-left-color: var(--danger);
+  border-color: var(--danger-line);
   background: var(--danger-wash);
 }
 
 .health-item.warning {
-  border-left-color: var(--amber);
+  border-color: var(--amber-line);
   background: var(--amber-wash);
 }
 
@@ -2119,7 +2141,7 @@ code {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--bg);
-  padding: 0 13px;
+  padding: 0 12px;
 }
 
 .form-help > summary {
@@ -2194,7 +2216,7 @@ code {
 
 /* Guided first-run experience */
 .first-run-card {
-  border-left: 2px solid var(--accent);
+  border-color: var(--accent-line);
 }
 
 .first-run-callout {

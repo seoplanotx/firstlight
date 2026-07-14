@@ -43,7 +43,7 @@ export function SettingsPage() {
     void load();
   }, []);
 
-  if (loading) return <div className="loading-block">Loading settings...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading settings...</div>;
   if (errorMessage && !settings) {
     return <PageErrorState title="Settings unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -96,8 +96,8 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {notice && <div className="callout">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {notice && <div className="callout" role="status">{notice}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
         title="General settings"
@@ -105,8 +105,8 @@ export function SettingsPage() {
       >
         <div className="form-grid">
           <div className="field">
-            <label>Wording</label>
-            <select value={languageMode} onChange={(e) => setLanguageMode(e.target.value as 'plain' | 'clinical')}>
+            <label htmlFor="settings-wording">Wording</label>
+            <select id="settings-wording" value={languageMode} onChange={(e) => setLanguageMode(e.target.value as 'plain' | 'clinical')}>
               <option value="plain">Plain language (recommended)</option>
               <option value="clinical">Clinical terms</option>
             </select>
@@ -116,16 +116,18 @@ export function SettingsPage() {
             </div>
           </div>
           <div className="field">
-            <label>Automatic check time while open</label>
+            <label htmlFor="settings-check-time">Automatic check time while open</label>
             <input
+              id="settings-check-time"
               type="time"
               value={settings.daily_run_time}
               onChange={(e) => setSettings({ ...settings, daily_run_time: e.target.value })}
             />
           </div>
           <div className="field">
-            <label>Report style</label>
+            <label htmlFor="settings-report-style">Report style</label>
             <select
+              id="settings-report-style"
               value={settings.default_report_style}
               onChange={(e) => setSettings({ ...settings, default_report_style: e.target.value })}
             >
@@ -134,8 +136,9 @@ export function SettingsPage() {
             </select>
           </div>
           <div className="field">
-            <label>Default report type</label>
+            <label htmlFor="settings-report-type">Default report type</label>
             <select
+              id="settings-report-type"
               value={settings.default_report_length}
               onChange={(e) => setSettings({ ...settings, default_report_length: e.target.value })}
             >
@@ -160,8 +163,9 @@ export function SettingsPage() {
       >
         <div className="stack">
           <div className="field">
-            <label>AI assist mode</label>
+            <label htmlFor="settings-ai-mode">AI assist mode</label>
             <select
+              id="settings-ai-mode"
               value={settings.privacy_mode}
               onChange={(e) => {
                 const privacyMode = e.target.value as AppSettings['privacy_mode'];
@@ -203,7 +207,7 @@ export function SettingsPage() {
             </label>
           )}
           {needsAiDisclosureAcknowledgement && (
-            <div className="callout callout-danger">Acknowledge the AI privacy disclosure before saving Mode 2.</div>
+            <div className="callout callout-danger" role="alert">Acknowledge the AI privacy disclosure before saving Mode 2.</div>
           )}
         </div>
       </Card>

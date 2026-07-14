@@ -91,6 +91,12 @@ const MODE_TABS: { value: ReviewMode; label: string }[] = [
   { value: 'archive', label: 'Archive' }
 ];
 
+const FILTER_OPTIONS = [
+  { value: '', label: 'Everything' },
+  { value: 'clinical_trials', label: 'Trials' },
+  { value: 'literature', label: 'Research' }
+];
+
 export function FindingsPage() {
   const initial = readPrefs();
   const [items, setItems] = useState<Finding[]>([]);
@@ -111,6 +117,10 @@ export function FindingsPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [undo, setUndo] = useState<{ id: number; previous: FindingAction; message: string } | null>(null);
   const undoTimer = useRef<number | null>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const viewRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const queueCardRef = useRef<HTMLDivElement | null>(null);
+  const queueNavigated = useRef(false);
 
   function clearUndoTimer() {
     if (undoTimer.current !== null) {
@@ -119,7 +129,11 @@ export function FindingsPage() {
     }
   }
 
-  useEffect(() => clearUndoTimer, []);
+  useEffect(() => {
+    return () => {
+      clearUndoTimer();
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -241,14 +255,13 @@ export function FindingsPage() {
     });
   }, [visible.length]);
 
-  const filterOptions = useMemo(
-    () => [
-      { value: '', label: 'Everything' },
-      { value: 'clinical_trials', label: 'Trials' },
-      { value: 'literature', label: 'Research' }
-    ],
-    []
-  );
+  // After Back/Next, move focus to the freshly shown card so keyboard and
+  // screen-reader users land on the new finding instead of a stale button.
+  // The guard keeps focus untouched on initial load.
+  useEffect(() => {
+    if (!queueNavigated.current) return;
+    queueCardRef.current?.focus({ preventScroll: false });
+  }, [queueIndex]);
 
   const sourceOptions = useMemo(() => {
     const names = new Set<string>();
@@ -283,6 +296,24 @@ export function FindingsPage() {
     setQueueIndex(0);
   }
 
+  function handleTablistKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const currentIndex = MODE_TABS.findIndex((tab) => tab.value === mode);
+    const delta = event.key === 'ArrowRight' ? 1 : -1;
+    const nextIndex = (currentIndex + delta + MODE_TABS.length) % MODE_TABS.length;
+    changeMode(MODE_TABS[nextIndex].value);
+    tabRefs.current[nextIndex]?.focus();
+  }
+
+  function handleViewKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const next: ViewMode = view === 'queue' ? 'list' : 'queue';
+    setView(next);
+    viewRefs.current[next === 'queue' ? 0 : 1]?.focus();
+  }
+
   function toggleSelected(id: number) {
     setSelected((current) => {
       const next = new Set(current);
@@ -296,7 +327,7 @@ export function FindingsPage() {
     setSelected(new Set(visible.map((item) => item.id)));
   }
 
-  if (loading) return <div className="loading-block">Loading…</div>;
+  if (loading) return <div className="loading-block" role="status">Loading…</div>;
   if (errorMessage && items.length === 0) {
     return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
@@ -334,7 +365,7 @@ export function FindingsPage() {
         </div>
       </div>
 
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       {undo && (
         <div className="callout undo-callout" role="status">
@@ -345,13 +376,17 @@ export function FindingsPage() {
         </div>
       )}
 
-      <div className="mode-tabs" role="tablist" aria-label="Review status">
-        {MODE_TABS.map((tab) => (
+      <div className="mode-tabs" role="tablist" aria-label="Review status" onKeyDown={handleTablistKeyDown}>
+        {MODE_TABS.map((tab, index) => (
           <button
             key={tab.value}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
             type="button"
             role="tab"
             aria-selected={mode === tab.value}
+            tabIndex={mode === tab.value ? 0 : -1}
             className={mode === tab.value ? 'mode-tab active' : 'mode-tab'}
             onClick={() => changeMode(tab.value)}
           >
@@ -363,8 +398,11 @@ export function FindingsPage() {
 
       <div className="findings-controls">
         {mode === 'needs_review' && visible.length > 0 && (
-          <div className="segmented" role="group" aria-label="How to review">
+          <div className="segmented" role="group" aria-label="How to review" onKeyDown={handleViewKeyDown}>
             <button
+              ref={(node) => {
+                viewRefs.current[0] = node;
+              }}
               type="button"
               className={view === 'queue' ? 'segmented-option active' : 'segmented-option'}
               aria-pressed={view === 'queue'}
@@ -373,6 +411,9 @@ export function FindingsPage() {
               One at a time
             </button>
             <button
+              ref={(node) => {
+                viewRefs.current[1] = node;
+              }}
               type="button"
               className={view === 'list' ? 'segmented-option active' : 'segmented-option'}
               aria-pressed={view === 'list'}
@@ -400,6 +441,8 @@ export function FindingsPage() {
         >
           <div className="toolbar toolbar-wide">
             <input
+              id="findings-search"
+              aria-label="Search findings"
               placeholder="Search by trial, drug, sponsor, phase, or any words in the summary"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -433,7 +476,7 @@ export function FindingsPage() {
             </label>
           </div>
           <div className="filter-chip-row">
-            {filterOptions.map((option) => (
+            {FILTER_OPTIONS.map((option) => (
               <button
                 key={option.value || 'all'}
                 className={filter === option.value ? 'filter-chip active' : 'filter-chip'}
@@ -497,7 +540,7 @@ export function FindingsPage() {
           ) : queueCurrent ? (
             <div className="review-queue">
               <div className="review-queue-stepper">
-                <span className="section-counter">
+                <span className="section-counter" aria-live="polite">
                   {queueIndex + 1} of {visible.length}
                 </span>
                 <div className="review-queue-progress" aria-hidden="true">
@@ -507,19 +550,24 @@ export function FindingsPage() {
                   />
                 </div>
               </div>
-              <FindingSummaryCard
-                key={queueCurrent.id}
-                finding={queueCurrent}
-                showWhy
-                onAction={(action) => handleAction(queueCurrent, action)}
-                actionPending={pendingId === queueCurrent.id}
-              />
+              <div ref={queueCardRef} tabIndex={-1}>
+                <FindingSummaryCard
+                  key={queueCurrent.id}
+                  finding={queueCurrent}
+                  showWhy
+                  onAction={(action) => handleAction(queueCurrent, action)}
+                  actionPending={pendingId === queueCurrent.id}
+                />
+              </div>
               <div className="button-row review-queue-nav">
                 <button
                   className="ghost-button"
                   type="button"
                   disabled={queueIndex === 0}
-                  onClick={() => setQueueIndex((current) => Math.max(0, current - 1))}
+                  onClick={() => {
+                    queueNavigated.current = true;
+                    setQueueIndex((current) => Math.max(0, current - 1));
+                  }}
                 >
                   Back
                 </button>
@@ -527,7 +575,10 @@ export function FindingsPage() {
                   className="secondary-button"
                   type="button"
                   disabled={queueIndex >= visible.length - 1}
-                  onClick={() => setQueueIndex((current) => Math.min(visible.length - 1, current + 1))}
+                  onClick={() => {
+                    queueNavigated.current = true;
+                    setQueueIndex((current) => Math.min(visible.length - 1, current + 1));
+                  }}
                 >
                   Next
                 </button>

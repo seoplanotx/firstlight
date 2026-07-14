@@ -113,7 +113,7 @@ export function DashboardPage() {
     return 'Run your first check to see what is new.';
   }, [data]);
 
-  if (loading) return <div className="loading-block">Loading...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading...</div>;
   if (errorMessage && !data) {
     return <PageErrorState title="Dashboard unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -144,8 +144,8 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {notice && <div className="callout">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+      {notice && <div className="callout" role="status">{notice}</div>}
+      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       {hasEverRun && (
         <TodayActions

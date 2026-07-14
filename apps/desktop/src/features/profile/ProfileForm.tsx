@@ -167,19 +167,19 @@ export function ProfileForm({
       )}
 
       <div className="field">
-        <label>Profile name</label>
-        <input value={form.profile_name} onChange={(e) => setForm({ ...form, profile_name: e.target.value })} required />
+        <label htmlFor="profile-name">Profile name</label>
+        <input id="profile-name" value={form.profile_name} onChange={(e) => setForm({ ...form, profile_name: e.target.value })} required />
         <div className="field-hint">A label for this profile, e.g. "Mom" or "Dad's lung cancer". Only you see this.</div>
       </div>
       <div className="field">
-        <label>Display name / initials</label>
-        <input value={form.display_name || ''} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
+        <label htmlFor="profile-display-name">Display name / initials</label>
+        <input id="profile-display-name" value={form.display_name || ''} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
         <div className="field-hint">Optional. Shown at the top of your daily check. Initials are fine.</div>
       </div>
       {!essentials && (
         <div className="field">
-          <label>Date of birth</label>
-          <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
+          <label htmlFor="profile-date-of-birth">Date of birth</label>
+          <input id="profile-date-of-birth" type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} />
           <div className="field-hint">Optional. Stays encrypted on this computer.</div>
         </div>
       )}
@@ -216,13 +216,13 @@ export function ProfileForm({
       {!essentials && (
         <>
           <div className="field">
-            <label>Subtype</label>
-            <input value={form.subtype || ''} onChange={(e) => setForm({ ...form, subtype: e.target.value })} />
+            <label htmlFor="profile-subtype">Subtype</label>
+            <input id="profile-subtype" value={form.subtype || ''} onChange={(e) => setForm({ ...form, subtype: e.target.value })} />
             <div className="field-hint">Optional, if a doctor named one — e.g. "adenocarcinoma". Leave blank if unsure.</div>
           </div>
           <div className="field">
-            <label>Stage / disease context</label>
-            <input value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
+            <label htmlFor="profile-stage">Stage / disease context</label>
+            <input id="profile-stage" value={form.stage_or_context || ''} onChange={(e) => setForm({ ...form, stage_or_context: e.target.value })} />
             <div className="field-hint">e.g. "Stage 4", "metastatic", or "newly diagnosed". Whatever the care team has said.</div>
           </div>
           <details className="form-help field-span-2">
@@ -235,21 +235,22 @@ export function ProfileForm({
             </p>
           </details>
           <div className="field field-span-2">
-            <label>Current therapy status</label>
-            <textarea value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
+            <label htmlFor="profile-therapy-status">Current therapy status</label>
+            <textarea id="profile-therapy-status" value={form.current_therapy_status || ''} onChange={(e) => setForm({ ...form, current_therapy_status: e.target.value })} rows={2} />
             <div className="field-hint">A sentence on where things stand now — e.g. "on chemo" or "deciding what's next".</div>
           </div>
         </>
       )}
       <div className="field">
-        <label>Location</label>
-        <input value={form.location_label || ''} onChange={(e) => setForm({ ...form, location_label: e.target.value })} />
+        <label htmlFor="profile-location">Location</label>
+        <input id="profile-location" value={form.location_label || ''} onChange={(e) => setForm({ ...form, location_label: e.target.value })} />
         <div className="field-hint">City and state is enough — used to flag trials within travel range.</div>
       </div>
       {!essentials && (
         <div className="field">
-          <label>Travel radius (miles)</label>
+          <label htmlFor="profile-travel-radius">Travel radius (miles)</label>
           <input
+            id="profile-travel-radius"
             type="number"
             value={form.travel_radius_miles || 0}
             onChange={(e) => setForm({ ...form, travel_radius_miles: Number(e.target.value) })}
@@ -260,7 +261,7 @@ export function ProfileForm({
 
       {!essentials && (
       <>
-      <div className="section-divider field-span-2">Biomarkers / mutations</div>
+      <h4 className="section-divider field-span-2">Biomarkers / mutations</h4>
       <div className="field-hint field-span-2">
         These come from a pathology, genetic, or molecular test report from the care team. Examples: KRAS G12C, EGFR,
         BRAF, MSI-High, PD-L1. They matter a lot for matching — but if you don't have them yet, leave this blank and add
@@ -288,8 +289,9 @@ export function ProfileForm({
         <div key={`bio-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
-              <label>Name</label>
+              <label htmlFor={`biomarker-${index}-name`}>Name</label>
               <input
+                id={`biomarker-${index}-name`}
                 list="biomarker-options"
                 placeholder="e.g. EGFR"
                 value={item.name}
@@ -301,8 +303,9 @@ export function ProfileForm({
               />
             </div>
             <div className="field">
-              <label>Variant</label>
+              <label htmlFor={`biomarker-${index}-variant`}>Variant</label>
               <input
+                id={`biomarker-${index}-variant`}
                 placeholder="e.g. Exon 19 deletion"
                 value={item.variant || ''}
                 onChange={(e) => {
@@ -313,8 +316,9 @@ export function ProfileForm({
               />
             </div>
             <div className="field">
-              <label>Status</label>
+              <label htmlFor={`biomarker-${index}-status`}>Status</label>
               <input
+                id={`biomarker-${index}-status`}
                 placeholder="e.g. positive"
                 value={item.status || ''}
                 onChange={(e) => {
@@ -341,7 +345,7 @@ export function ProfileForm({
         Add biomarker
       </button>
 
-      <div className="section-divider field-span-2">Therapy history</div>
+      <h4 className="section-divider field-span-2">Therapy history</h4>
       <div className="field-hint field-span-2">
         Treatments tried so far, most recent first if you can. The drug or treatment name is the important part — the
         rest is optional. Start typing for common examples, or type your own.
@@ -355,8 +359,9 @@ export function ProfileForm({
         <div key={`therapy-${index}`} className="row-card">
           <div className="row-card-grid">
             <div className="field">
-              <label>Therapy</label>
+              <label htmlFor={`therapy-${index}-name`}>Therapy</label>
               <input
+                id={`therapy-${index}-name`}
                 list="therapy-options"
                 placeholder="e.g. carboplatin"
                 value={item.therapy_name}
@@ -368,8 +373,9 @@ export function ProfileForm({
               />
             </div>
             <div className="field">
-              <label>Type</label>
+              <label htmlFor={`therapy-${index}-type`}>Type</label>
               <input
+                id={`therapy-${index}-type`}
                 placeholder="e.g. chemotherapy"
                 value={item.therapy_type || ''}
                 onChange={(e) => {
@@ -380,8 +386,9 @@ export function ProfileForm({
               />
             </div>
             <div className="field">
-              <label>Line of therapy</label>
+              <label htmlFor={`therapy-${index}-line`}>Line of therapy</label>
               <input
+                id={`therapy-${index}-line`}
                 placeholder="e.g. 1st line"
                 value={item.line_of_therapy || ''}
                 onChange={(e) => {
@@ -392,8 +399,9 @@ export function ProfileForm({
               />
             </div>
             <div className="field">
-              <label>Status</label>
+              <label htmlFor={`therapy-${index}-status`}>Status</label>
               <input
+                id={`therapy-${index}-status`}
                 placeholder="e.g. completed"
                 value={item.status || ''}
                 onChange={(e) => {
@@ -421,8 +429,9 @@ export function ProfileForm({
       </button>
 
       <div className="field">
-        <label>Would consider</label>
+        <label htmlFor="profile-would-consider">Would consider</label>
         <textarea
+          id="profile-would-consider"
           rows={2}
           value={considerText}
           onChange={(e) =>
@@ -438,8 +447,9 @@ export function ProfileForm({
         <div className="field-hint">Options you're open to, one per line — e.g. "clinical trials", "travel for treatment".</div>
       </div>
       <div className="field">
-        <label>Would not consider</label>
+        <label htmlFor="profile-would-not-consider">Would not consider</label>
         <textarea
+          id="profile-would-not-consider"
           rows={2}
           value={avoidText}
           onChange={(e) =>
@@ -455,8 +465,8 @@ export function ProfileForm({
         <div className="field-hint">Anything to rule out, one per line. Firstlight will flag items that conflict with these.</div>
       </div>
       <div className="field field-span-2">
-        <label>Notes</label>
-        <textarea value={form.notes || ''} rows={3} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+        <label htmlFor="profile-notes">Notes</label>
+        <textarea id="profile-notes" value={form.notes || ''} rows={3} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <div className="field-hint">Anything else worth remembering. You can paste notes from a doctor's report here too.</div>
       </div>
       </>

@@ -14,7 +14,7 @@ export function RecoveryScreen({ errorMessage, apiBase, onRetry }: RecoveryScree
           Firstlight waits for the bundled backend for a few seconds on launch. If that startup window is missed, retry
           before reinstalling.
         </p>
-        <div className="callout callout-danger">{errorMessage}</div>
+        <div className="callout callout-danger" role="alert">{errorMessage}</div>
         <div className="detail-grid recovery-details">
           <div>
             <strong>Expected API</strong>
