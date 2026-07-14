@@ -41,11 +41,18 @@
 
   --radius: 6px;
   --radius-lg: 10px;
-  --content-width: 1320px;
+  --content-width: 1180px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: anywhere;
 }
 
 html {
@@ -299,9 +306,14 @@ code {
   border-bottom: 1px solid var(--line);
 }
 
+.page-header > div {
+  min-width: 0;
+}
+
 .page-header h1 {
   font-size: 1.7rem;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .page-lede {
@@ -841,9 +853,10 @@ code {
 }
 
 .stat {
-  display: grid;
-  gap: 1px;
-  padding: 14px 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 15px 20px;
 }
 
 .stat + .stat {
@@ -852,15 +865,16 @@ code {
 
 .stat-num {
   font-family: var(--font-mono);
-  font-size: 1.45rem;
+  font-size: 1.65rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.1;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.25;
   color: var(--ink-soft);
 }
 
@@ -1502,6 +1516,7 @@ code {
   padding: 0;
   display: grid;
   gap: 4px;
+  max-width: 880px;
 }
 
 .today-action {
@@ -1540,6 +1555,7 @@ code {
 
 .today-action-detail {
   margin: 3px 0 0;
+  max-width: 68ch;
   color: var(--ink-soft);
   font-size: 0.86rem;
 }
@@ -1588,6 +1604,13 @@ code {
 }
 
 /* ---------- Empty / error states ---------- */
+
+.section-empty-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
 
 .empty-state {
   padding: 22px;

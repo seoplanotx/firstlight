@@ -1,5 +1,4 @@
 import { Card } from './Card';
-import { EmptyState } from './EmptyState';
 import { FindingSummaryCard } from './FindingSummaryCard';
 import type { BriefingFindingSection, FindingAction } from '../lib/types';
 
@@ -40,7 +39,7 @@ export function BriefingSection({ section, anchorId, showWhy = true, onAction, p
     <div id={anchorId}>
       <Card title={title} description={description} action={<span className="section-counter">{section.count} total</span>}>
         {section.items.length === 0 ? (
-          <EmptyState title={title} message={section.empty_message} />
+          <p className="section-empty-note">{section.empty_message}</p>
         ) : (
           <div className="finding-list">
             {section.items.map((finding) => (
