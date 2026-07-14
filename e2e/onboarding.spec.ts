@@ -21,11 +21,9 @@ test('first launch onboarding reaches the dashboard and support surface', async 
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await expect(page.getByText('Enabled real sources')).toBeVisible();
+  // The sources step now requires acknowledging the local-only privacy promise.
+  await page.getByRole('checkbox', { name: /I understand my information stays/ }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
-
-  // AI assist step is optional and skippable without an OpenRouter key.
-  await expect(page.getByRole('heading', { name: 'AI assist (optional)' })).toBeVisible();
-  await page.getByRole('button', { name: 'Skip for now' }).click();
 
   await page.getByRole('button', { name: 'Run health check' }).click();
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled({ timeout: 30_000 });
