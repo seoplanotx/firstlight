@@ -82,14 +82,46 @@ describe('FindingsPage', () => {
     mockedApi.setFindingAction.mockResolvedValue(buildFinding());
   });
 
-  it('preserves the backend ranking by default and re-sorts by date for Newest', async () => {
+  it('defaults to Needs review and steps through findings one at a time', async () => {
+    render(<FindingsPage />);
+    await screen.findByText('High score, older');
+
+    // Queue view shows a single card with a "1 of N" stepper.
+    expect(screen.getByText('1 of 2')).toBeInTheDocument();
+    expect(screen.queryByText('Low score, newer')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /^next$/i }));
+    expect(screen.getByText('2 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Low score, newer')).toBeInTheDocument();
+  });
+
+  it('preserves the backend ranking in the full list and re-sorts by date for Newest', async () => {
     const { container } = render(<FindingsPage />);
     await screen.findByText('High score, older');
 
+    await userEvent.click(screen.getByRole('button', { name: /full list/i }));
     expect(findingTitles(container)).toEqual(['High score, older', 'Low score, newer']);
 
+    await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
     await userEvent.selectOptions(screen.getByDisplayValue('Most relevant'), 'newest');
     expect(findingTitles(container)).toEqual(['Low score, newer', 'High score, older']);
+  });
+
+  it('separates saved-for-doctor and archived findings into their own tabs', async () => {
+    const saved = buildFinding({ id: 3, title: 'Saved item', user_action: 'discuss' });
+    const archived = buildFinding({ id: 4, title: 'Archived item', user_action: 'dismissed' });
+    mockedApi.getFindings.mockResolvedValue({ total: 3, items: [highScoreOlder, saved, archived] });
+
+    render(<FindingsPage />);
+    await screen.findByText('High score, older');
+    expect(screen.queryByText('Saved item')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /saved for doctor/i }));
+    expect(await screen.findByText('Saved item')).toBeInTheDocument();
+    expect(screen.queryByText('High score, older')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /archive/i }));
+    expect(await screen.findByText('Archived item')).toBeInTheDocument();
   });
 
   it('confirms an action and restores the previous state on undo', async () => {
@@ -111,10 +143,11 @@ describe('FindingsPage', () => {
     render(<FindingsPage />);
     await screen.findByText('High score, older');
 
+    await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
     await userEvent.type(screen.getByPlaceholderText(/search by trial/i), 'zzz-no-match');
     expect(await screen.findByText(/zzz-no-match/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /clear search and filters/i }));
+    await userEvent.click(screen.getAllByRole('button', { name: /clear search and filters/i })[0]);
     expect(screen.getByText('High score, older')).toBeInTheDocument();
   });
 });

@@ -5,9 +5,10 @@ import { BriefingSection } from '../components/BriefingSection';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { PageErrorState } from '../components/PageErrorState';
+import { TodayActions } from '../components/TodayActions';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import type { Dashboard, FindingAction, SourceConfig } from '../lib/types';
+import type { Dashboard, Finding, FindingAction, SourceConfig } from '../lib/types';
 
 const SOURCE_NAMES: Record<string, string> = {
   clinicaltrials_gov: 'ClinicalTrials.gov',
@@ -26,6 +27,7 @@ function jumpToSection(anchorId: string) {
 
 export function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
+  const [findings, setFindings] = useState<Finding[]>([]);
   const [personName, setPersonName] = useState<string>('');
   const [sourceConfigs, setSourceConfigs] = useState<SourceConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +43,16 @@ export function DashboardPage() {
       const result = await api.getDashboard();
       setData(result);
       try {
-        const [profile, sources] = await Promise.all([api.getActiveProfile(), api.getSources()]);
+        const [profile, sources, findingsResult] = await Promise.all([
+          api.getActiveProfile(),
+          api.getSources(),
+          api.getFindings()
+        ]);
         setPersonName(profile?.display_name || profile?.profile_name || '');
         setSourceConfigs(sources);
+        setFindings(findingsResult.items);
       } catch {
-        // The dashboard still works without a personalized greeting or persistent source rows.
+        // The dashboard still works without a personalized greeting, source rows, or the next-steps counts.
       }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not load the dashboard.'));
@@ -85,6 +92,15 @@ export function DashboardPage() {
       setPendingFindingId(null);
     }
   }
+
+  const needsReviewCount = useMemo(
+    () => findings.filter((item) => item.user_action === 'none').length,
+    [findings]
+  );
+  const discussCount = useMemo(
+    () => findings.filter((item) => item.user_action === 'discuss').length,
+    [findings]
+  );
 
   const latestRunLabel = useMemo(() => {
     if (!data) return 'Run your first check to see what is new.';
@@ -130,6 +146,14 @@ export function DashboardPage() {
 
       {notice && <div className="callout">{notice}</div>}
       {errorMessage && <div className="callout callout-danger">{errorMessage}</div>}
+
+      {hasEverRun && (
+        <TodayActions
+          needsReviewCount={needsReviewCount}
+          matchingGapCount={data.briefing.blockers.length}
+          discussCount={discussCount}
+        />
+      )}
 
       {runInProgress && (
         <div className="callout first-run-callout">

@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PageErrorState } from '../components/PageErrorState';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
+import { fileDirectory, openLocalPath } from '../lib/external';
 import type { BriefingFindingSection, BriefingBlocker, ReportExport } from '../lib/types';
 
 const REPORT_TYPE_LABELS: Record<string, string> = {
@@ -55,6 +56,15 @@ export function ReportsPage() {
       setErrorMessage(getErrorMessage(error, 'Could not generate the report.'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function openLocation(report: ReportExport) {
+    setErrorMessage('');
+    setNotice('');
+    const opened = await openLocalPath(fileDirectory(report.file_path));
+    if (!opened) {
+      setNotice(`Saved on this computer at: ${report.file_path}`);
     }
   }
 
@@ -171,7 +181,7 @@ export function ReportsPage() {
         )}
       </Card>
 
-      <Card title="Report history" description="Recent locally generated PDFs and their saved locations.">
+      <Card title="Report history" description="Reports you have made on this computer. Open, save, or refresh any of them.">
         {reports.length === 0 ? (
           <EmptyState title="No reports yet" message="Generate a report to start the local report history." />
         ) : (
@@ -183,11 +193,20 @@ export function ReportsPage() {
                     <strong>{reportTypeLabel(report.report_type)}</strong>
                     <div className="muted">{new Date(report.generated_at).toLocaleString()}</div>
                   </div>
-                  <button className="secondary-button" onClick={() => void download(report.id, report.report_type)}>
-                    Download PDF
-                  </button>
                 </div>
-                <div className="muted">{report.file_path}</div>
+                <div className="finding-footer">
+                  <div className="finding-actions">
+                    <button className="secondary-button" onClick={() => void download(report.id, report.report_type)}>
+                      Download PDF
+                    </button>
+                    <button className="ghost-button" onClick={() => void openLocation(report)}>
+                      Open file location
+                    </button>
+                    <button className="ghost-button" disabled={busy} onClick={() => void generate(report.report_type)}>
+                      Generate updated version
+                    </button>
+                  </div>
+                </div>
               </article>
             ))}
           </div>

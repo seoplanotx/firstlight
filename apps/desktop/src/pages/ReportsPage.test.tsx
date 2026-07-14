@@ -50,4 +50,15 @@ describe('ReportsPage', () => {
     );
     expect(await screen.findByText(/Appointment Prep Sheet generated locally/i)).toBeInTheDocument();
   });
+
+  it('regenerates an existing report from its history entry', async () => {
+    render(<ReportsPage />);
+    await screen.findAllByText('Appointment Prep Sheet');
+
+    await userEvent.click(screen.getByRole('button', { name: /generate updated version/i }));
+
+    await waitFor(() =>
+      expect(mockedApi.generateReport).toHaveBeenCalledWith({ report_type: 'appointment_prep' })
+    );
+  });
 });

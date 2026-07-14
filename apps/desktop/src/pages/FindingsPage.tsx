@@ -10,42 +10,67 @@ import type { Finding, FindingAction, SourceConfig } from '../lib/types';
 
 type SortKey = 'relevance' | 'newest';
 type DateRangeKey = 'any' | '7d' | '30d' | '90d';
+type ReviewMode = 'needs_review' | 'discuss' | 'archive';
+type ViewMode = 'queue' | 'list';
 
 const STORAGE_KEY = 'firstlight.findingsPrefs';
 const UNDO_TIMEOUT_MS = 8000;
 
+const MODE_ACTION: Record<ReviewMode, FindingAction> = {
+  needs_review: 'none',
+  discuss: 'discuss',
+  archive: 'dismissed'
+};
+
 const ACTION_CONFIRMATIONS: Record<FindingAction, string> = {
-  discuss: 'Added to your list for the doctor.',
+  discuss: 'Saved for the doctor.',
   dismissed: 'Set aside.',
-  none: 'Moved back to your list.'
+  none: 'Moved back to your review list.'
 };
 
 type FindingsPrefs = {
   query: string;
   filter: string;
   sortKey: SortKey;
-  includeDismissed: boolean;
   sourceFilter: string;
   dateRange: DateRangeKey;
+  mode: ReviewMode;
+  view: ViewMode;
+  filtersOpen: boolean;
+};
+
+const DEFAULT_PREFS: FindingsPrefs = {
+  query: '',
+  filter: '',
+  sortKey: 'relevance',
+  sourceFilter: '',
+  dateRange: 'any',
+  mode: 'needs_review',
+  view: 'queue',
+  filtersOpen: false
 };
 
 function readPrefs(): FindingsPrefs {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return { query: '', filter: '', sortKey: 'relevance', includeDismissed: false, sourceFilter: '', dateRange: 'any' };
-    }
+    if (!raw) return { ...DEFAULT_PREFS };
     const parsed = JSON.parse(raw) as Partial<FindingsPrefs>;
     return {
       query: typeof parsed.query === 'string' ? parsed.query : '',
       filter: typeof parsed.filter === 'string' ? parsed.filter : '',
       sortKey: parsed.sortKey === 'newest' ? 'newest' : 'relevance',
-      includeDismissed: Boolean(parsed.includeDismissed),
       sourceFilter: typeof parsed.sourceFilter === 'string' ? parsed.sourceFilter : '',
-      dateRange: parsed.dateRange === '7d' || parsed.dateRange === '30d' || parsed.dateRange === '90d' ? parsed.dateRange : 'any'
+      dateRange:
+        parsed.dateRange === '7d' || parsed.dateRange === '30d' || parsed.dateRange === '90d' ? parsed.dateRange : 'any',
+      mode:
+        parsed.mode === 'discuss' || parsed.mode === 'archive' || parsed.mode === 'needs_review'
+          ? parsed.mode
+          : 'needs_review',
+      view: parsed.view === 'list' ? 'list' : 'queue',
+      filtersOpen: Boolean(parsed.filtersOpen)
     };
   } catch {
-    return { query: '', filter: '', sortKey: 'relevance', includeDismissed: false, sourceFilter: '', dateRange: 'any' };
+    return { ...DEFAULT_PREFS };
   }
 }
 
@@ -60,6 +85,12 @@ function withinDateRange(item: Finding, range: DateRangeKey): boolean {
   return findingTimestamp(item) >= cutoff;
 }
 
+const MODE_TABS: { value: ReviewMode; label: string }[] = [
+  { value: 'needs_review', label: 'Needs review' },
+  { value: 'discuss', label: 'Saved for doctor' },
+  { value: 'archive', label: 'Archive' }
+];
+
 export function FindingsPage() {
   const initial = readPrefs();
   const [items, setItems] = useState<Finding[]>([]);
@@ -67,9 +98,12 @@ export function FindingsPage() {
   const [query, setQuery] = useState(initial.query);
   const [filter, setFilter] = useState(initial.filter);
   const [sortKey, setSortKey] = useState<SortKey>(initial.sortKey);
-  const [includeDismissed, setIncludeDismissed] = useState(initial.includeDismissed);
   const [sourceFilter, setSourceFilter] = useState(initial.sourceFilter);
   const [dateRange, setDateRange] = useState<DateRangeKey>(initial.dateRange);
+  const [mode, setMode] = useState<ReviewMode>(initial.mode);
+  const [view, setView] = useState<ViewMode>(initial.view);
+  const [filtersOpen, setFiltersOpen] = useState(initial.filtersOpen);
+  const [queueIndex, setQueueIndex] = useState(0);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -91,19 +125,21 @@ export function FindingsPage() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ query, filter, sortKey, includeDismissed, sourceFilter, dateRange })
+        JSON.stringify({ query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen })
       );
     } catch {
       // best-effort
     }
-  }, [query, filter, sortKey, includeDismissed, sourceFilter, dateRange]);
+  }, [query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen]);
 
   async function load() {
     setLoading(true);
     setErrorMessage('');
     try {
+      // Load everything, including set-aside items, so all three review modes and
+      // their counts stay accurate without reloading when the mode changes.
       const [result, sourceResult] = await Promise.all([
-        api.getFindings({ include_dismissed: includeDismissed }),
+        api.getFindings({ include_dismissed: true }),
         api.getSources()
       ]);
       setItems(result.items);
@@ -118,8 +154,7 @@ export function FindingsPage() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeDismissed]);
+  }, []);
 
   async function applyAction(findingId: number, action: FindingAction, previous: FindingAction, offerUndo: boolean) {
     setPendingId(findingId);
@@ -168,13 +203,10 @@ export function FindingsPage() {
   }
 
   const visible = useMemo(() => {
+    const modeAction = MODE_ACTION[mode];
     const filtered = items.filter((item) => {
-      const matchesFilter =
-        filter === 'discuss'
-          ? item.user_action === 'discuss'
-          : filter
-            ? item.type === filter
-            : true;
+      if (item.user_action !== modeAction) return false;
+      const matchesType = filter ? item.type === filter : true;
       const matchesQuery = query
         ? [
             item.title,
@@ -192,21 +224,28 @@ export function FindingsPage() {
         : true;
       const matchesSource = sourceFilter ? item.source_name === sourceFilter : true;
       const matchesDate = withinDateRange(item, dateRange);
-      return matchesFilter && matchesQuery && matchesSource && matchesDate;
+      return matchesType && matchesQuery && matchesSource && matchesDate;
     });
 
     if (sortKey === 'newest') {
       return [...filtered].sort((a, b) => findingTimestamp(b) - findingTimestamp(a));
     }
     return filtered;
-  }, [items, query, filter, sortKey, sourceFilter, dateRange]);
+  }, [items, query, filter, sortKey, sourceFilter, dateRange, mode]);
+
+  // Keep the review-queue pointer within bounds as items leave the list.
+  useEffect(() => {
+    setQueueIndex((current) => {
+      if (visible.length === 0) return 0;
+      return Math.min(current, visible.length - 1);
+    });
+  }, [visible.length]);
 
   const filterOptions = useMemo(
     () => [
       { value: '', label: 'Everything' },
       { value: 'clinical_trials', label: 'Trials' },
-      { value: 'literature', label: 'Research' },
-      { value: 'discuss', label: 'To discuss' }
+      { value: 'literature', label: 'Research' }
     ],
     []
   );
@@ -218,14 +257,30 @@ export function FindingsPage() {
     return [...names].sort((a, b) => a.localeCompare(b));
   }, [sources, items]);
 
-  const discussCount = useMemo(() => items.filter((item) => item.user_action === 'discuss').length, [items]);
+  const modeCounts = useMemo(
+    () => ({
+      needs_review: items.filter((item) => item.user_action === 'none').length,
+      discuss: items.filter((item) => item.user_action === 'discuss').length,
+      archive: items.filter((item) => item.user_action === 'dismissed').length
+    }),
+    [items]
+  );
+
   const isFiltered = Boolean(query || filter || sourceFilter || dateRange !== 'any');
+  const activeFilterCount =
+    (query ? 1 : 0) + (filter ? 1 : 0) + (sourceFilter ? 1 : 0) + (dateRange !== 'any' ? 1 : 0);
 
   function clearSearch() {
     setQuery('');
     setFilter('');
     setSourceFilter('');
     setDateRange('any');
+  }
+
+  function changeMode(next: ReviewMode) {
+    setMode(next);
+    setSelected(new Set());
+    setQueueIndex(0);
   }
 
   function toggleSelected(id: number) {
@@ -246,6 +301,23 @@ export function FindingsPage() {
     return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
   }
 
+  const useQueue = mode === 'needs_review' && view === 'queue';
+  const emptyForMode: Record<ReviewMode, { title: string; message: string }> = {
+    needs_review: {
+      title: "You're all caught up",
+      message: 'Nothing is waiting for review. New items will appear here after your next check.'
+    },
+    discuss: {
+      title: 'Nothing saved yet',
+      message: 'Items you save for the doctor will collect here, ready for your next visit.'
+    },
+    archive: {
+      title: 'Nothing set aside',
+      message: 'Items you mark "not relevant" move here. You can always restore them.'
+    }
+  };
+  const queueCurrent = visible[queueIndex];
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -253,8 +325,8 @@ export function FindingsPage() {
           <div className="eyebrow">Everything Firstlight found</div>
           <h1>What's New</h1>
           <p className="page-lede">
-            Search and skim everything Firstlight has found. Mark anything you want to raise at the next visit, and set
-            aside the things that are not relevant.
+            Work through new findings one at a time, keep the ones worth raising at the next visit, and set aside the
+            rest.
           </p>
         </div>
         <div className="page-header-actions">
@@ -273,74 +345,124 @@ export function FindingsPage() {
         </div>
       )}
 
-      <Card title="Find something specific" description="Search stays on this computer. Your sort and filters are remembered on this device.">
-        <div className="toolbar toolbar-wide">
-          <input
-            placeholder="Search by trial, drug, sponsor, phase, or any words in the summary"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <label className="toolbar-sort">
-            <span className="muted">Sort by</span>
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
-              <option value="relevance">Most relevant</option>
-              <option value="newest">Newest</option>
-            </select>
-          </label>
-          <label className="toolbar-sort">
-            <span className="muted">Source</span>
-            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-              <option value="">All sources</option>
-              {sourceOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="toolbar-sort">
-            <span className="muted">Date</span>
-            <select value={dateRange} onChange={(e) => setDateRange(e.target.value as DateRangeKey)}>
-              <option value="any">Any time</option>
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-            </select>
-          </label>
-        </div>
-        <div className="filter-chip-row">
-          {filterOptions.map((option) => (
+      <div className="mode-tabs" role="tablist" aria-label="Review status">
+        {MODE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={mode === tab.value}
+            className={mode === tab.value ? 'mode-tab active' : 'mode-tab'}
+            onClick={() => changeMode(tab.value)}
+          >
+            <span className="mode-tab-label">{tab.label}</span>
+            <span className="mode-tab-count">{modeCounts[tab.value]}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="findings-controls">
+        {mode === 'needs_review' && visible.length > 0 && (
+          <div className="segmented" role="group" aria-label="How to review">
             <button
-              key={option.value || 'all'}
-              className={filter === option.value ? 'filter-chip active' : 'filter-chip'}
-              onClick={() => setFilter(option.value)}
               type="button"
+              className={view === 'queue' ? 'segmented-option active' : 'segmented-option'}
+              aria-pressed={view === 'queue'}
+              onClick={() => setView('queue')}
             >
-              {option.label}
-              {option.value === 'discuss' && discussCount > 0 ? ` (${discussCount})` : ''}
+              One at a time
             </button>
-          ))}
-        </div>
-        <label className="toggle-row dismissed-toggle">
-          <input type="checkbox" checked={includeDismissed} onChange={(e) => setIncludeDismissed(e.target.checked)} />
-          <div>
-            <strong>Show items I set aside</strong>
-            <div className="muted">Items you marked "not relevant" are hidden by default. Turn this on to review or restore them.</div>
+            <button
+              type="button"
+              className={view === 'list' ? 'segmented-option active' : 'segmented-option'}
+              aria-pressed={view === 'list'}
+              onClick={() => setView('list')}
+            >
+              Full list
+            </button>
           </div>
-        </label>
-      </Card>
+        )}
+        <button
+          type="button"
+          className={filtersOpen ? 'secondary-button filters-toggle active' : 'secondary-button filters-toggle'}
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          {filtersOpen ? 'Hide filters' : 'Filters'}
+          {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+        </button>
+      </div>
+
+      {filtersOpen && (
+        <Card
+          title="Find something specific"
+          description="Search stays on this computer. Your sort and filters are remembered on this device."
+        >
+          <div className="toolbar toolbar-wide">
+            <input
+              placeholder="Search by trial, drug, sponsor, phase, or any words in the summary"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <label className="toolbar-sort">
+              <span className="muted">Sort by</span>
+              <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+                <option value="relevance">Most relevant</option>
+                <option value="newest">Newest</option>
+              </select>
+            </label>
+            <label className="toolbar-sort">
+              <span className="muted">Source</span>
+              <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+                <option value="">All sources</option>
+                {sourceOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="toolbar-sort">
+              <span className="muted">Date</span>
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value as DateRangeKey)}>
+                <option value="any">Any time</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+              </select>
+            </label>
+          </div>
+          <div className="filter-chip-row">
+            {filterOptions.map((option) => (
+              <button
+                key={option.value || 'all'}
+                className={filter === option.value ? 'filter-chip active' : 'filter-chip'}
+                onClick={() => setFilter(option.value)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {isFiltered && (
+            <button className="link-button" type="button" onClick={clearSearch}>
+              Clear search and filters
+            </button>
+          )}
+        </Card>
+      )}
 
       {selected.size > 0 && (
-        <Card title="Bulk actions" description={`${selected.size} selected`}>
+        <Card title="Handle several findings at once" description={`${selected.size} selected`}>
           <div className="button-row">
             <button className="primary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('discuss')}>
-              Mark to discuss
+              Save for doctor
             </button>
             <button className="secondary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('dismissed')}>
               Set aside
             </button>
             <button className="secondary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('none')}>
-              Clear action
+              Move back to review
             </button>
             <button className="link-button" type="button" onClick={() => setSelected(new Set())}>
               Clear selection
@@ -349,58 +471,124 @@ export function FindingsPage() {
         </Card>
       )}
 
-      <Card
-        title="Results"
-        description="Each item keeps its source, evidence excerpt, and the plain reason it came up."
-        action={
-          visible.length > 0 ? (
-            <button className="secondary-button" type="button" onClick={selectAllVisible}>
-              Select all shown
-            </button>
-          ) : undefined
-        }
-      >
-        {visible.length === 0 ? (
-          isFiltered ? (
+      {useQueue ? (
+        <Card
+          title="Review one at a time"
+          description="Decide on each finding, then move to the next. This is the calmest way to get through what's new."
+        >
+          {visible.length === 0 ? (
             <EmptyState
-              title="No matches"
+              title={isFiltered ? 'No matches' : emptyForMode.needs_review.title}
               message={
-                query
-                  ? `Nothing matched “${query}”${filter || sourceFilter || dateRange !== 'any' ? ' with these filters' : ''}. Try different words or clear the search.`
-                  : 'Nothing matched the current filters.'
+                isFiltered
+                  ? query
+                    ? `Nothing matched “${query}”${filter || sourceFilter || dateRange !== 'any' ? ' with these filters' : ''}.`
+                    : 'Nothing matched the current filters.'
+                  : emptyForMode.needs_review.message
               }
               action={
-                <button className="secondary-button" type="button" onClick={clearSearch}>
-                  Clear search and filters
-                </button>
+                isFiltered ? (
+                  <button className="secondary-button" type="button" onClick={clearSearch}>
+                    Clear search and filters
+                  </button>
+                ) : undefined
               }
             />
-          ) : (
-            <EmptyState title="Nothing here yet" message="Run a check from Today to see what Firstlight finds." />
-          )
-        ) : (
-          <div className="finding-list">
-            {visible.map((item) => (
-              <div key={item.id} className="finding-select-row">
-                <label className="finding-select">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(item.id)}
-                    onChange={() => toggleSelected(item.id)}
-                    aria-label={`Select ${item.title}`}
+          ) : queueCurrent ? (
+            <div className="review-queue">
+              <div className="review-queue-stepper">
+                <span className="section-counter">
+                  {queueIndex + 1} of {visible.length}
+                </span>
+                <div className="review-queue-progress" aria-hidden="true">
+                  <div
+                    className="review-queue-progress-bar"
+                    style={{ width: `${((queueIndex + 1) / visible.length) * 100}%` }}
                   />
-                </label>
-                <FindingSummaryCard
-                  finding={item}
-                  showWhy
-                  onAction={(action) => handleAction(item, action)}
-                  actionPending={pendingId === item.id}
-                />
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+              <FindingSummaryCard
+                key={queueCurrent.id}
+                finding={queueCurrent}
+                showWhy
+                onAction={(action) => handleAction(queueCurrent, action)}
+                actionPending={pendingId === queueCurrent.id}
+              />
+              <div className="button-row review-queue-nav">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={queueIndex === 0}
+                  onClick={() => setQueueIndex((current) => Math.max(0, current - 1))}
+                >
+                  Back
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={queueIndex >= visible.length - 1}
+                  onClick={() => setQueueIndex((current) => Math.min(visible.length - 1, current + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </Card>
+      ) : (
+        <Card
+          title="Results"
+          description="Each item keeps its source, evidence excerpt, and the plain reason it came up."
+          action={
+            visible.length > 0 ? (
+              <button className="secondary-button" type="button" onClick={selectAllVisible}>
+                Select all shown
+              </button>
+            ) : undefined
+          }
+        >
+          {visible.length === 0 ? (
+            isFiltered ? (
+              <EmptyState
+                title="No matches"
+                message={
+                  query
+                    ? `Nothing matched “${query}”${filter || sourceFilter || dateRange !== 'any' ? ' with these filters' : ''}. Try different words or clear the search.`
+                    : 'Nothing matched the current filters.'
+                }
+                action={
+                  <button className="secondary-button" type="button" onClick={clearSearch}>
+                    Clear search and filters
+                  </button>
+                }
+              />
+            ) : (
+              <EmptyState title={emptyForMode[mode].title} message={emptyForMode[mode].message} />
+            )
+          ) : (
+            <div className="finding-list">
+              {visible.map((item) => (
+                <div key={item.id} className="finding-select-row">
+                  <label className="finding-select">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(item.id)}
+                      onChange={() => toggleSelected(item.id)}
+                      aria-label={`Select ${item.title}`}
+                    />
+                  </label>
+                  <FindingSummaryCard
+                    finding={item}
+                    showWhy
+                    onAction={(action) => handleAction(item, action)}
+                    actionPending={pendingId === item.id}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

@@ -576,6 +576,133 @@ code {
   color: var(--bg);
 }
 
+/* ---------- Review mode tabs ---------- */
+
+.mode-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  background: var(--bg-shade);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.mode-tab {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mode-tab:hover {
+  color: var(--ink);
+}
+
+.mode-tab.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(33, 39, 34, 0.08);
+}
+
+.mode-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--line);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.mode-tab.active .mode-tab-count {
+  background: var(--accent-wash);
+  color: var(--accent-strong);
+}
+
+.findings-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filters-toggle.active {
+  border-color: var(--ink-soft);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: var(--bg-shade);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.segmented-option {
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.segmented-option.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(33, 39, 34, 0.08);
+}
+
+/* ---------- Review queue ---------- */
+
+.review-queue {
+  display: grid;
+  gap: 16px;
+}
+
+.review-queue-stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-queue-progress {
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-shade);
+  overflow: hidden;
+}
+
+.review-queue-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.review-queue-nav {
+  justify-content: space-between;
+}
+
 /* ---------- Stat strip ---------- */
 
 .stat-strip {
@@ -1234,6 +1361,103 @@ code {
 .blocker-item .muted {
   margin-top: 3px;
   font-size: 0.82rem;
+}
+
+/* ---------- Today's next steps ---------- */
+
+.today-actions-card {
+  border-color: var(--line-strong);
+}
+
+.today-actions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.today-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+}
+
+.today-action + .today-action {
+  border-top: 1px solid var(--line);
+}
+
+.today-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--accent-wash);
+  color: var(--accent-strong);
+}
+
+.today-action-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.today-action-title {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.today-action-detail {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+
+.today-action-link {
+  flex: 0 0 auto;
+  align-self: center;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.today-actions-clear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.today-actions-clear-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--ok-line);
+  background: var(--ok-wash);
+  color: var(--ok);
+}
+
+.today-actions-clear .empty-state {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .today-action {
+    flex-wrap: wrap;
+  }
+
+  .today-action-link {
+    align-self: flex-start;
+    margin-left: 52px;
+  }
 }
 
 /* ---------- Empty / error states ---------- */
