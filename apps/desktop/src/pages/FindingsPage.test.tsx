@@ -107,21 +107,20 @@ describe('FindingsPage', () => {
     expect(findingTitles(container)).toEqual(['Low score, newer', 'High score, older']);
   });
 
-  it('separates saved-for-doctor and archived findings into their own tabs', async () => {
+  it('keeps saved-for-discussion items out of review and archived findings in their own tab', async () => {
     const saved = buildFinding({ id: 3, title: 'Saved item', user_action: 'discuss' });
     const archived = buildFinding({ id: 4, title: 'Archived item', user_action: 'dismissed' });
     mockedApi.getFindings.mockResolvedValue({ total: 3, items: [highScoreOlder, saved, archived] });
 
     render(<FindingsPage />);
     await screen.findByText('High score, older');
+    // Saved items live in Doctor Visit -> Saved for Discussion, not in a review tab here.
     expect(screen.queryByText('Saved item')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('tab', { name: /saved for doctor/i }));
-    expect(await screen.findByText('Saved item')).toBeInTheDocument();
-    expect(screen.queryByText('High score, older')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /saved/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('tab', { name: /archive/i }));
     expect(await screen.findByText('Archived item')).toBeInTheDocument();
+    expect(screen.queryByText('High score, older')).not.toBeInTheDocument();
   });
 
   it('confirms an action and restores the previous state on undo', async () => {

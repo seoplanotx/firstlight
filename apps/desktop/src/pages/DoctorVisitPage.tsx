@@ -2,10 +2,14 @@ import { Link } from 'react-router-dom';
 
 import { ClinicianSummaryPage } from './ClinicianSummaryPage';
 import { ReportsPage } from './ReportsPage';
+import { SavedForDiscussionPage } from './SavedForDiscussionPage';
 
-export type DoctorVisitTab = 'summary' | 'reports';
+export type DoctorVisitTab = 'saved' | 'summary' | 'reports';
 
+// Visit prep in reading order: gather the shortlist, shape the summary,
+// print the report.
 const TABS: { key: DoctorVisitTab; label: string; to: string }[] = [
+  { key: 'saved', label: 'Saved for Discussion', to: '/saved-findings' },
   { key: 'summary', label: 'Questions & summary', to: '/clinician' },
   { key: 'reports', label: 'Printable reports', to: '/reports' }
 ];
@@ -26,6 +30,7 @@ export function DoctorVisitPage({ activeTab }: { activeTab: DoctorVisitTab }) {
         ))}
       </nav>
 
+      {activeTab === 'saved' && <SavedForDiscussionPage />}
       {activeTab === 'summary' && <ClinicianSummaryPage />}
       {activeTab === 'reports' && <ReportsPage />}
     </div>

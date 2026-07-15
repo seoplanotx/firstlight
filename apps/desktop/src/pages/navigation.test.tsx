@@ -111,10 +111,11 @@ describe('task-based navigation', () => {
     expect(screen.getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('renders the Saved for discussion view at /saved-findings', async () => {
+  it('renders the Saved for Discussion view under Doctor Visit at /saved-findings', async () => {
     renderAppAt('/saved-findings');
-    expect(await screen.findByText('Saved for discussion')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Saved for discussion' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { name: 'Saved for Discussion' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Saved for Discussion' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Questions & summary' })).toBeInTheDocument();
   });
 
   it('keeps the legacy /clinician URL working under Doctor Visit', async () => {

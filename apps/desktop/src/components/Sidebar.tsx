@@ -8,14 +8,14 @@ import type { PatientProfile } from '../lib/types';
 // still resolve), so the nav item highlights no matter which tab the user is on.
 const primaryItems = [
   { to: '/', label: 'Today', match: ['/'] },
-  { to: '/discoveries', label: 'Discoveries', match: ['/discoveries', '/findings', '/trials', '/updates', '/saved-findings'] },
-  { to: '/doctor-visit', label: 'Doctor Visit', match: ['/doctor-visit', '/clinician', '/reports'] }
+  { to: '/discoveries', label: 'Discoveries', match: ['/discoveries', '/findings', '/trials', '/updates'] },
+  { to: '/doctor-visit', label: 'Doctor Visit', match: ['/doctor-visit', '/clinician', '/reports', '/saved-findings'] }
 ];
 
 const secondaryItems = [
   { to: '/profile', label: 'Patient Details' },
   { to: '/settings', label: 'Settings' },
-  { to: '/support', label: 'About / Help' }
+  { to: '/support', label: 'About / Support' }
 ];
 
 export function Sidebar() {

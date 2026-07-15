@@ -10,7 +10,7 @@ import type { Finding, FindingAction, SourceConfig } from '../lib/types';
 
 type SortKey = 'relevance' | 'newest';
 type DateRangeKey = 'any' | '7d' | '30d' | '90d';
-type ReviewMode = 'needs_review' | 'discuss' | 'archive';
+type ReviewMode = 'needs_review' | 'archive';
 type ViewMode = 'queue' | 'list';
 
 const STORAGE_KEY = 'firstlight.findingsPrefs';
@@ -18,12 +18,11 @@ const UNDO_TIMEOUT_MS = 8000;
 
 const MODE_ACTION: Record<ReviewMode, FindingAction> = {
   needs_review: 'none',
-  discuss: 'discuss',
   archive: 'dismissed'
 };
 
 const ACTION_CONFIRMATIONS: Record<FindingAction, string> = {
-  discuss: 'Saved for the doctor.',
+  discuss: 'Saved for Discussion — waiting in Doctor Visit.',
   dismissed: 'Set aside.',
   none: 'Moved back to your review list.'
 };
@@ -62,10 +61,7 @@ function readPrefs(): FindingsPrefs {
       sourceFilter: typeof parsed.sourceFilter === 'string' ? parsed.sourceFilter : '',
       dateRange:
         parsed.dateRange === '7d' || parsed.dateRange === '30d' || parsed.dateRange === '90d' ? parsed.dateRange : 'any',
-      mode:
-        parsed.mode === 'discuss' || parsed.mode === 'archive' || parsed.mode === 'needs_review'
-          ? parsed.mode
-          : 'needs_review',
+      mode: parsed.mode === 'archive' ? 'archive' : 'needs_review',
       view: parsed.view === 'list' ? 'list' : 'queue',
       filtersOpen: Boolean(parsed.filtersOpen)
     };
@@ -87,7 +83,6 @@ function withinDateRange(item: Finding, range: DateRangeKey): boolean {
 
 const MODE_TABS: { value: ReviewMode; label: string }[] = [
   { value: 'needs_review', label: 'Needs review' },
-  { value: 'discuss', label: 'Saved for doctor' },
   { value: 'archive', label: 'Archive' }
 ];
 
@@ -273,7 +268,6 @@ export function FindingsPage() {
   const modeCounts = useMemo(
     () => ({
       needs_review: items.filter((item) => item.user_action === 'none').length,
-      discuss: items.filter((item) => item.user_action === 'discuss').length,
       archive: items.filter((item) => item.user_action === 'dismissed').length
     }),
     [items]
@@ -337,10 +331,6 @@ export function FindingsPage() {
     needs_review: {
       title: "You're all caught up",
       message: 'Nothing is waiting for review. New items will appear here after your next check.'
-    },
-    discuss: {
-      title: 'Nothing saved yet',
-      message: 'Items you save for the doctor will collect here, ready for your next visit.'
     },
     archive: {
       title: 'Nothing set aside',
@@ -499,7 +489,7 @@ export function FindingsPage() {
         <Card title="Handle several findings at once" description={`${selected.size} selected`}>
           <div className="button-row">
             <button className="primary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('discuss')}>
-              Save for doctor
+              Save for Discussion
             </button>
             <button className="secondary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('dismissed')}>
               Set aside

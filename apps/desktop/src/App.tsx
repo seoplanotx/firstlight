@@ -27,7 +27,7 @@ export function appRouteChildren(bootstrap: BootstrapInfo): RouteObject[] {
     { path: 'findings', element: <DiscoveriesPage activeTab="all" /> },
     { path: 'trials', element: <DiscoveriesPage activeTab="trials" /> },
     { path: 'updates', element: <DiscoveriesPage activeTab="research" /> },
-    { path: 'saved-findings', element: <DiscoveriesPage activeTab="saved" /> },
+    { path: 'saved-findings', element: <DoctorVisitPage activeTab="saved" /> },
     { path: 'doctor-visit', element: <DoctorVisitPage activeTab="summary" /> },
     { path: 'clinician', element: <DoctorVisitPage activeTab="summary" /> },
     { path: 'reports', element: <DoctorVisitPage activeTab="reports" /> },
