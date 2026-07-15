@@ -137,11 +137,13 @@ export function DashboardPage() {
             menu bar or system tray and lets you know when something new lands.
           </p>
         </div>
-        <div className="page-header-actions">
-          <button className="primary-button" onClick={() => void handleRunNow()} disabled={runInProgress}>
-            {runInProgress ? 'Checking…' : hasEverRun ? 'Check now' : 'Run your first check'}
-          </button>
-        </div>
+        {hasEverRun && (
+          <div className="page-header-actions">
+            <button className="primary-button" onClick={() => void handleRunNow()} disabled={runInProgress}>
+              {runInProgress ? 'Checking…' : 'Check now'}
+            </button>
+          </div>
+        )}
       </div>
 
       {notice && <div className="callout" role="status">{notice}</div>}
@@ -194,24 +196,26 @@ export function DashboardPage() {
         </Card>
       )}
 
-      <div className="stat-strip">
-        <div className="stat">
-          <span className="stat-num">{data.counts.new || 0}</span>
-          <span className="stat-label">New since last check</span>
+      {hasEverRun && (
+        <div className="stat-strip">
+          <div className="stat">
+            <span className="stat-num">{data.counts.new || 0}</span>
+            <span className="stat-label">New since last check</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">{data.counts.changed || 0}</span>
+            <span className="stat-label">Updated</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">{data.counts.high_relevance || 0}</span>
+            <span className="stat-label">Strong matches</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">{data.counts.trial_matches || 0}</span>
+            <span className="stat-label">Possible trials</span>
+          </div>
         </div>
-        <div className="stat">
-          <span className="stat-num">{data.counts.changed || 0}</span>
-          <span className="stat-label">Updated</span>
-        </div>
-        <div className="stat">
-          <span className="stat-num">{data.counts.high_relevance || 0}</span>
-          <span className="stat-label">Strong matches</span>
-        </div>
-        <div className="stat">
-          <span className="stat-num">{data.counts.trial_matches || 0}</span>
-          <span className="stat-label">Possible trials</span>
-        </div>
-      </div>
+      )}
 
       {hasEverRun && (
         <Card
@@ -263,6 +267,7 @@ export function DashboardPage() {
         </Card>
       )}
 
+      {hasEverRun && (
       <div className="dashboard-layout">
         <div className="dashboard-main-column">
           {data.briefing.sections.map((section) => (
@@ -383,6 +388,7 @@ export function DashboardPage() {
           </Card>
         </div>
       </div>
+      )}
     </div>
   );
 }
