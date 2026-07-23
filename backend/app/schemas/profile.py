@@ -80,6 +80,8 @@ class PatientProfileRead(PatientProfileBase):
 
 class ProfileExtractRequest(BaseModel):
     text: str = Field(min_length=1)
+    # Opt-in per paste: attempt a de-identified AI pass in addition to local rules.
+    allow_ai: bool = False
 
 
 class ProfileExtractResponse(BaseModel):
@@ -90,3 +92,7 @@ class ProfileExtractResponse(BaseModel):
     therapy_history: list[TherapyHistoryEntryCreate] = Field(default_factory=list)
     notes: str | None = None
     warnings: list[str] = Field(default_factory=list)
+    # AI-assist outcome: not_requested | local_only | disclosure_required | ai_unavailable
+    # | redaction_failed | ai_failed | ai_assisted | ai_no_additions
+    ai_status: str = "not_requested"
+    ai_message: str | None = None

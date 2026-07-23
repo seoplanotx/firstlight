@@ -6,6 +6,8 @@ import {
 } from '@tauri-apps/plugin-notification';
 
 import { api } from './api';
+import { decideNotification } from './notifications';
+import { getNotificationsEnabled } from './notificationPrefs';
 import type { MonitoringRun } from './types';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -78,16 +80,15 @@ export function useBackgroundMonitoring() {
         const latest = latestCompletedRun(runs);
         if (!latest) return;
 
-        const lastNotified = readLastNotifiedId();
+        const decision = decideNotification({
+          latestRunId: latest.id,
+          hasFindings: latest.new_findings_count > 0 || latest.changed_findings_count > 0,
+          lastNotifiedId: readLastNotifiedId(),
+          enabled: getNotificationsEnabled(),
+          now: new Date(),
+        });
 
-        // First observation: set the baseline without notifying for history.
-        if (lastNotified === 0) {
-          writeLastNotifiedId(latest.id);
-          return;
-        }
-
-        const hasFindings = latest.new_findings_count > 0 || latest.changed_findings_count > 0;
-        if (latest.id > lastNotified && hasFindings) {
+        if (decision.notify) {
           if (!permissionReady) {
             permissionReady = await ensureNotificationPermission();
           }
@@ -97,11 +98,13 @@ export function useBackgroundMonitoring() {
               body: buildNotificationBody(latest),
             });
           }
-          writeLastNotifiedId(latest.id);
-        } else if (latest.id > lastNotified) {
-          // Newer run with nothing new to surface — advance the marker quietly.
-          writeLastNotifiedId(latest.id);
+          // Advance even if permission was denied, so the same run is not retried forever.
+          if (decision.advanceMarkerTo !== null) writeLastNotifiedId(decision.advanceMarkerTo);
+        } else if (decision.advanceMarkerTo !== null) {
+          // Baseline, nothing-new, or notifications-off: advance the marker quietly.
+          writeLastNotifiedId(decision.advanceMarkerTo);
         }
+        // Quiet hours return advanceMarkerTo: null, so the alert still fires after 8am.
       } catch {
         // Backend not ready or transient error — try again on the next tick.
       }

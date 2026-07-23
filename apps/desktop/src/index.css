@@ -2280,3 +2280,24 @@ code {
   white-space: nowrap;
   border: 0;
 }
+
+/* Optional plain-language explanation block (AI assist). Calm, understated:
+   piggybacks on .support-card theming; the disclaimer and hint are muted via
+   opacity so they inherit the active theme's text color. */
+.plain-language-block {
+  margin-top: 0.75rem;
+}
+.plain-language-block .multiline {
+  white-space: pre-line;
+}
+.plain-language-disclaimer {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  opacity: 0.72;
+}
+.plain-language-hint {
+  margin-top: 0.45rem;
+  font-size: 0.85rem;
+  opacity: 0.78;
+}

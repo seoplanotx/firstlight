@@ -53,6 +53,14 @@ class Finding(Base, TimestampMixin):
     llm_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
     llm_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
 
+    # Optional cached plain-language explanation of the finding's PUBLIC source text.
+    # Generated on demand only when de-identified AI assist is enabled; invalidated
+    # (cleared) whenever the finding's content_hash changes.
+    plain_language_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    plain_language_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    plain_language_provider: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    plain_language_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
     profile: Mapped["PatientProfile"] = relationship(back_populates="findings")
     monitoring_run: Mapped["MonitoringRun | None"] = relationship(back_populates="findings")
     evidence_items: Mapped[list["FindingEvidence"]] = relationship(

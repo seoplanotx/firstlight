@@ -143,6 +143,8 @@ export type Finding = {
   llm_provider?: string | null;
   llm_model?: string | null;
   llm_metadata: Record<string, unknown>;
+  plain_language_summary?: string | null;
+  plain_language_generated_at?: string | null;
   evidence_items: FindingEvidence[];
   primary_evidence_label?: string | null;
   primary_evidence_snippet?: string | null;
@@ -152,6 +154,12 @@ export type Finding = {
   trial_intervention_summary?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PlainLanguageResponse = {
+  finding: Finding;
+  status: string;
+  message?: string | null;
 };
 
 export type MonitoringRun = {
