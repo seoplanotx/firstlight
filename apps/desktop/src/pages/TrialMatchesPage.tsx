@@ -53,7 +53,7 @@ export function TrialMatchesPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">From ClinicalTrials.gov</div>
-          <h1>Trials to Consider</h1>
+          <h1>Trials</h1>
           <p className="page-lede">
             Trials that may relate to the details you entered. None of this confirms eligibility — it is a starting point
             to review with the care team.

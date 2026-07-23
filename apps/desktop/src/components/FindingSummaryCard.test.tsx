@@ -58,7 +58,7 @@ describe('FindingSummaryCard', () => {
     const actions: string[] = [];
     render(<FindingSummaryCard finding={buildFinding()} onAction={(action) => actions.push(action)} />);
     screen.getByRole('button', { name: /ask the doctor about this/i }).click();
-    screen.getByRole('button', { name: /not relevant/i }).click();
+    screen.getByRole('button', { name: /set aside/i }).click();
     expect(actions).toEqual(['discuss', 'dismissed']);
   });
 

@@ -9,7 +9,7 @@ export type DiscoveriesTab = 'all' | 'trials' | 'research';
 // Content types only. The Saved for Discussion shortlist lives under
 // Doctor Visit — saving during review feeds visit prep, not another tab here.
 const TABS: { key: DiscoveriesTab; label: string; to: string }[] = [
-  { key: 'all', label: 'All', to: '/discoveries' },
+  { key: 'all', label: "What's new", to: '/discoveries' },
   { key: 'trials', label: 'Trials', to: '/trials' },
   { key: 'research', label: 'Research', to: '/updates' }
 ];

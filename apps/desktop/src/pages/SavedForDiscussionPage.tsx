@@ -57,7 +57,7 @@ export function SavedForDiscussionPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">Your shortlist</div>
-          <h1>Saved for Discussion</h1>
+          <h1>Saved for discussion</h1>
           <p className="page-lede">
             Everything you have marked to raise at the next visit, in one place. When you are ready, continue to
             Questions &amp; summary to turn these into a visit sheet.

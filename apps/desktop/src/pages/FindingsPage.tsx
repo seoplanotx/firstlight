@@ -22,7 +22,7 @@ const MODE_ACTION: Record<ReviewMode, FindingAction> = {
 };
 
 const ACTION_CONFIRMATIONS: Record<FindingAction, string> = {
-  discuss: 'Saved for Discussion — waiting in Doctor Visit.',
+  discuss: 'Saved for discussion — waiting in Doctor Visit.',
   dismissed: 'Set aside.',
   none: 'Moved back to your review list.'
 };
@@ -83,7 +83,7 @@ function withinDateRange(item: Finding, range: DateRangeKey): boolean {
 
 const MODE_TABS: { value: ReviewMode; label: string }[] = [
   { value: 'needs_review', label: 'Needs review' },
-  { value: 'archive', label: 'Archive' }
+  { value: 'archive', label: 'Set aside' }
 ];
 
 const FILTER_OPTIONS = [
@@ -344,7 +344,7 @@ export function FindingsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">Everything Firstlight found</div>
-          <h1>What's New</h1>
+          <h1>What's new</h1>
           <p className="page-lede">
             Work through new findings one at a time, keep the ones worth raising at the next visit, and set aside the
             rest.

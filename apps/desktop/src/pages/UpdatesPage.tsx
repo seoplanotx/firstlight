@@ -53,7 +53,7 @@ export function UpdatesPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">From PubMed &amp; Europe PMC</div>
-          <h1>Research Updates</h1>
+          <h1>Research</h1>
           <p className="page-lede">
             New research from PubMed and Europe PMC in one calm list, each with a short excerpt and the reason it came up.
           </p>
@@ -66,7 +66,7 @@ export function UpdatesPage() {
       {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
 
       <Card
-        title="Research"
+        title="Latest research"
         description="Each item keeps the evidence excerpt and the plain reason it came up side by side."
       >
         {items.length === 0 ? (

@@ -124,17 +124,17 @@ export function DashboardPage() {
   const sourceStatuses = data.briefing.source_statuses || [];
   const suggestedQuestions = data.briefing.suggested_questions || [];
   const hasEverRun = Boolean(data.latest_run);
-  const heading = personName ? `What's new for ${personName}` : 'Today';
 
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
           <div className="eyebrow">Your daily check</div>
-          <h1>{heading}</h1>
+          <h1>Today</h1>
           <p className="page-lede">
-            A calm, once-a-day look at what is new in trials and research. Firstlight keeps watching while it runs in the
-            menu bar or system tray and lets you know when something new lands.
+            {personName ? `Monitoring for ${personName}. ` : ''}A calm, once-a-day look at what is new in trials and
+            research. Firstlight keeps watching while it runs in the menu bar or system tray and lets you know when
+            something new lands.
           </p>
         </div>
         {hasEverRun && (

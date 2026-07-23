@@ -94,40 +94,40 @@ describe('task-based navigation', () => {
 
   it('keeps the legacy /trials URL working and shows the Trials tab active under Discoveries', async () => {
     renderAppAt('/trials');
-    expect(await screen.findByText('Trials to Consider')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Trials' })).toBeInTheDocument();
     const trialsTab = screen.getByRole('link', { name: 'Trials' });
     expect(trialsTab).toHaveAttribute('aria-current', 'page');
   });
 
   it('keeps the legacy /updates URL working and shows the Research tab active', async () => {
     renderAppAt('/updates');
-    expect(await screen.findByText('Research Updates')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Research' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Research' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the new /discoveries route with the findings review experience', async () => {
     renderAppAt('/discoveries');
-    expect(await screen.findByText("What's New")).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { name: "What's new" })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: "What's new" })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the Saved for Discussion view under Doctor Visit at /saved-findings', async () => {
     renderAppAt('/saved-findings');
-    expect(await screen.findByRole('heading', { name: 'Saved for Discussion' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Saved for Discussion' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Questions & summary' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Saved for discussion' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Saved for discussion' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'For your doctor' })).toBeInTheDocument();
   });
 
   it('keeps the legacy /clinician URL working under Doctor Visit', async () => {
     renderAppAt('/clinician');
-    expect(await screen.findByText('Summary for the Doctor')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Questions & summary' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { name: 'For your doctor' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'For your doctor' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('keeps the legacy /reports URL working and shows the Printable reports tab active', async () => {
+  it('keeps the legacy /reports URL working and shows the Reports tab active', async () => {
     renderAppAt('/reports');
     expect(await screen.findByRole('heading', { name: 'Reports' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Printable reports' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('highlights the Discoveries sidebar item on a legacy sub-route', async () => {

@@ -144,7 +144,7 @@ export function ClinicianSummaryPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">For your oncology visit</div>
-          <h1>Summary for the Doctor</h1>
+          <h1>For your doctor</h1>
           <p className="page-lede">
             A clinician-facing snapshot of the case and what Firstlight flagged for review. Nothing here confirms
             eligibility or recommends treatment — it is a starting point for the care team.

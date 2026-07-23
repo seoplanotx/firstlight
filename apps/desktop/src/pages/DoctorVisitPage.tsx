@@ -9,9 +9,9 @@ export type DoctorVisitTab = 'saved' | 'summary' | 'reports';
 // Visit prep in reading order: gather the shortlist, shape the summary,
 // print the report.
 const TABS: { key: DoctorVisitTab; label: string; to: string }[] = [
-  { key: 'saved', label: 'Saved for Discussion', to: '/saved-findings' },
-  { key: 'summary', label: 'Questions & summary', to: '/clinician' },
-  { key: 'reports', label: 'Printable reports', to: '/reports' }
+  { key: 'saved', label: 'Saved for discussion', to: '/saved-findings' },
+  { key: 'summary', label: 'For your doctor', to: '/clinician' },
+  { key: 'reports', label: 'Reports', to: '/reports' }
 ];
 
 export function DoctorVisitPage({ activeTab }: { activeTab: DoctorVisitTab }) {

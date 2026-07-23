@@ -120,7 +120,7 @@ export function FindingSummaryCard({
                   {isDiscuss ? 'Remove from list' : 'Ask the doctor about this'}
                 </button>
                 <button className="ghost-button" disabled={actionPending} onClick={() => onAction('dismissed')}>
-                  Not relevant
+                  Set aside
                 </button>
               </>
             )}
