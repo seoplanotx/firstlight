@@ -8,6 +8,7 @@ import { ClaudeDesktopConnection } from '../features/ai/ClaudeDesktopConnection'
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import { setLanguageMode, useLanguageMode } from '../lib/languageMode';
+import { setNotificationsEnabled, useNotificationsEnabled } from '../lib/notificationPrefs';
 import type { AppSettings, SourceConfig } from '../lib/types';
 
 const SOURCE_BLURBS: Record<string, string> = {
@@ -25,6 +26,7 @@ export function SettingsPage() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const languageMode = useLanguageMode();
+  const notificationsEnabled = useNotificationsEnabled();
 
   async function load() {
     setLoading(true);
@@ -164,6 +166,26 @@ export function SettingsPage() {
         {needsAiDisclosureAcknowledgement && (
           <p className="field-hint">To save, acknowledge the AI privacy disclosure below.</p>
         )}
+      </Card>
+
+      <Card
+        title="Notifications"
+        description="While Firstlight runs in the menu bar or system tray, it can raise a quiet system notification when a background check finds something new."
+      >
+        <label className="toggle-row">
+          <input
+            type="checkbox"
+            checked={notificationsEnabled}
+            onChange={(e) => setNotificationsEnabled(e.target.checked)}
+          />
+          <div>
+            <strong>Notify me when new research is found</strong>
+            <div className="muted">
+              One calm notification per check that surfaces new or changed items. Quiet hours are always on: nothing is
+              sent between 11pm and 8am. Turn this off to check on your own schedule instead.
+            </div>
+          </div>
+        </label>
       </Card>
 
       <Card

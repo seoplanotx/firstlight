@@ -381,6 +381,19 @@ class DeidentificationServiceTests(unittest.TestCase):
         self.assertEqual(generalize_location_label("Rochester, Minnesota"), "Minnesota")
         self.assertIsNone(generalize_location_label("912 Greenway Dr Jacksonville NC"))
 
+    def test_assert_deidentified_packet_rejects_ssn_and_day_first_dates(self) -> None:
+        for value in ("NSCLC; SSN 123-45-6789", "NSCLC diagnosed 12 April 2026"):
+            with self.subTest(value=value):
+                unsafe_packet = {
+                    "privacy_mode": "deidentified_ai_assist",
+                    "task": "clinician_questions",
+                    "profile_context": {"cancer_type": value},
+                    "findings": [],
+                    "safety_instructions": [],
+                }
+                with self.assertRaises(DeidentificationError):
+                    assert_deidentified_packet(unsafe_packet)
+
 
 if __name__ == "__main__":
     unittest.main()

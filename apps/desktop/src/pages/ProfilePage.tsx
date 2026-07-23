@@ -34,6 +34,8 @@ export function ProfilePage() {
   const [extractWarnings, setExtractWarnings] = useState<string[]>([]);
   const [extractNote, setExtractNote] = useState('');
   const [extractError, setExtractError] = useState('');
+  const [allowAi, setAllowAi] = useState(false);
+  const [aiMessage, setAiMessage] = useState('');
   const dirtyRef = useRef(false);
   const [leavePrompt, setLeavePrompt] = useState<
     { kind: 'route' } | { kind: 'activate'; profileId: number } | { kind: 'new' } | null
@@ -158,9 +160,11 @@ export function ProfilePage() {
     setExtractWarnings([]);
     setExtractNote('');
     setExtractError('');
+    setAiMessage('');
     try {
-      const result = await api.extractProfileFromText(extractText);
+      const result = await api.extractProfileFromText(extractText, allowAi);
       setExtractWarnings(result.warnings || []);
+      setAiMessage(result.ai_message || '');
       setProfile((current) => {
         const base = current || emptyProfile();
         return {
@@ -196,7 +200,7 @@ export function ProfilePage() {
               : base.therapy_history
         };
       });
-      dirtyRef.current = true;
+      markDirty(true);
       setExtractNote('Suggestions applied to the form below — review carefully, then save.');
     } catch (error) {
       setExtractError(getErrorMessage(error, 'Could not extract profile candidates.'));
@@ -247,7 +251,7 @@ export function ProfilePage() {
 
       <Card
         title="Paste a report (optional)"
-        description="Local rules-based suggestions only. Nothing is sent to an AI provider. Confirm every field before saving."
+        description="Turn a pathology or molecular report into suggested fields. Local rules run entirely on this computer. You can also opt in, per paste, to a de-identified AI pass that removes names, dates, and contacts before anything is sent. Confirm every field before saving."
       >
         <div className="stack">
           <div className="field">
@@ -260,6 +264,17 @@ export function ProfilePage() {
               placeholder="Paste pathology or molecular report text here…"
             />
           </div>
+          <label className="toggle-row">
+            <input type="checkbox" checked={allowAi} onChange={(e) => setAllowAi(e.target.checked)} />
+            <div>
+              <strong>Use AI to help read this report</strong>
+              <div className="muted">
+                Optional, and only works when de-identified AI assist is turned on in Settings. Firstlight removes names,
+                dates, contacts, IDs, and places locally and confirms the text is clean before sending it — if it cannot,
+                it quietly falls back to local rules. AI suggestions are labeled for you to confirm.
+              </div>
+            </div>
+          </label>
           <div className="button-row">
             <button className="secondary-button" type="button" disabled={extractBusy || !extractText.trim()} onClick={() => void handleExtract()}>
               {extractBusy ? 'Reading…' : 'Suggest profile fields'}
@@ -267,6 +282,7 @@ export function ProfilePage() {
           </div>
           {extractError && <div className="callout callout-caution" role="alert">{extractError}</div>}
           {extractNote && <div className="callout" role="status">{extractNote}</div>}
+          {aiMessage && <div className="callout" role="status">{aiMessage}</div>}
           {extractWarnings.map((warning) => (
             <div className="callout" role="status" key={warning}>
               {warning}

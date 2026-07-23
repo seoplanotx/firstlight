@@ -9,7 +9,7 @@ from app.schemas.profile import (
     ProfileExtractRequest,
     ProfileExtractResponse,
 )
-from app.services.profile_extraction_service import extract_profile_candidates
+from app.services.profile_ai_service import extract_profile_candidates_ai
 from app.services.profile_service import (
     create_profile,
     get_active_profile,
@@ -33,17 +33,11 @@ def get_current_profile(db: Session = Depends(get_db)) -> PatientProfileRead | N
 
 
 @router.post("/extract-from-text", response_model=ProfileExtractResponse)
-def extract_profile_from_text(payload: ProfileExtractRequest) -> ProfileExtractResponse:
-    result = extract_profile_candidates(payload.text)
-    return ProfileExtractResponse(
-        cancer_type=result.cancer_type,
-        subtype=result.subtype,
-        stage_or_context=result.stage_or_context,
-        biomarkers=result.biomarkers,  # type: ignore[arg-type]
-        therapy_history=result.therapy_history,  # type: ignore[arg-type]
-        notes=result.notes,
-        warnings=result.warnings,
-    )
+def extract_profile_from_text(
+    payload: ProfileExtractRequest, db: Session = Depends(get_db)
+) -> ProfileExtractResponse:
+    result = extract_profile_candidates_ai(db, payload.text, allow_ai=payload.allow_ai)
+    return ProfileExtractResponse(**result)
 
 
 @router.get("/{profile_id}", response_model=PatientProfileRead)

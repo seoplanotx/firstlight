@@ -9,6 +9,7 @@ import {
   statusTone,
   typeTone
 } from '../lib/findingPresentation';
+import { PlainLanguageBlock } from './PlainLanguageBlock';
 import { useLanguageMode } from '../lib/languageMode';
 import type { Finding, FindingAction } from '../lib/types';
 
@@ -17,6 +18,7 @@ type FindingSummaryCardProps = {
   showWhy?: boolean;
   showSourceLink?: boolean;
   showMatchingMeta?: boolean;
+  showPlainLanguage?: boolean;
   onAction?: (action: FindingAction) => void;
   actionPending?: boolean;
 };
@@ -26,6 +28,7 @@ export function FindingSummaryCard({
   showWhy = false,
   showSourceLink = true,
   showMatchingMeta = false,
+  showPlainLanguage = true,
   onAction,
   actionPending = false
 }: FindingSummaryCardProps) {
@@ -67,6 +70,8 @@ export function FindingSummaryCard({
       </div>
 
       <p className="finding-summary">{finding.normalized_summary || finding.raw_summary || 'No summary available.'}</p>
+
+      {showPlainLanguage && <PlainLanguageBlock finding={finding} />}
 
       <TrialDetailsGrid finding={finding} />
 

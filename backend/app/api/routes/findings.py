@@ -2,11 +2,27 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.schemas.finding import FindingActionBulkUpdate, FindingActionUpdate, FindingRead, FindingsQueryResponse
+from app.schemas.finding import (
+    FindingActionBulkUpdate,
+    FindingActionUpdate,
+    FindingRead,
+    FindingsQueryResponse,
+    PlainLanguageResponse,
+)
 from app.services.findings_service import get_finding, list_findings, set_finding_action, set_finding_actions_bulk
+from app.services.plain_language_service import generate_plain_language
 from app.services.profile_service import get_active_profile
 
 router = APIRouter()
+
+# Calm, non-technical explanations for each non-generating status. `ai_generated` and
+# `cached` need no message (the summary speaks for itself).
+_PLAIN_LANGUAGE_MESSAGES = {
+    "local_only": "Turn on optional de-identified AI help in Settings to add plain-language summaries.",
+    "disclosure_required": "Acknowledge the AI privacy disclosure in Settings to use plain-language summaries.",
+    "ai_unavailable": "Add and select an AI provider in Settings to use plain-language summaries.",
+    "ai_failed": "The AI helper could not produce a plain-language summary right now. Nothing changed.",
+}
 
 
 @router.get("", response_model=FindingsQueryResponse)
@@ -57,3 +73,17 @@ def update_finding_action(
     if finding is None:
         raise HTTPException(status_code=404, detail="Finding not found")
     return finding
+
+
+@router.post("/{finding_id}/plain-language", response_model=PlainLanguageResponse)
+def create_plain_language_summary(finding_id: int, db: Session = Depends(get_db)) -> PlainLanguageResponse:
+    """Generate (or return a cached) plain-language explanation of a finding's public
+    source text. Returns 200 with a status even when AI assist is off, so the UI can
+    explain calmly rather than surfacing an error."""
+
+    result = generate_plain_language(db, finding_id)
+    finding = result["finding"]
+    if result["status"] == "not_found" or finding is None:
+        raise HTTPException(status_code=404, detail="Finding not found")
+    message = result.get("message") or _PLAIN_LANGUAGE_MESSAGES.get(result["status"])
+    return PlainLanguageResponse(finding=finding, status=result["status"], message=message)
