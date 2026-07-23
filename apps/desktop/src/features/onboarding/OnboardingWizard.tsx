@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '../../components/Card';
 import { api } from '../../lib/api';
@@ -50,6 +50,13 @@ const IMPROVE_LATER = [
 
 export function OnboardingWizard({ onCompleted }: Props) {
   const [step, setStep] = useState(0);
+  const stepTitleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    // Move focus to the new step's heading so keyboard and screen-reader users
+    // land at the top of the step instead of staying on the button they clicked.
+    stepTitleRef.current?.focus();
+  }, [step]);
   const [profile, setProfile] = useState<PatientProfile>(blankProfile);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [sources, setSources] = useState<SourceConfig[]>([]);
@@ -219,10 +226,17 @@ export function OnboardingWizard({ onCompleted }: Props) {
             <div className="eyebrow">
               Step {step + 1} of {steps.length}
             </div>
-            <h2>{currentStep.title}</h2>
+            <h2 ref={stepTitleRef} tabIndex={-1}>{currentStep.title}</h2>
             <p className="muted">{currentStep.description}</p>
           </div>
-          <div className="progress-track" aria-hidden="true">
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-valuenow={step + 1}
+            aria-valuemin={1}
+            aria-valuemax={steps.length}
+            aria-label={`Setup progress: step ${step + 1} of ${steps.length}`}
+          >
             <div className="progress-bar" style={{ width: `${progress}%` }} />
           </div>
         </div>

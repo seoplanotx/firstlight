@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { BriefingBlockers } from '../components/BriefingBlockers';
 import { BriefingSection } from '../components/BriefingSection';
@@ -121,7 +122,6 @@ export function DashboardPage() {
 
   const runInProgress = runBusy || data.latest_run?.status === 'running';
   const sourceStatuses = data.briefing.source_statuses || [];
-  const sourceFailures = data.briefing.source_failures || [];
   const suggestedQuestions = data.briefing.suggested_questions || [];
   const hasEverRun = Boolean(data.latest_run);
   const heading = personName ? `What's new for ${personName}` : 'Today';
@@ -197,7 +197,7 @@ export function DashboardPage() {
       )}
 
       {hasEverRun && (
-        <div className="stat-strip">
+        <div className="stat-strip" aria-live="polite">
           <div className="stat">
             <span className="stat-num">{data.counts.new || 0}</span>
             <span className="stat-label">New since last check</span>
@@ -223,35 +223,14 @@ export function DashboardPage() {
           description={latestRunLabel}
           className="hero-card"
           action={
-            <button className="secondary-button" onClick={() => (window.location.hash = '#/reports')}>
+            <Link className="secondary-button" to="/reports">
               Open reports
-            </button>
+            </Link>
           }
         >
-          <div className="briefing-hero">
-            <div className="briefing-copy">
-              <div className="eyebrow">Daily briefing</div>
-              <h2>Start with what is new, then look at anything that changed and might be worth asking about.</h2>
-            </div>
-            <div className="briefing-metrics">
-              <div className="briefing-metric">
-                <span className="briefing-metric-label">New</span>
-                <strong>{data.briefing.new_count}</strong>
-              </div>
-              <div className="briefing-metric">
-                <span className="briefing-metric-label">Updated</span>
-                <strong>{data.briefing.changed_count}</strong>
-              </div>
-              <div className="briefing-metric">
-                <span className="briefing-metric-label">To fill in</span>
-                <strong>{data.briefing.blockers.length}</strong>
-              </div>
-              <div className="briefing-metric">
-                <span className="briefing-metric-label">Source issues</span>
-                <strong>{sourceFailures.length}</strong>
-              </div>
-            </div>
-          </div>
+          <p className="briefing-statement">
+            Start with what is new, then look at anything that changed and might be worth asking about.
+          </p>
 
           <div className="button-row hero-actions">
             <button className="secondary-button" onClick={() => jumpToSection('dashboard-new-findings')}>

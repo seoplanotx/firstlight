@@ -89,7 +89,7 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <div className="app-loading">{loadingLabel}</div>;
+    return <div className="app-loading" role="status">{loadingLabel}</div>;
   }
 
   if (bootError) {

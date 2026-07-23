@@ -91,6 +91,7 @@ export function Sidebar() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  aria-current={isActive ? 'page' : undefined}
                   className={isActive ? 'nav-item active' : 'nav-item'}
                 >
                   {item.label}

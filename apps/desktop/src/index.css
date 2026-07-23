@@ -17,6 +17,7 @@
   --ink: #212722;
   --ink-soft: #5d655f;
   --ink-faint: #686f68;
+  --ink-nav: #3c433d;
 
   --line: #e5e2d9;
   --line-strong: #d2cfc4;
@@ -252,7 +253,7 @@ code {
   padding: 8px 10px;
   border-left: 2px solid transparent;
   border-radius: 0 var(--radius) var(--radius) 0;
-  color: #3c433d;
+  color: var(--ink-nav);
   font-size: 0.9rem;
   transition: color 0.15s ease, background 0.15s ease, scale 0.1s ease;
 }
@@ -507,7 +508,10 @@ code {
 .ghost-button:focus-visible,
 .link-button:focus-visible,
 .filter-chip:focus-visible,
-.nav-item:focus-visible {
+.nav-item:focus-visible,
+.mode-tab:focus-visible,
+.segmented-option:focus-visible,
+.source-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -933,58 +937,12 @@ code {
 
 /* ---------- Dashboard briefing ---------- */
 
-.briefing-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-  gap: 24px;
-  align-items: start;
-}
-
-.briefing-copy {
-  display: grid;
-  gap: 8px;
-}
-
-.briefing-copy h2 {
+.briefing-statement {
+  margin: 0;
+  font-family: var(--font-display);
   font-size: 1.3rem;
-  line-height: 1.25;
-}
-
-.briefing-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.briefing-metric {
-  padding: 10px 14px;
-}
-
-.briefing-metric:nth-child(2n) {
-  border-left: 1px solid var(--line);
-}
-
-.briefing-metric:nth-child(n + 3) {
-  border-top: 1px solid var(--line);
-}
-
-.briefing-metric-label {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--ink-faint);
-}
-
-.briefing-metric strong {
-  display: block;
-  margin-top: 1px;
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  color: var(--ink);
 }
 
 .dashboard-layout {
@@ -1130,12 +1088,30 @@ code {
   box-shadow: 0 0 0 3px rgba(22, 97, 86, 0.14);
 }
 
+/* Placeholder text needs the same 4.5:1 as body copy; the UA default gray fails it.
+   --ink-faint is ~5.2:1 on the white input surface. opacity:1 overrides Firefox's dimming. */
+.toolbar input::placeholder,
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
 .field label {
   display: block;
   margin-bottom: 5px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink);
+}
+
+/* Required-field marker. The asterisk is CSS-generated (presentational only, so it
+   stays out of the accessible name); screen readers get "required" from the input's
+   own required/aria-required attribute. */
+.field label.required-field::after {
+  content: ' *';
+  color: var(--danger);
+  font-weight: 600;
 }
 
 /* Standalone fields stay readable; grid columns size their own fields. */
@@ -1167,7 +1143,7 @@ code {
   padding-top: 16px;
   border-top: 1px solid var(--line-strong);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink);
@@ -1488,6 +1464,7 @@ code {
 }
 
 .finding-actions button {
+  min-height: 40px;
   font-size: 0.82rem;
   padding: 6px 12px;
 }
@@ -1919,38 +1896,10 @@ code {
   color: var(--ink-faint);
 }
 
-/* ---------- Motion ---------- */
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-stack > * {
-  animation: rise 0.3s ease both;
-}
-
-.page-stack > *:nth-child(2) {
-  animation-delay: 0.07s;
-}
-
-.page-stack > *:nth-child(3) {
-  animation-delay: 0.14s;
-}
-
-.page-stack > *:nth-child(4) {
-  animation-delay: 0.21s;
-}
-
-.page-stack > *:nth-child(5) {
-  animation-delay: 0.28s;
-}
+/* ---------- Motion ----------
+   No page-load entrance sequence. This is a product surface: users load into a
+   task, not a choreographed reveal. Motion lives on state changes (hover, active,
+   progress, tab switches), never on a section's arrival. */
 
 /* ---------- Responsive ---------- */
 
@@ -2009,8 +1958,7 @@ code {
     border-bottom: 1px solid var(--line);
   }
 
-  .dashboard-layout,
-  .briefing-hero {
+  .dashboard-layout {
     grid-template-columns: 1fr;
   }
 
@@ -2037,7 +1985,6 @@ code {
   }
 
   .stat-strip,
-  .briefing-metrics,
   .detail-grid,
   .form-grid,
   .row-card-grid,
@@ -2054,14 +2001,6 @@ code {
   .stat + .stat,
   .mini-stat + .mini-stat {
     border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .briefing-metric:nth-child(2n) {
-    border-left: 0;
-  }
-
-  .briefing-metric + .briefing-metric {
     border-top: 1px solid var(--line);
   }
 
@@ -2090,8 +2029,9 @@ code {
     scroll-behavior: auto;
   }
 
-  .page-stack > *,
-  .progress-bar {
+  .progress-bar,
+  .review-queue-progress-bar,
+  .profile-strength-bar {
     animation: none;
     transition: none;
   }
@@ -2102,7 +2042,8 @@ code {
   .link-button,
   .filter-chip,
   .nav-item,
-  .finding-item {
+  .finding-item,
+  .intent-card {
     transition: none;
   }
 
@@ -2111,8 +2052,10 @@ code {
   .ghost-button:active:not(:disabled),
   .link-button:active,
   .filter-chip:active,
-  .nav-item:active {
+  .nav-item:active,
+  .intent-card:active {
     scale: 1;
+    transform: none;
   }
 }
 

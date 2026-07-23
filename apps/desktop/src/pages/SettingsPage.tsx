@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Card } from '../components/Card';
 import { PageErrorState } from '../components/PageErrorState';
@@ -151,9 +152,9 @@ export function SettingsPage() {
           <button className="primary-button" onClick={saveGeneral} disabled={busy || needsAiDisclosureAcknowledgement}>
             Save general settings
           </button>
-          <button className="secondary-button" onClick={() => (window.location.hash = '#/support')}>
+          <Link className="secondary-button" to="/support">
             Open support details
-          </button>
+          </Link>
         </div>
       </Card>
 
