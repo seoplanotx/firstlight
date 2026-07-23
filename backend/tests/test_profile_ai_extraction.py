@@ -49,6 +49,60 @@ class RedactionTests(unittest.TestCase):
         self.assertEqual(redact_free_text(""), "")
         assert_free_text_deidentified("")
 
+    def test_dashed_ssn_is_redacted_and_flagged(self) -> None:
+        report = "Diagnosis: NSCLC. SSN: 123-45-6789 on file."
+        # Raw text must fail the fail-closed assertion...
+        with self.assertRaises(DeidentificationError):
+            assert_free_text_deidentified(report)
+        redacted = redact_free_text(report)
+        # ...the SSN must be gone, clinical content kept, and the result must clear the gate.
+        self.assertNotIn("123-45-6789", redacted)
+        self.assertIn("NSCLC", redacted)
+        assert_free_text_deidentified(redacted)
+
+    def test_ssn_space_and_dot_separators_are_redacted(self) -> None:
+        for raw in ("123 45 6789", "123.45.6789"):
+            with self.subTest(raw=raw):
+                self.assertNotIn(raw, redact_free_text(f"Social security {raw} noted"))
+
+    def test_labeled_name_colliding_with_oncology_terms_is_redacted(self) -> None:
+        # "Small"/"Low"/"Cell" are oncology denylist words; a real surname that collides
+        # with one must still be removed when it appears behind a person label.
+        cases = [
+            ("Patient: Robert Small, follow-up.", "Robert Small"),
+            ("Patient: Amy Low presented today.", "Amy Low"),
+            ("Ordering physician: Grace Cell", "Grace Cell"),
+        ]
+        for report, name in cases:
+            with self.subTest(report=report):
+                with self.assertRaises(DeidentificationError):
+                    assert_free_text_deidentified(report)
+                redacted = redact_free_text(report)
+                self.assertNotIn(name, redacted)
+                assert_free_text_deidentified(redacted)
+
+    def test_medical_bigrams_survive_redaction(self) -> None:
+        # Regression guard: the denylist must still protect medical phrases that look
+        # like First-Last names, so extraction keeps the cancer type it needs.
+        report = "Diagnosis: Merkel Cell Carcinoma; also Small Cell Lung Cancer, Stage IV."
+        redacted = redact_free_text(report)
+        self.assertIn("Merkel Cell", redacted)
+        self.assertIn("Small Cell", redacted)
+
+    def test_day_first_spelled_dates_are_redacted_and_flagged(self) -> None:
+        for report in (
+            "Date of birth 7 February 1955.",
+            "Specimen collected 14 March 2026.",
+            "Reviewed 3 Apr 2026.",
+        ):
+            with self.subTest(report=report):
+                with self.assertRaises(DeidentificationError):
+                    assert_free_text_deidentified(report)
+                redacted = redact_free_text(report)
+                assert_free_text_deidentified(redacted)
+        # Numeric day-first dates were already handled by the exact-date pattern.
+        self.assertNotIn("14/03/2026", redact_free_text("Collected 14/03/2026."))
+
 
 class ValidateExtractedCandidatesTests(unittest.TestCase):
     def test_parses_clean_json_object(self) -> None:
