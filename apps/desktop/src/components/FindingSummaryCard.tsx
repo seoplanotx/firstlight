@@ -38,12 +38,10 @@ export function FindingSummaryCard({
   ]
     .filter(Boolean)
     .join('  ·  ');
+  // Relevance is already shown as a badge in the topline, so it is intentionally
+  // not repeated here.
   const supportingItems = [
     { label: 'Location context', value: finding.location_summary || 'Location details not stored.' },
-    {
-      label: mode === 'plain' ? 'How strong is this match?' : 'Relevance',
-      value: formatRelevanceLabel(finding.relevance_label, mode)
-    },
     {
       label: mode === 'plain' ? 'Still missing' : 'Missing information',
       value: finding.matching_gaps.length ? finding.matching_gaps.join(' ') : 'No structured gaps stored.'
@@ -107,19 +105,20 @@ export function FindingSummaryCard({
         {onAction && (
           <div className="finding-actions">
             {isDismissed ? (
-              <button className="ghost-button" disabled={actionPending} onClick={() => onAction('none')}>
+              <button type="button" className="ghost-button" disabled={actionPending} onClick={() => onAction('none')}>
                 Restore
               </button>
             ) : (
               <>
                 <button
+                  type="button"
                   className={isDiscuss ? 'secondary-button' : 'ghost-button'}
                   disabled={actionPending}
                   onClick={() => onAction(isDiscuss ? 'none' : 'discuss')}
                 >
                   {isDiscuss ? 'Remove from list' : 'Ask the doctor about this'}
                 </button>
-                <button className="ghost-button" disabled={actionPending} onClick={() => onAction('dismissed')}>
+                <button type="button" className="ghost-button" disabled={actionPending} onClick={() => onAction('dismissed')}>
                   Set aside
                 </button>
               </>

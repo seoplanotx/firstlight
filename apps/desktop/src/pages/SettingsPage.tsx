@@ -89,7 +89,7 @@ export function SettingsPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Configuration</div>
+          <div className="eyebrow">Configure</div>
           <h1>Settings</h1>
           <p className="page-lede">
             Adjust while-open monitoring, report defaults, and the real sources available in this release.
@@ -98,7 +98,7 @@ export function SettingsPage() {
       </div>
 
       {notice && <div className="callout" role="status">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       <Card
         title="General settings"
@@ -132,8 +132,8 @@ export function SettingsPage() {
               value={settings.default_report_style}
               onChange={(e) => setSettings({ ...settings, default_report_style: e.target.value })}
             >
-              <option value="clinical">Clinical</option>
-              <option value="plain">Plain English</option>
+              <option value="plain">Plain language</option>
+              <option value="clinical">Clinical terms</option>
             </select>
           </div>
           <div className="field">
@@ -149,13 +149,21 @@ export function SettingsPage() {
           </div>
         </div>
         <div className="button-row">
-          <button className="primary-button" onClick={saveGeneral} disabled={busy || needsAiDisclosureAcknowledgement}>
-            Save general settings
+          <button
+            type="button"
+            className="primary-button"
+            onClick={saveGeneral}
+            disabled={busy || needsAiDisclosureAcknowledgement}
+          >
+            {busy ? 'Saving…' : 'Save general settings'}
           </button>
           <Link className="secondary-button" to="/support">
             Open support details
           </Link>
         </div>
+        {needsAiDisclosureAcknowledgement && (
+          <p className="field-hint">To save, acknowledge the AI privacy disclosure below.</p>
+        )}
       </Card>
 
       <Card
@@ -210,6 +218,7 @@ export function SettingsPage() {
           {needsAiDisclosureAcknowledgement && (
             <div className="callout callout-danger" role="alert">Acknowledge the AI privacy disclosure before saving Mode 2.</div>
           )}
+          <p className="field-hint">These AI privacy choices save with the “Save general settings” button above.</p>
         </div>
       </Card>
 
@@ -243,7 +252,7 @@ export function SettingsPage() {
               <div>
                 <strong>{source.name}</strong>
                 <div className="muted">{SOURCE_BLURBS[source.connector_key] ?? source.name}</div>
-                <div className={source.last_error ? 'callout callout-danger' : 'muted'}>
+                <div className={source.last_error ? 'source-note-caution' : 'muted'}>
                   {source.last_successful_sync_at
                     ? `Last success: ${new Date(source.last_successful_sync_at).toLocaleString()}`
                     : 'No successful check stored yet'}

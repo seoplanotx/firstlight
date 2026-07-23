@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { api } from '../lib/api';
+import { hasUnsavedProfileEdits, setProfileEditsDirty } from '../lib/profileEditGuard';
 import type { PatientProfile } from '../lib/types';
+
+import { ConfirmDialog } from './ConfirmDialog';
 
 // Each primary destination owns a group of routes (including the legacy URLs that
 // still resolve), so the nav item highlights no matter which tab the user is on.
@@ -22,6 +25,7 @@ export function Sidebar() {
   const [profiles, setProfiles] = useState<PatientProfile[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingProfileId, setPendingProfileId] = useState<number | null>(null);
   const location = useLocation();
 
   async function loadProfiles() {
@@ -44,6 +48,7 @@ export function Sidebar() {
     try {
       const activated = await api.activateProfile(profileId);
       setActiveId(activated.id ?? profileId);
+      setProfileEditsDirty(false);
       // Soft refresh for pages that load active profile on mount.
       window.dispatchEvent(new Event('firstlight:profile-changed'));
     } catch {
@@ -51,6 +56,18 @@ export function Sidebar() {
     } finally {
       setBusy(false);
     }
+  }
+
+  // Guard the switch: if Patient Details has unsaved edits, confirm before
+  // discarding them. The <select> stays controlled by activeId, so cancelling
+  // simply snaps the control back to the current profile.
+  function handleSelect(profileId: number) {
+    if (profileId === activeId) return;
+    if (hasUnsavedProfileEdits()) {
+      setPendingProfileId(profileId);
+      return;
+    }
+    void handleActivate(profileId);
   }
 
   return (
@@ -69,7 +86,7 @@ export function Sidebar() {
               <select
                 value={activeId ?? ''}
                 disabled={busy || profiles.length === 0}
-                onChange={(e) => void handleActivate(Number(e.target.value))}
+                onChange={(e) => handleSelect(Number(e.target.value))}
               >
                 {profiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
@@ -125,6 +142,20 @@ export function Sidebar() {
           </p>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingProfileId !== null}
+        title="Switch profiles?"
+        message="You have unsaved changes on the Patient Details page. Switching profiles will discard them."
+        confirmLabel="Switch anyway"
+        cancelLabel="Stay"
+        onConfirm={() => {
+          const id = pendingProfileId;
+          setPendingProfileId(null);
+          if (id !== null) void handleActivate(id);
+        }}
+        onCancel={() => setPendingProfileId(null)}
+      />
     </aside>
   );
 }

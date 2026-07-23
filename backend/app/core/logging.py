@@ -8,7 +8,7 @@ from app.core.paths import get_app_paths
 
 def configure_logging() -> None:
     paths = get_app_paths()
-    log_file = paths.logs_dir / "oncowatch.log"
+    log_file = paths.logs_dir / "firstlight.log"
 
     root_logger = logging.getLogger()
     if root_logger.handlers:

@@ -94,39 +94,39 @@ describe('task-based navigation', () => {
 
   it('keeps the legacy /trials URL working and shows the Trials tab active under Discoveries', async () => {
     renderAppAt('/trials');
-    expect(await screen.findByRole('heading', { name: 'Trials' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Discoveries' })).toBeInTheDocument();
     const trialsTab = screen.getByRole('link', { name: 'Trials' });
     expect(trialsTab).toHaveAttribute('aria-current', 'page');
   });
 
   it('keeps the legacy /updates URL working and shows the Research tab active', async () => {
     renderAppAt('/updates');
-    expect(await screen.findByRole('heading', { name: 'Research' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Discoveries' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Research' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the new /discoveries route with the findings review experience', async () => {
     renderAppAt('/discoveries');
-    expect(await screen.findByRole('heading', { name: "What's new" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Discoveries' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: "What's new" })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the Saved for Discussion view under Doctor Visit at /saved-findings', async () => {
     renderAppAt('/saved-findings');
-    expect(await screen.findByRole('heading', { name: 'Saved for discussion' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Doctor Visit' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Saved for discussion' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'For your doctor' })).toBeInTheDocument();
   });
 
   it('keeps the legacy /clinician URL working under Doctor Visit', async () => {
     renderAppAt('/clinician');
-    expect(await screen.findByRole('heading', { name: 'For your doctor' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Doctor Visit' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'For your doctor' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('keeps the legacy /reports URL working and shows the Reports tab active', async () => {
     renderAppAt('/reports');
-    expect(await screen.findByRole('heading', { name: 'Reports' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Doctor Visit' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute('aria-current', 'page');
   });
 

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../components/Card';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { api } from '../lib/api';
 import { formatAuditAction, formatAuditTimestamp } from '../lib/audit';
 import { getErrorMessage } from '../lib/errors';
+import { formatMonitoringMode } from '../lib/findingPresentation';
 import type { AuditEvent, BootstrapInfo } from '../lib/types';
 
 type SupportPageProps = {
@@ -15,6 +17,8 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
   const [auditError, setAuditError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusIsError, setStatusIsError] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loadAudit = useCallback(async () => {
     try {
@@ -38,14 +42,16 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `oncowatch-export-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.download = `firstlight-export-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
+      setStatusIsError(false);
       setStatusMessage('Your data was exported to a local JSON file.');
       void loadAudit();
     } catch (error) {
+      setStatusIsError(true);
       setStatusMessage(getErrorMessage(error, 'Could not export your data.'));
     } finally {
       setBusy(null);
@@ -53,25 +59,21 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
   }, [loadAudit]);
 
   const handleDelete = useCallback(async () => {
-    const confirmed = window.confirm(
-      'Permanently delete all local profiles, findings, monitoring runs, and reports? This cannot be undone. ' +
-        'Consider exporting your data first.'
-    );
-    if (!confirmed) {
-      return;
-    }
     setBusy('delete');
     setStatusMessage(null);
     try {
       const summary = await api.deleteAllData();
+      setStatusIsError(false);
       setStatusMessage(
         `Deleted ${summary.profiles} profile(s), ${summary.findings} finding(s), and ${summary.reports} report(s).`
       );
       void loadAudit();
     } catch (error) {
+      setStatusIsError(true);
       setStatusMessage(getErrorMessage(error, 'Could not delete your data.'));
     } finally {
       setBusy(null);
+      setConfirmDelete(false);
     }
   }, [loadAudit]);
 
@@ -100,7 +102,7 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
           </div>
           <div>
             <strong>Monitoring mode</strong>
-            <div>{bootstrap.monitoring_mode === 'while_open' ? 'Automatic runs while the app is open' : bootstrap.monitoring_mode}</div>
+            <div>{formatMonitoringMode(bootstrap.monitoring_mode)}</div>
           </div>
           <div>
             <strong>Privacy</strong>
@@ -156,20 +158,26 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
           <button type="button" className="secondary-button" onClick={handleExport} disabled={busy !== null}>
             {busy === 'export' ? 'Exporting…' : 'Export my data'}
           </button>
-          <button type="button" className="ghost-button" onClick={handleDelete} disabled={busy !== null}>
+          <button type="button" className="ghost-button" onClick={() => setConfirmDelete(true)} disabled={busy !== null}>
             {busy === 'delete' ? 'Deleting…' : 'Delete all my data'}
           </button>
         </div>
         {statusMessage ? (
-          <p className="muted" role="status">
-            {statusMessage}
-          </p>
+          statusIsError ? (
+            <p className="callout callout-caution" role="alert">
+              {statusMessage}
+            </p>
+          ) : (
+            <p className="callout" role="status">
+              {statusMessage}
+            </p>
+          )
         ) : null}
       </Card>
 
       <Card title="Activity log" description="A local, append-only record of data-affecting actions on this device.">
         {auditError ? (
-          <p className="muted" role="alert">
+          <p className="callout callout-caution" role="alert">
             Could not load the activity log: {auditError}
           </p>
         ) : auditEvents.length === 0 ? (
@@ -195,7 +203,7 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
           <div className="support-step">
             <strong>2. Review the local log folder.</strong>
             <div className="muted">
-              Open the logs path above and inspect the newest `oncowatch.log` entries for backend startup or connector
+              Open the logs path above and inspect the newest `firstlight.log` entries for backend startup or connector
               failures.
             </div>
           </div>
@@ -215,6 +223,18 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
           </div>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete all your data?"
+        message="This permanently removes all local profiles, findings, monitoring runs, and reports on this computer. It cannot be undone — consider exporting a copy first."
+        confirmLabel="Delete everything"
+        cancelLabel="Keep my data"
+        danger
+        busy={busy === 'delete'}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

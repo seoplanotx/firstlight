@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 
 import { Card } from '../components/Card';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageErrorState } from '../components/PageErrorState';
 import { ProfileForm } from '../features/profile/ProfileForm';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
+import { setProfileEditsDirty } from '../lib/profileEditGuard';
 import type { PatientProfile } from '../lib/types';
 
 const LEAVE_PROMPT = 'You have unsaved profile changes. Leave without saving?';
@@ -30,7 +32,17 @@ export function ProfilePage() {
   const [extractText, setExtractText] = useState('');
   const [extractBusy, setExtractBusy] = useState(false);
   const [extractWarnings, setExtractWarnings] = useState<string[]>([]);
+  const [extractNote, setExtractNote] = useState('');
+  const [extractError, setExtractError] = useState('');
   const dirtyRef = useRef(false);
+  const [leavePrompt, setLeavePrompt] = useState<
+    { kind: 'route' } | { kind: 'activate'; profileId: number } | { kind: 'new' } | null
+  >(null);
+
+  function markDirty(value: boolean) {
+    dirtyRef.current = value;
+    setProfileEditsDirty(value);
+  }
 
   async function load() {
     setLoading(true);
@@ -58,14 +70,12 @@ export function ProfilePage() {
   const blocker = useBlocker(() => dirtyRef.current);
 
   useEffect(() => {
-    if (blocker.state !== 'blocked') return;
-    if (window.confirm(LEAVE_PROMPT)) {
-      dirtyRef.current = false;
-      blocker.proceed();
-    } else {
-      blocker.reset();
-    }
+    if (blocker.state === 'blocked') setLeavePrompt({ kind: 'route' });
   }, [blocker]);
+
+  // Clear the shared signal when leaving Patient Details so other switch paths
+  // aren't guarded against edits that no longer exist.
+  useEffect(() => () => setProfileEditsDirty(false), []);
 
   useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent) {
@@ -83,7 +93,7 @@ export function ProfilePage() {
     try {
       const saved = payload.id ? await api.updateProfile(payload.id, payload) : await api.createProfile(payload);
       setProfile(saved);
-      dirtyRef.current = false;
+      markDirty(false);
       setMessage('Profile saved locally.');
       const all = await api.getProfiles();
       setProfiles(all);
@@ -93,12 +103,11 @@ export function ProfilePage() {
     }
   }
 
-  async function handleActivate(profileId: number) {
-    if (dirtyRef.current && !window.confirm(LEAVE_PROMPT)) return;
+  async function doActivate(profileId: number) {
     try {
       const activated = await api.activateProfile(profileId);
       setProfile(activated);
-      dirtyRef.current = false;
+      markDirty(false);
       setMessage(`Now monitoring ${activated.display_name || activated.profile_name}.`);
       window.dispatchEvent(new Event('firstlight:profile-changed'));
     } catch (error) {
@@ -106,17 +115,49 @@ export function ProfilePage() {
     }
   }
 
-  function startNewProfile() {
-    if (dirtyRef.current && !window.confirm(LEAVE_PROMPT)) return;
+  function handleActivate(profileId: number) {
+    if (dirtyRef.current) {
+      setLeavePrompt({ kind: 'activate', profileId });
+      return;
+    }
+    void doActivate(profileId);
+  }
+
+  function doNewProfile() {
     setProfile(emptyProfile());
-    dirtyRef.current = false;
+    markDirty(false);
     setMessage('Creating a new local profile. Save when ready.');
+  }
+
+  function startNewProfile() {
+    if (dirtyRef.current) {
+      setLeavePrompt({ kind: 'new' });
+      return;
+    }
+    doNewProfile();
+  }
+
+  function confirmLeave() {
+    const action = leavePrompt;
+    setLeavePrompt(null);
+    if (!action) return;
+    markDirty(false);
+    if (action.kind === 'route') blocker.proceed?.();
+    else if (action.kind === 'activate') void doActivate(action.profileId);
+    else doNewProfile();
+  }
+
+  function cancelLeave() {
+    const action = leavePrompt;
+    setLeavePrompt(null);
+    if (action?.kind === 'route') blocker.reset?.();
   }
 
   async function handleExtract() {
     setExtractBusy(true);
     setExtractWarnings([]);
-    setErrorMessage('');
+    setExtractNote('');
+    setExtractError('');
     try {
       const result = await api.extractProfileFromText(extractText);
       setExtractWarnings(result.warnings || []);
@@ -156,15 +197,15 @@ export function ProfilePage() {
         };
       });
       dirtyRef.current = true;
-      setMessage('Suggestions applied to the form — review carefully, then save.');
+      setExtractNote('Suggestions applied to the form below — review carefully, then save.');
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Could not extract profile candidates.'));
+      setExtractError(getErrorMessage(error, 'Could not extract profile candidates.'));
     } finally {
       setExtractBusy(false);
     }
   }
 
-  if (loading) return <div className="loading-block" role="status">Loading patient profile...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading patient profile…</div>;
   if (errorMessage && !profile) {
     return <PageErrorState title="Profile unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -209,19 +250,23 @@ export function ProfilePage() {
         description="Local rules-based suggestions only. Nothing is sent to an AI provider. Confirm every field before saving."
       >
         <div className="stack">
-          <textarea
-            id="profile-report-text"
-            aria-label="Pathology or molecular report text"
-            rows={6}
-            value={extractText}
-            onChange={(e) => setExtractText(e.target.value)}
-            placeholder="Paste pathology or molecular report text here…"
-          />
+          <div className="field">
+            <label htmlFor="profile-report-text">Pathology or molecular report text</label>
+            <textarea
+              id="profile-report-text"
+              rows={6}
+              value={extractText}
+              onChange={(e) => setExtractText(e.target.value)}
+              placeholder="Paste pathology or molecular report text here…"
+            />
+          </div>
           <div className="button-row">
             <button className="secondary-button" type="button" disabled={extractBusy || !extractText.trim()} onClick={() => void handleExtract()}>
               {extractBusy ? 'Reading…' : 'Suggest profile fields'}
             </button>
           </div>
+          {extractError && <div className="callout callout-caution" role="alert">{extractError}</div>}
+          {extractNote && <div className="callout" role="status">{extractNote}</div>}
           {extractWarnings.map((warning) => (
             <div className="callout" role="status" key={warning}>
               {warning}
@@ -232,17 +277,25 @@ export function ProfilePage() {
 
       <Card title="Edit details" description="Add only the facts you are confident in. Everything stays encrypted on this computer.">
         {message && <div className="callout" role="status">{message}</div>}
-        {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+        {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
         <ProfileForm
           key={profile?.id || 'new-profile'}
           initialValue={profile}
           onSave={handleSave}
           submitLabel={profile?.id ? 'Save profile' : 'Create profile'}
-          onDirtyChange={(dirty) => {
-            dirtyRef.current = dirty;
-          }}
+          onDirtyChange={markDirty}
         />
       </Card>
+
+      <ConfirmDialog
+        open={leavePrompt !== null}
+        title="Leave without saving?"
+        message="You have unsaved changes to this profile. If you continue, those changes will be lost."
+        confirmLabel="Leave without saving"
+        cancelLabel="Keep editing"
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
+      />
     </div>
   );
 }

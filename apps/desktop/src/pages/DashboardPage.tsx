@@ -9,6 +9,7 @@ import { PageErrorState } from '../components/PageErrorState';
 import { TodayActions } from '../components/TodayActions';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
+import { formatRunStatus, formatTriggeredBy } from '../lib/findingPresentation';
 import type { Dashboard, Finding, FindingAction, SourceConfig } from '../lib/types';
 
 const SOURCE_NAMES: Record<string, string> = {
@@ -22,8 +23,8 @@ function friendlySourceName(connectorKey: string) {
   return SOURCE_NAMES[connectorKey] || connectorKey.replace(/_/g, ' ');
 }
 
-function jumpToSection(anchorId: string) {
-  document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function pluralize(count: number, singular: string, plural: string): string {
+  return count === 1 ? singular : plural;
 }
 
 export function DashboardPage() {
@@ -114,7 +115,7 @@ export function DashboardPage() {
     return 'Run your first check to see what is new.';
   }, [data]);
 
-  if (loading) return <div className="loading-block" role="status">Loading...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading…</div>;
   if (errorMessage && !data) {
     return <PageErrorState title="Dashboard unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -124,6 +125,20 @@ export function DashboardPage() {
   const sourceStatuses = data.briefing.source_statuses || [];
   const suggestedQuestions = data.briefing.suggested_questions || [];
   const hasEverRun = Boolean(data.latest_run);
+
+  // Quiet at-a-glance counts for the header meta line (replaces the boxed stat strip).
+  const newCount = data.counts.new || 0;
+  const changedCount = data.counts.changed || 0;
+  const strongCount = data.counts.high_relevance || 0;
+  const trialCount = data.counts.trial_matches || 0;
+  const nothingNew = newCount === 0 && changedCount === 0;
+  const glanceCounts = nothingNew
+    ? 'Nothing new since your last check.'
+    : `${newCount} new · ${changedCount} updated · ${strongCount} strong ${pluralize(
+        strongCount,
+        'match',
+        'matches'
+      )} · ${trialCount} possible ${pluralize(trialCount, 'trial', 'trials')}`;
 
   return (
     <div className="page-stack">
@@ -136,9 +151,19 @@ export function DashboardPage() {
             research. Firstlight keeps watching while it runs in the menu bar or system tray and lets you know when
             something new lands.
           </p>
+          {hasEverRun && (
+            <p className="today-glance">
+              {latestRunLabel}
+              {' · '}
+              {glanceCounts}
+            </p>
+          )}
         </div>
         {hasEverRun && (
           <div className="page-header-actions">
+            <Link className="secondary-button" to="/reports">
+              Open reports
+            </Link>
             <button className="primary-button" onClick={() => void handleRunNow()} disabled={runInProgress}>
               {runInProgress ? 'Checking…' : 'Check now'}
             </button>
@@ -147,7 +172,7 @@ export function DashboardPage() {
       </div>
 
       {notice && <div className="callout" role="status">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       {hasEverRun && (
         <TodayActions
@@ -197,76 +222,47 @@ export function DashboardPage() {
       )}
 
       {hasEverRun && (
-        <div className="stat-strip" aria-live="polite">
-          <div className="stat">
-            <span className="stat-num">{data.counts.new || 0}</span>
-            <span className="stat-label">New since last check</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{data.counts.changed || 0}</span>
-            <span className="stat-label">Updated</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{data.counts.high_relevance || 0}</span>
-            <span className="stat-label">Strong matches</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{data.counts.trial_matches || 0}</span>
-            <span className="stat-label">Possible trials</span>
-          </div>
-        </div>
-      )}
-
-      {hasEverRun && (
-        <Card
-          title="What changed since your last check?"
-          description={latestRunLabel}
-          className="hero-card"
-          action={
-            <Link className="secondary-button" to="/reports">
-              Open reports
-            </Link>
-          }
-        >
-          <p className="briefing-statement">
-            Start with what is new, then look at anything that changed and might be worth asking about.
-          </p>
-
-          <div className="button-row hero-actions">
-            <button className="secondary-button" onClick={() => jumpToSection('dashboard-new-findings')}>
-              See what's new
-            </button>
-            <button className="secondary-button" onClick={() => jumpToSection('dashboard-changed-findings')}>
-              See what changed
-            </button>
-            <button className="secondary-button" onClick={() => jumpToSection('dashboard-blockers')}>
-              See what's missing
-            </button>
-          </div>
-        </Card>
-      )}
-
-      {hasEverRun && (
-      <div className="dashboard-layout">
-        <div className="dashboard-main-column">
+        <div className="dashboard-sections">
           {data.briefing.sections.map((section) => (
             <BriefingSection
               key={section.key}
               section={section}
-              anchorId={`dashboard-${section.key.replace(/_/g, '-')}`}
               onAction={handleFindingAction}
               pendingId={pendingFindingId}
             />
           ))}
         </div>
+      )}
 
-        <div className="dashboard-side-column">
-          <Card
-            title="Check status"
-            description="How often Firstlight checks, and details of the most recent check."
-            className="side-panel-card"
-          >
-            {data.latest_run ? (
+      {hasEverRun && (
+        <details className="today-details">
+          <summary className="today-details-summary">
+            <span className="today-details-summary-text">
+              <span className="today-details-label">Check details</span>
+              <span className="today-details-hint">
+                Status, sources, questions for the doctor, and recent finds
+              </span>
+            </span>
+            <svg
+              className="today-details-chevron"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              aria-hidden="true"
+            >
+              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </summary>
+
+          <div className="today-details-body">
+            <Card
+              title="Check status"
+              description="How often Firstlight checks, and details of the most recent check."
+            >
+              {data.latest_run ? (
               <div className="detail-grid">
                 <div>
                   <strong>Last check</strong>
@@ -274,11 +270,11 @@ export function DashboardPage() {
                 </div>
                 <div>
                   <strong>Status</strong>
-                  <div>{data.latest_run.status}</div>
+                  <div>{formatRunStatus(data.latest_run.status)}</div>
                 </div>
                 <div>
                   <strong>Started by</strong>
-                  <div>{data.latest_run.triggered_by}</div>
+                  <div>{formatTriggeredBy(data.latest_run.triggered_by)}</div>
                 </div>
                 <div>
                   <strong>Next automatic check while open</strong>
@@ -290,14 +286,11 @@ export function DashboardPage() {
             )}
           </Card>
 
-          <div id="dashboard-blockers">
-            <BriefingBlockers blockers={data.briefing.blockers} />
-          </div>
+          <BriefingBlockers blockers={data.briefing.blockers} />
 
           <Card
             title="Questions for the doctor"
             description="Plain prompts you can bring to a visit. These are conversation starters, not medical advice."
-            className="side-panel-card"
           >
             {suggestedQuestions.length === 0 ? (
               <EmptyState title="No questions yet" message="Run a check to generate source-backed questions to ask." />
@@ -314,8 +307,7 @@ export function DashboardPage() {
 
           <Card
             title="Where we looked"
-            description="Each source Firstlight checked in the most recent run, and whether it responded. Persistent source health from Settings is shown if a source has never completed a run yet."
-            className="side-panel-card"
+            description="Each source Firstlight checked in the most recent run, and whether it responded. If a source hasn't finished a check yet, its most recent status is shown instead."
           >
             {sourceStatuses.length === 0 && sourceConfigs.length === 0 ? (
               <EmptyState title="Nothing checked yet" message="Run a check to see how each source responded." />
@@ -324,9 +316,9 @@ export function DashboardPage() {
                 {sourceConfigs.map((source) => (
                   <article className="headline-item" key={source.id}>
                     <strong>{source.name}</strong>
-                    <div className={source.last_error ? 'callout callout-danger' : 'muted'}>
+                    <div className={source.last_error ? 'source-note-caution' : 'muted'}>
                       {source.last_error
-                        ? `Last issue: ${source.last_error}`
+                        ? "Couldn't reach it last time"
                         : source.last_successful_sync_at
                           ? `Last success: ${new Date(source.last_successful_sync_at).toLocaleString()}`
                           : 'No check recorded yet'}
@@ -339,9 +331,9 @@ export function DashboardPage() {
                 {sourceStatuses.map((source) => (
                   <article className="headline-item" key={source.connector_key}>
                     <strong>{friendlySourceName(source.connector_key)}</strong>
-                    <div className={source.status === 'ok' ? 'muted' : 'callout callout-danger'}>
-                      {source.status === 'ok' ? 'Responded' : 'Had trouble'} • {source.retrieved} found
-                      {source.message ? ` • ${source.message}` : ''}
+                    <div className={source.status === 'ok' ? 'muted' : 'source-note-caution'}>
+                      {source.status === 'ok' ? 'Responded' : 'Had trouble'} · {source.retrieved} found
+                      {source.message ? ` · ${source.message}` : ''}
                     </div>
                   </article>
                 ))}
@@ -349,7 +341,7 @@ export function DashboardPage() {
             )}
           </Card>
 
-          <Card title="Recently found" description="A quick glance at the latest items Firstlight stored." className="side-panel-card">
+          <Card title="Recently found" description="A quick glance at the latest items Firstlight stored.">
             {data.recent_findings.length === 0 ? (
               <EmptyState title="Nothing found yet" message="Once a check finishes, items will appear here." />
             ) : (
@@ -358,15 +350,15 @@ export function DashboardPage() {
                   <article className="headline-item" key={item.id}>
                     <strong>{item.title}</strong>
                     <div className="muted">
-                      {item.source_name} • {new Date(item.published_at || item.retrieved_at).toLocaleString()}
+                      {item.source_name} · {new Date(item.published_at || item.retrieved_at).toLocaleString()}
                     </div>
                   </article>
                 ))}
               </div>
             )}
           </Card>
-        </div>
-      </div>
+          </div>
+        </details>
       )}
     </div>
   );

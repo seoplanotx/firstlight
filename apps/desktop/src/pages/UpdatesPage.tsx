@@ -8,7 +8,7 @@ import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import type { Finding, FindingAction } from '../lib/types';
 
-export function UpdatesPage() {
+export function UpdatesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [items, setItems] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -43,27 +43,16 @@ export function UpdatesPage() {
     }
   }
 
-  if (loading) return <div className="loading-block" role="status">Loading research updates...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading research updates…</div>;
   if (errorMessage && items.length === 0) {
-    return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
+    return <PageErrorState title="Couldn't load research" message={errorMessage} onRetry={load} />;
   }
 
-  return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <div className="eyebrow">From PubMed &amp; Europe PMC</div>
-          <h1>Research</h1>
-          <p className="page-lede">
-            New research from PubMed and Europe PMC in one calm list, each with a short excerpt and the reason it came up.
-          </p>
-        </div>
-        <div className="page-header-actions">
-          <span className="section-counter">{items.length} found</span>
-        </div>
-      </div>
+  const actions = <span className="section-counter">{items.length} found</span>;
 
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+  const content = (
+    <>
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       <Card
         title="Latest research"
@@ -85,6 +74,31 @@ export function UpdatesPage() {
           </div>
         )}
       </Card>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        <div className="section-toolbar">{actions}</div>
+        {content}
+      </>
+    );
+  }
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">From PubMed &amp; Europe PMC</div>
+          <h1>Research</h1>
+          <p className="page-lede">
+            New research from PubMed and Europe PMC in one calm list, each with a short excerpt and the reason it came up.
+          </p>
+        </div>
+        <div className="page-header-actions">{actions}</div>
+      </div>
+      {content}
     </div>
   );
 }

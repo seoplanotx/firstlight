@@ -62,7 +62,7 @@ describe('SupportPage', () => {
     expect(await screen.findByText(/exported to a local JSON file/i)).toBeInTheDocument();
   });
 
-  it('deletes all data after the user confirms', async () => {
+  it('deletes all data after the user confirms in the in-app dialog', async () => {
     mockedApi.deleteAllData.mockResolvedValue({
       profiles: 1,
       findings: 2,
@@ -70,23 +70,27 @@ describe('SupportPage', () => {
       reports: 1,
       report_files_removed: 1
     });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<SupportPage bootstrap={bootstrap} />);
     await screen.findByText('Profile created');
     await userEvent.click(screen.getByRole('button', { name: /delete all my data/i }));
+
+    // The action is held until the user confirms in the dialog.
+    expect(mockedApi.deleteAllData).not.toHaveBeenCalled();
+    await userEvent.click(await screen.findByRole('button', { name: /delete everything/i }));
 
     await waitFor(() => expect(mockedApi.deleteAllData).toHaveBeenCalledTimes(1));
     expect(await screen.findByText(/Deleted 1 profile/i)).toBeInTheDocument();
   });
 
-  it('does not delete when the user cancels the confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
-
+  it('does not delete when the user cancels the dialog', async () => {
     render(<SupportPage bootstrap={bootstrap} />);
     await screen.findByText('Profile created');
     await userEvent.click(screen.getByRole('button', { name: /delete all my data/i }));
 
+    await userEvent.click(await screen.findByRole('button', { name: /keep my data/i }));
+
     expect(mockedApi.deleteAllData).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

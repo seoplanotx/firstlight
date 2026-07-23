@@ -10,13 +10,13 @@ import { fileDirectory, openLocalPath } from '../lib/external';
 import type { ClinicianSummary, Finding, ReportExport, ReportType } from '../lib/types';
 
 const REPORT_TYPE_LABELS: Record<string, string> = {
-  daily_summary: 'Daily Summary Report',
-  full_review: 'Full Oncology Review Report',
-  appointment_prep: 'Appointment Prep Sheet'
+  daily_summary: 'Daily summary report',
+  full_review: 'Full oncology review report',
+  appointment_prep: 'Appointment prep sheet'
 };
 
 function reportTypeLabel(reportType: string): string {
-  return REPORT_TYPE_LABELS[reportType] || 'Full Oncology Review Report';
+  return REPORT_TYPE_LABELS[reportType] || 'Full oncology review report';
 }
 
 // Lead with intent — what the family is preparing for — mapped onto the existing
@@ -68,7 +68,7 @@ function missingProfileDetails(summary: ClinicianSummary | null): string[] {
 
 type Phase = 'choose' | 'prep' | 'done';
 
-export function ReportsPage() {
+export function ReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [reports, setReports] = useState<ReportExport[]>([]);
   const [summary, setSummary] = useState<ClinicianSummary | null>(null);
   const [savedFindings, setSavedFindings] = useState<Finding[]>([]);
@@ -172,7 +172,7 @@ export function ReportsPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `firstlight-${reportType}.pdf`;
+      link.download = `firstlight-${reportType.replace(/_/g, '-')}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
       setNotice('PDF download started.');
@@ -197,26 +197,15 @@ export function ReportsPage() {
     return parts.join(' ');
   }, [savedFindings.length, questions.length, missingDetails]);
 
-  if (loading) return <div className="loading-block" role="status">Loading reports...</div>;
+  if (loading) return <div className="loading-block" role="status">Loading reports…</div>;
   if (errorMessage && reports.length === 0 && phase === 'choose') {
     return <PageErrorState title="Reports unavailable" message={errorMessage} onRetry={load} />;
   }
 
-  return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <div className="eyebrow">Generated on this computer</div>
-          <h1>Reports</h1>
-          <p className="page-lede">
-            Start with what you are preparing for. Firstlight builds a clean PDF from your saved findings and questions,
-            all on this computer.
-          </p>
-        </div>
-      </div>
-
+  const content = (
+    <>
       {notice && <div className="callout" role="status">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       {phase === 'choose' && (
         <Card title="What are you preparing for?" description="Pick one to start — you can review everything before it is created.">
@@ -383,8 +372,8 @@ export function ReportsPage() {
                     <button className="ghost-button" onClick={() => void openLocation(report)}>
                       Open file location
                     </button>
-                    <button className="ghost-button" disabled={busy} onClick={() => void regenerate(report.report_type)}>
-                      Generate updated version
+                    <button type="button" className="ghost-button" disabled={busy} onClick={() => void regenerate(report.report_type)}>
+                      {busy ? 'Updating…' : 'Update this report'}
                     </button>
                   </div>
                 </div>
@@ -393,6 +382,26 @@ export function ReportsPage() {
           </div>
         )}
       </Card>
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Generated on this computer</div>
+          <h1>Reports</h1>
+          <p className="page-lede">
+            Start with what you are preparing for. Firstlight builds a clean PDF from your saved findings and questions,
+            all on this computer.
+          </p>
+        </div>
+      </div>
+      {content}
     </div>
   );
 }

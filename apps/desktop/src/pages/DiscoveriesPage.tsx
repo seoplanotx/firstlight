@@ -17,6 +17,17 @@ const TABS: { key: DiscoveriesTab; label: string; to: string }[] = [
 export function DiscoveriesPage({ activeTab }: { activeTab: DiscoveriesTab }) {
   return (
     <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Your daily check</div>
+          <h1>Discoveries</h1>
+          <p className="page-lede">
+            Everything Firstlight found for the person you're monitoring — new findings to review, possible trials, and
+            fresh research.
+          </p>
+        </div>
+      </div>
+
       <nav className="section-tabs" aria-label="Discoveries views">
         {TABS.map((tab) => (
           <Link
@@ -30,9 +41,9 @@ export function DiscoveriesPage({ activeTab }: { activeTab: DiscoveriesTab }) {
         ))}
       </nav>
 
-      {activeTab === 'all' && <FindingsPage />}
-      {activeTab === 'trials' && <TrialMatchesPage />}
-      {activeTab === 'research' && <UpdatesPage />}
+      {activeTab === 'all' && <FindingsPage embedded />}
+      {activeTab === 'trials' && <TrialMatchesPage embedded />}
+      {activeTab === 'research' && <UpdatesPage embedded />}
     </div>
   );
 }

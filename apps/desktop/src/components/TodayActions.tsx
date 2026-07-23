@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Card } from './Card';
 import { EmptyState } from './EmptyState';
@@ -16,7 +17,7 @@ type TodayAction = {
   title: string;
   detail: string;
   linkLabel: string;
-  href: string;
+  to: string;
 };
 
 // Clean line icons only — no emoji. Stroke-based, matching the app's quiet style.
@@ -65,7 +66,7 @@ export function TodayActions({ needsReviewCount, matchingGapCount, discussCount 
       title: `Review ${needsReviewCount} new ${pluralize(needsReviewCount, 'finding', 'findings')}`,
       detail: 'These are new to you. A quick look lets you set aside what does not fit and save the rest for the doctor.',
       linkLabel: 'Start reviewing',
-      href: '#/findings'
+      to: '/findings'
     });
   }
 
@@ -81,7 +82,7 @@ export function TodayActions({ needsReviewCount, matchingGapCount, discussCount 
         'findings'
       )} to discuss. Turn them into a clear summary to bring to the next visit.`,
       linkLabel: 'Prepare summary',
-      href: '#/clinician'
+      to: '/clinician'
     });
   }
 
@@ -97,7 +98,7 @@ export function TodayActions({ needsReviewCount, matchingGapCount, discussCount 
         'details'
       )} that, if you can add ${pluralize(matchingGapCount, 'it', 'them')}, would help it judge these items more confidently.`,
       linkLabel: 'Add details',
-      href: '#/profile'
+      to: '/profile'
     });
   }
 
@@ -126,9 +127,9 @@ export function TodayActions({ needsReviewCount, matchingGapCount, discussCount 
                 <strong className="today-action-title">{action.title}</strong>
                 <p className="today-action-detail">{action.detail}</p>
               </div>
-              <a className="secondary-button today-action-link" href={action.href}>
+              <Link className="secondary-button today-action-link" to={action.to}>
                 {action.linkLabel}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

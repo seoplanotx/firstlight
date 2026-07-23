@@ -50,19 +50,38 @@ describe('ProfilePage unsaved-changes guard', () => {
     mockedApi.getProfiles.mockResolvedValue([profile]);
   });
 
-  it('blocks router navigation (including Back/Forward) when edits are pending and the user cancels', async () => {
+  it('blocks router navigation with an in-app dialog when edits are pending and the user cancels', async () => {
     const router = renderInRouter();
     await screen.findByDisplayValue('breast cancer');
 
     await userEvent.type(screen.getByLabelText('Cancer type'), ' (HER2+)');
 
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     await act(async () => {
       await router.navigate('/other');
     });
 
-    expect(confirmSpy).toHaveBeenCalled();
+    // An in-app confirm dialog appears (no native window.confirm) and navigation is held.
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.queryByText('Other page')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /keep editing/i }));
+    expect(screen.queryByText('Other page')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('lets navigation proceed when the user confirms leaving', async () => {
+    const router = renderInRouter();
+    await screen.findByDisplayValue('breast cancer');
+
+    await userEvent.type(screen.getByLabelText('Cancer type'), ' (HER2+)');
+
+    await act(async () => {
+      await router.navigate('/other');
+    });
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /leave without saving/i }));
+    await waitFor(() => expect(screen.getByText('Other page')).toBeInTheDocument());
   });
 
   it('allows navigation when there are no pending edits', async () => {
@@ -75,6 +94,7 @@ describe('ProfilePage unsaved-changes guard', () => {
     });
 
     expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Other page')).toBeInTheDocument());
   });
 });
