@@ -481,3 +481,107 @@ def assert_deidentified_packet(packet: Any) -> None:
     visit(packet, "$packet")
     if problems:
         raise DeidentificationError("AI payload is not de-identified: " + "; ".join(problems))
+
+
+def assert_no_profile_identity(packet: Any, profile: Any) -> None:
+    """Public guard: raise DeidentificationError if any of the profile's identity terms
+    appear anywhere in the packet.
+
+    Used by the plain-language path, where the payload is public source text but we still
+    guarantee the patient's own name/identifiers can never ride along.
+    """
+
+    _reject_local_identity_terms(packet, profile)
+
+
+# --- Free-text redaction for pasted pathology / molecular reports (AI-assist path) ---
+#
+# A pasted report is raw PHI. Before ANY of it may be sent to an AI provider it is
+# redacted locally and then re-asserted clean; if the assertion fails, the caller must
+# refuse the AI call and fall back to local rules only. This follows HIPAA Safe Harbor
+# intent: remove names, contacts, record IDs, geography finer than state, facilities, and
+# dates more specific than a year. Bare years are permitted (not identifying alone) so the
+# assertion stays usable on real report text.
+
+_REDACTION_PLACEHOLDER = "[redacted]"
+_RECORD_ID_RE = re.compile(
+    r"\b(?:mrn|medical\s+record(?:\s+number)?|accession(?:\s+(?:no|number|#))?|acc|"
+    r"record\s*(?:no|number|#)|patient\s*id|specimen(?:\s+id)?|case\s*(?:no|number|#))\b"
+    r"\s*[:#]?\s*[A-Za-z0-9][A-Za-z0-9-]*",
+    re.IGNORECASE,
+)
+_LONG_NUMBER_RE = re.compile(r"\b\d{6,}\b")
+
+
+def redact_free_text(text: str | None) -> str:
+    """Redact identifiers from free report text, replacing each with a placeholder."""
+
+    if not text:
+        return ""
+
+    out = str(text)
+    # Structured identifiers first (labels + long numbers before generic patterns).
+    out = _EMAIL_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _PHONE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _RECORD_ID_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _LONG_NUMBER_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _LOCAL_PATH_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _ZIP_RE.sub(_REDACTION_PLACEHOLDER, out)
+    # Dates finer than a year.
+    out = _EXACT_DATE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _SHORT_EXACT_DATE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _MONTH_DATE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _MONTH_DAY_RE.sub(_REDACTION_PLACEHOLDER, out)
+    # Geography and facilities.
+    out = _CITY_STATE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _KNOWN_FACILITY_OR_PLACE_RE.sub(_REDACTION_PLACEHOLDER, out)
+    out = _CLINICIAN_OR_FACILITY_RE.sub(_REDACTION_PLACEHOLDER, out)
+
+    # Person names, filtered so oncology terms (e.g. "Invasive Ductal") that also look
+    # like a First-Last pair are only redacted when they read like a real name.
+    def _name_sub(match: re.Match[str]) -> str:
+        return _REDACTION_PLACEHOLDER if _looks_like_person_name(match.group(0)) else match.group(0)
+
+    for pattern in (_SUSPICIOUS_PERSON_NAME_RE, _INITIAL_SURNAME_RE, _SUSPICIOUS_UPPERCASE_NAME_RE):
+        out = pattern.sub(_name_sub, out)
+
+    return out
+
+
+def assert_free_text_deidentified(text: str | None) -> None:
+    """Raise DeidentificationError if high-risk identifiers remain in report text.
+
+    Deliberately does NOT flag bare years or month-day-without-year (Safe-Harbor permits
+    year-level dates), so it stays usable on genuine report text after redaction.
+    """
+
+    value = str(text or "")
+    problems: list[str] = []
+
+    if _EMAIL_RE.search(value):
+        problems.append("email")
+    if _PHONE_RE.search(value):
+        problems.append("phone")
+    if _LOCAL_PATH_RE.search(value):
+        problems.append("local-path")
+    if _RECORD_ID_RE.search(value):
+        problems.append("record-id")
+    if _LONG_NUMBER_RE.search(value):
+        problems.append("long-number")
+    if _ZIP_RE.search(value):
+        problems.append("zip-code")
+    if _EXACT_DATE_RE.search(value) or _SHORT_EXACT_DATE_RE.search(value) or _MONTH_DATE_RE.search(value):
+        problems.append("exact-date")
+    if _CITY_STATE_RE.search(value):
+        problems.append("city-state")
+    if _KNOWN_FACILITY_OR_PLACE_RE.search(value) or _CLINICIAN_OR_FACILITY_RE.search(value):
+        problems.append("facility-or-clinician")
+    for pattern in (_SUSPICIOUS_PERSON_NAME_RE, _INITIAL_SURNAME_RE, _SUSPICIOUS_UPPERCASE_NAME_RE):
+        if any(_looks_like_person_name(match.group(0)) for match in pattern.finditer(value)):
+            problems.append("person-name")
+            break
+
+    if problems:
+        raise DeidentificationError(
+            "Report text is not sufficiently de-identified: " + ", ".join(sorted(set(problems)))
+        )

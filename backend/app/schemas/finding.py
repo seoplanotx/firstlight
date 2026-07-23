@@ -57,6 +57,8 @@ class FindingRead(BaseModel):
     llm_provider: str | None = None
     llm_model: str | None = None
     llm_metadata: dict = Field(default_factory=dict)
+    plain_language_summary: str | None = None
+    plain_language_generated_at: datetime | None = None
     evidence_items: list[FindingEvidenceRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
@@ -114,3 +116,13 @@ class FindingRead(BaseModel):
 class FindingsQueryResponse(BaseModel):
     total: int
     items: list[FindingRead]
+
+
+class PlainLanguageResponse(BaseModel):
+    """Result of a plain-language generation attempt. `finding` always carries the
+    current stored state (with `plain_language_summary` populated on success); `status`
+    and `message` let the UI explain calmly when AI assist is off or unavailable."""
+
+    finding: FindingRead
+    status: str
+    message: str | None = None

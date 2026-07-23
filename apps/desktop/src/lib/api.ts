@@ -14,6 +14,7 @@ import type {
   MonitoringRun,
   OnboardingState,
   PatientProfile,
+  PlainLanguageResponse,
   ProviderConfig,
   ReportExport,
   SourceConfig
@@ -132,13 +133,15 @@ export const api = {
   },
   setFindingAction: (findingId: number, action: FindingAction) =>
     request<Finding>(`/findings/${findingId}/action`, { method: 'POST', body: JSON.stringify({ action }) }),
+  generatePlainLanguage: (findingId: number) =>
+    request<PlainLanguageResponse>(`/findings/${findingId}/plain-language`, { method: 'POST' }),
   setFindingActionsBulk: (findingIds: number[], action: FindingAction) =>
     request<{ total: number; items: Finding[] }>('/findings/actions/bulk', {
       method: 'POST',
       body: JSON.stringify({ finding_ids: findingIds, action })
     }),
   activateProfile: (id: number) => request<PatientProfile>(`/profiles/${id}/activate`, { method: 'POST' }),
-  extractProfileFromText: (text: string) =>
+  extractProfileFromText: (text: string, allowAi = false) =>
     request<{
       cancer_type?: string | null;
       subtype?: string | null;
@@ -153,7 +156,9 @@ export const api = {
       }>;
       notes?: string | null;
       warnings: string[];
-    }>('/profiles/extract-from-text', { method: 'POST', body: JSON.stringify({ text }) }),
+      ai_status: string;
+      ai_message?: string | null;
+    }>('/profiles/extract-from-text', { method: 'POST', body: JSON.stringify({ text, allow_ai: allowAi }) }),
 
   getClinicianSummary: (profileId?: number) =>
     request<ClinicianSummary>(

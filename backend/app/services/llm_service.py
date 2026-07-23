@@ -86,6 +86,139 @@ def validate_case_framing(text: str | None) -> str:
     return cleaned
 
 
+# Fail-closed prose validator for plain-language explanations of PUBLIC source text.
+# Explaining what a study says (third person, factual) is allowed; addressing the reader
+# or drifting into advice/eligibility/recommendation is not. Any hit fails closed to "".
+_UNSAFE_EXPLANATION_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\byou\b",
+        r"\byour\b",
+        r"\bwe\s+recommend\b",
+        r"\brecommend(?:ed|ation|ations|ing|s)?\b",
+        r"\bshould\b",
+        r"\beligib(?:le|ility)\b",
+        r"\bqualif(?:y|ies|ied|ying)\b",
+        r"\bcandidate\s+for\b",
+        r"\bbest\s+(?:option|treatment|choice|for)\b",
+        r"\btalk\s+to\s+your\b",
+        r"\bask\s+your\b",
+        r"\bconsider\s+(?:starting|switching|taking|enrolling)\b",
+    )
+)
+_EXPLANATION_MIN_CHARS = 20
+_EXPLANATION_MAX_CHARS = 900
+
+
+def validate_plain_language(text: str | None) -> str:
+    """Keep only a short, factual, third-person explanation; fail closed on advice,
+    second-person address, eligibility, or recommendation language."""
+
+    if not text:
+        return ""
+    cleaned = " ".join(str(text).split()).strip("-• ").strip()
+    if len(cleaned) < _EXPLANATION_MIN_CHARS or len(cleaned) > _EXPLANATION_MAX_CHARS:
+        return ""
+    if any(pattern.search(cleaned) for pattern in _UNSAFE_EXPLANATION_PATTERNS):
+        return ""
+    return cleaned
+
+
+_PLAIN_LANGUAGE_SYSTEM_PROMPT = (
+    "You explain public cancer-research and clinical-trial text in plain language for a "
+    "worried family member with no medical background. Use ONLY the provided public source "
+    "text. Write 2 to 4 short sentences, in the third person, describing what the source "
+    "says. Do NOT address the reader ('you'/'your'). Do NOT give advice, recommendations, "
+    "next steps, or opinions. Do NOT say anyone is eligible, qualifies, should do anything, "
+    "or would benefit. Do NOT mention or infer any specific patient. Keep it calm and factual; "
+    "briefly gloss any unavoidable medical term."
+)
+_PLAIN_LANGUAGE_INSTRUCTION = (
+    "Explain in 2 to 4 plain, third-person sentences what this public source text is about. "
+    "No advice, no eligibility, no recommendations, no next steps, no 'you'."
+)
+
+_PROFILE_EXTRACTION_SYSTEM_PROMPT = (
+    "You extract structured oncology profile fields from DE-IDENTIFIED pathology or molecular "
+    "report text. Names, dates, contacts, IDs, and places have been removed and replaced with "
+    "[redacted]; never try to infer or reconstruct them. Return ONLY a compact JSON object with "
+    "these keys: cancer_type (string or null), subtype (string or null), stage_or_context "
+    "(string or null), biomarkers (array of objects with name, variant, status), therapy_history "
+    "(array of objects with therapy_name, therapy_type, status). Use null or empty arrays when "
+    "unsure. Do NOT give advice, eligibility, prognosis, recommendations, or any commentary. "
+    "Output JSON only, with no surrounding prose or code fences."
+)
+_PROFILE_EXTRACTION_INSTRUCTION = (
+    "Extract the oncology profile fields as a JSON object from this de-identified report text."
+)
+
+
+def validate_extracted_candidates(raw: Any) -> dict[str, Any]:
+    """Parse and whitelist the model's profile-extraction output.
+
+    Fail-closed to an empty dict on anything that is not a clean JSON object of the
+    expected shape. Only short structured fields are kept, so advice/commentary cannot
+    ride along in free text.
+    """
+
+    text = str(raw or "").strip()
+    if not text:
+        return {}
+    if text.startswith("```"):
+        text = re.sub(r"^```[A-Za-z]*\n?", "", text).strip().rstrip("`").strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return {}
+    try:
+        data = json.loads(text[start : end + 1])
+    except (json.JSONDecodeError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+
+    def _clean(value: Any, limit: int) -> str | None:
+        if value is None:
+            return None
+        cleaned = " ".join(str(value).split()).strip()
+        return cleaned[:limit] if cleaned else None
+
+    result: dict[str, Any] = {
+        "cancer_type": _clean(data.get("cancer_type"), 120),
+        "subtype": _clean(data.get("subtype"), 120),
+        "stage_or_context": _clean(data.get("stage_or_context"), 120),
+        "biomarkers": [],
+        "therapy_history": [],
+    }
+
+    raw_biomarkers = data.get("biomarkers")
+    if isinstance(raw_biomarkers, list):
+        for item in raw_biomarkers[:25]:
+            if not isinstance(item, dict):
+                continue
+            name = _clean(item.get("name"), 120)
+            if not name:
+                continue
+            result["biomarkers"].append(
+                {"name": name, "variant": _clean(item.get("variant"), 120), "status": _clean(item.get("status"), 60)}
+            )
+
+    raw_therapies = data.get("therapy_history")
+    if isinstance(raw_therapies, list):
+        for item in raw_therapies[:25]:
+            if not isinstance(item, dict):
+                continue
+            name = _clean(item.get("therapy_name"), 160) or _clean(item.get("name"), 160)
+            if not name:
+                continue
+            result["therapy_history"].append(
+                {"therapy_name": name, "therapy_type": _clean(item.get("therapy_type"), 80), "status": _clean(item.get("status"), 60)}
+            )
+
+    return result
+
+
 # First-party Anthropic model IDs (console.anthropic.com); OpenRouter uses its
 # own aggregator IDs like "anthropic/claude-sonnet-4.6".
 FIRST_PARTY_ANTHROPIC_MODELS = [
@@ -170,6 +303,51 @@ class _BaseLLMClient:
             return validate_case_framing(str(content))
         except Exception:
             return ""
+
+    def explain_finding(self, *, finding_packet: dict[str, Any]) -> str:
+        """Explain a finding's PUBLIC source text in plain language.
+
+        Unlike the clinician-question / case-framing paths, the input here is public
+        source material (not a de-identified case packet), so `assert_deidentified_packet`
+        is deliberately NOT applied. The caller guarantees the packet is built only from
+        whitelisted public Finding fields and carries no patient identity. Output is
+        fail-closed validated to strip advice / eligibility / second-person language.
+        """
+
+        user_payload = json.dumps(
+            {
+                "public_source": finding_packet,
+                "instruction": _PLAIN_LANGUAGE_INSTRUCTION,
+            },
+            sort_keys=True,
+            default=str,
+        )
+        try:
+            content = self._complete(system=_PLAIN_LANGUAGE_SYSTEM_PROMPT, user_payload=user_payload)
+            return validate_plain_language(str(content))
+        except Exception:
+            return ""
+
+    def extract_profile_candidates(self, *, redacted_text: str) -> dict[str, Any]:
+        """Extract structured oncology fields from ALREADY-REDACTED report text.
+
+        The caller (profile_ai_service) guarantees `redacted_text` has been locally
+        redacted and re-asserted clean before this is invoked. Output is fail-closed
+        validated to a whitelisted JSON shape.
+        """
+
+        user_payload = json.dumps(
+            {
+                "deidentified_report_text": redacted_text,
+                "instruction": _PROFILE_EXTRACTION_INSTRUCTION,
+            },
+            default=str,
+        )
+        try:
+            content = self._complete(system=_PROFILE_EXTRACTION_SYSTEM_PROMPT, user_payload=user_payload)
+            return validate_extracted_candidates(content)
+        except Exception:
+            return {}
 
 
 class OpenRouterClient(_BaseLLMClient):

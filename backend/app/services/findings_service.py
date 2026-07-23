@@ -442,6 +442,11 @@ def upsert_finding(
         if finding.content_hash != content_hash:
             finding.status = "changed"
             finding.content_hash = content_hash
+            # Source text changed, so any cached plain-language summary is stale.
+            finding.plain_language_summary = None
+            finding.plain_language_generated_at = None
+            finding.plain_language_provider = None
+            finding.plain_language_model = None
             state = "changed"
         else:
             finding.status = "unchanged"

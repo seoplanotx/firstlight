@@ -47,6 +47,7 @@ export function BriefingSection({ section, anchorId, showWhy = true, onAction, p
                 key={finding.id}
                 finding={finding}
                 showWhy={showWhy}
+                showPlainLanguage={false}
                 onAction={onAction ? (action) => onAction(finding.id, action) : undefined}
                 actionPending={pendingId === finding.id}
               />
