@@ -20,9 +20,9 @@
 - `GET /api/settings` — app settings (includes `active_ai_provider`)
 - `PUT /api/settings` — update app settings (omitting `active_ai_provider` leaves the selection unchanged)
 - `GET /api/settings/provider/{provider_key}` — provider config (`openrouter` or `anthropic`; unknown keys 422)
-- `POST /api/settings/provider/{provider_key}/save` — save provider config (key encrypted at rest)
+- `POST /api/settings/provider/{provider_key}/save` — save provider config (key encrypted at rest). `selected_model` accepts any model id the provider recognizes, so a user can save an id that is not in the curated/live list (e.g. `moonshotai/kimi-k3`)
 - `POST /api/settings/provider/{provider_key}/test` — validate API key against the provider
-- `GET /api/settings/provider/{provider_key}/models` — model list (live when a key is stored, else per-provider fallback)
+- `GET /api/settings/provider/{provider_key}/models` — model list (live full catalog when a key is stored, else a curated per-provider fallback spanning the frontier labs). The list is a convenience, not a limit — any valid model id may be entered by hand in the UI
 - `GET /api/settings/mcp` — Claude Desktop (MCP) access status (`enabled`, `has_token`; never the token itself)
 - `POST /api/settings/mcp/enable` — enable access and return the connection code (shown once; re-calling rotates it)
 - `POST /api/settings/mcp/disable` — disable access and clear the stored token

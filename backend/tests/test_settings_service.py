@@ -102,6 +102,18 @@ class ActiveAiProviderTests(unittest.TestCase):
         self.assertEqual(FALLBACK_MODELS_BY_PROVIDER["anthropic"], FIRST_PARTY_ANTHROPIC_MODELS)
         self.assertIn("claude-sonnet-4-6", FIRST_PARTY_ANTHROPIC_MODELS)
 
+    def test_openrouter_fallback_covers_frontier_labs(self) -> None:
+        # The curated OpenRouter starting set should span the major frontier labs
+        # so a user without a live catalog still sees a current, representative list.
+        vendors = {model.split("/", 1)[0] for model in FALLBACK_MODELS}
+        for vendor in ("anthropic", "openai", "google", "x-ai", "deepseek", "moonshotai", "qwen", "meta-llama", "mistralai"):
+            self.assertIn(vendor, vendors)
+        # Every entry uses OpenRouter's vendor/model id form (the format users paste).
+        for model in FALLBACK_MODELS:
+            self.assertIn("/", model)
+        # The example id from the product request is a valid, listed id.
+        self.assertIn("moonshotai/kimi-k3", FALLBACK_MODELS)
+
 
 if __name__ == "__main__":
     unittest.main()

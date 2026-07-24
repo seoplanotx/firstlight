@@ -28,11 +28,38 @@ ALLOWED_AI_PROVIDERS = {
     "anthropic": "Anthropic (Claude)",
 }
 
+# Curated starting set of OpenRouter model IDs, one or more per frontier lab
+# (latest as of 2026-07-24). This is only a convenience fallback shown before a
+# valid key is available: with a key, `list_provider_models` returns OpenRouter's
+# full live catalog, and any model ID can be entered by hand (e.g.
+# "moonshotai/kimi-k3"), so this list is never a hard limit.
 FALLBACK_MODELS = [
-    "anthropic/claude-sonnet-4.6",
-    "openai/gpt-4.1-mini",
-    "google/gemini-2.5-pro",
+    # Anthropic (Claude)
+    "anthropic/claude-sonnet-5",
+    "anthropic/claude-fable-5",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-haiku-4.5",
+    # OpenAI (GPT)
+    "openai/gpt-5.6-sol",
+    "openai/gpt-5.6-terra",
+    "openai/gpt-5.6-luna",
+    "openai/gpt-5.5-pro",
+    # Google (Gemini)
+    "google/gemini-3.1-pro-preview",
+    "google/gemini-3.5-flash",
+    # xAI (Grok)
+    "x-ai/grok-4.5",
+    # DeepSeek
+    "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-flash",
+    # Moonshot AI (Kimi)
+    "moonshotai/kimi-k3",
+    # Alibaba (Qwen)
+    "qwen/qwen3.7-max",
+    # Meta (Llama)
     "meta-llama/llama-4-maverick",
+    # Mistral
+    "mistralai/mistral-large",
 ]
 
 FALLBACK_MODELS_BY_PROVIDER = {

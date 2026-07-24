@@ -181,7 +181,7 @@ class CreateLlmClientTests(unittest.TestCase):
             create_llm_client("mystery", api_key="k")
 
     def test_default_models_per_provider(self) -> None:
-        self.assertEqual(create_llm_client("openrouter", api_key="k").model, "anthropic/claude-sonnet-4.6")
+        self.assertEqual(create_llm_client("openrouter", api_key="k").model, "anthropic/claude-sonnet-5")
         self.assertEqual(create_llm_client("anthropic", api_key="k").model, "claude-sonnet-4-6")
 
 
