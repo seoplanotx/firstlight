@@ -9,6 +9,7 @@ import type { AppSettings, ProviderConfig } from '../../lib/types';
 vi.mock('../../lib/api', () => ({
   api: {
     getProviderConfig: vi.fn(),
+    getProviderModels: vi.fn(),
     getSettings: vi.fn(),
     updateSettings: vi.fn(),
     saveProviderConfig: vi.fn(),
@@ -47,6 +48,7 @@ function providerConfig(overrides: Partial<ProviderConfig>): ProviderConfig {
 beforeEach(() => {
   vi.clearAllMocks();
   mockedApi.getProviderConfig.mockResolvedValue(null);
+  mockedApi.getProviderModels.mockResolvedValue([]);
   mockedApi.getSettings.mockResolvedValue(baseSettings);
   mockedApi.updateSettings.mockResolvedValue(baseSettings);
 });
@@ -127,5 +129,61 @@ describe('AIProviderSetup', () => {
       );
     });
     expect(await screen.findByText('API key looks valid.')).toBeInTheDocument();
+  });
+
+  it('offers frontier-lab models for OpenRouter', async () => {
+    render(<AIProviderSetup />);
+
+    await userEvent.selectOptions(
+      await screen.findByDisplayValue('Anthropic (Claude) — direct (recommended)'),
+      'openrouter'
+    );
+
+    const modelSelect = await screen.findByLabelText('AI model');
+    const options = Array.from(modelSelect.querySelectorAll('option')).map((o) => o.value);
+    // Spans multiple frontier labs, not just the old four-model list.
+    expect(options).toEqual(
+      expect.arrayContaining([
+        'anthropic/claude-sonnet-5',
+        'openai/gpt-5.6-sol',
+        'google/gemini-3.1-pro-preview',
+        'x-ai/grok-4.5',
+        'deepseek/deepseek-v4-pro',
+        'moonshotai/kimi-k3',
+        'qwen/qwen3.7-max'
+      ])
+    );
+    // Plus an explicit escape hatch for anything not listed.
+    expect(options).toContain('__custom__');
+  });
+
+  it('lets you paste any model ID and saves it verbatim', async () => {
+    mockedApi.saveProviderConfig.mockResolvedValue(
+      providerConfig({ provider_key: 'openrouter', selected_model: 'moonshotai/kimi-k9-preview' })
+    );
+
+    render(<AIProviderSetup />);
+
+    await userEvent.selectOptions(
+      await screen.findByDisplayValue('Anthropic (Claude) — direct (recommended)'),
+      'openrouter'
+    );
+
+    // Switch the picker to free-text entry and paste an id that is not in the list.
+    await userEvent.selectOptions(screen.getByLabelText('AI model'), '__custom__');
+    await userEvent.type(screen.getByLabelText('Custom model ID'), 'moonshotai/kimi-k9-preview');
+
+    await userEvent.type(screen.getByPlaceholderText('sk-or-...'), 'sk-or-test-123');
+    await userEvent.click(screen.getByRole('button', { name: 'Save AI settings' }));
+
+    await waitFor(() => {
+      expect(mockedApi.saveProviderConfig).toHaveBeenCalledWith(
+        'openrouter',
+        expect.objectContaining({
+          provider_key: 'openrouter',
+          selected_model: 'moonshotai/kimi-k9-preview'
+        })
+      );
+    });
   });
 });

@@ -16,7 +16,15 @@ type ProviderMeta = {
   helpTitle: string;
   helpSteps: string[];
   recommendedModels: string[];
+  // Example model id shown in the "enter a model id" box and hint.
+  modelPlaceholder: string;
+  // Where the full, always-current catalog of model ids lives.
+  modelsUrl: string;
 };
+
+// Sentinel value for the model <select> that switches to free-text entry so a
+// user can paste any model id the provider accepts (e.g. "moonshotai/kimi-k3").
+const CUSTOM_MODEL_VALUE = '__custom__';
 
 export const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   anthropic: {
@@ -34,6 +42,8 @@ export const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
       'Copy the key that starts with sk-ant- and paste it here. Add a few dollars of credit under Billing — typical briefings cost only pennies.',
     ],
     recommendedModels: ['claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5'],
+    modelPlaceholder: 'claude-sonnet-5',
+    modelsUrl: 'https://docs.anthropic.com/en/docs/about-claude/models',
   },
   openrouter: {
     label: 'OpenRouter',
@@ -49,12 +59,40 @@ export const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
       'Open Keys from your account menu, then choose Create Key. Name it anything, like “Firstlight”.',
       'Copy the key that starts with sk-or- and paste it here. Add a few dollars of credit on the same page — typical briefings cost only pennies.',
     ],
+    // A curated starting set spanning the frontier labs (latest as of
+    // 2026-07-24). This is not a limit: once a key is added, the full live
+    // OpenRouter catalog loads into this list, and any id can be pasted with
+    // the "Enter a model ID…" option below.
     recommendedModels: [
-      'anthropic/claude-sonnet-4.6',
-      'openai/gpt-4.1-mini',
-      'google/gemini-2.5-pro',
+      // Anthropic (Claude)
+      'anthropic/claude-sonnet-5',
+      'anthropic/claude-fable-5',
+      'anthropic/claude-opus-4.6',
+      'anthropic/claude-haiku-4.5',
+      // OpenAI (GPT)
+      'openai/gpt-5.6-sol',
+      'openai/gpt-5.6-terra',
+      'openai/gpt-5.6-luna',
+      'openai/gpt-5.5-pro',
+      // Google (Gemini)
+      'google/gemini-3.1-pro-preview',
+      'google/gemini-3.5-flash',
+      // xAI (Grok)
+      'x-ai/grok-4.5',
+      // DeepSeek
+      'deepseek/deepseek-v4-pro',
+      'deepseek/deepseek-v4-flash',
+      // Moonshot AI (Kimi)
+      'moonshotai/kimi-k3',
+      // Alibaba (Qwen)
+      'qwen/qwen3.7-max',
+      // Meta (Llama)
       'meta-llama/llama-4-maverick',
+      // Mistral
+      'mistralai/mistral-large',
     ],
+    modelPlaceholder: 'moonshotai/kimi-k3',
+    modelsUrl: 'https://openrouter.ai/models',
   },
 };
 
@@ -78,6 +116,7 @@ export function AIProviderSetup({ onConfigured }: Props) {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState(PROVIDER_META.anthropic.recommendedModels[0]);
   const [models, setModels] = useState<string[]>(PROVIDER_META.anthropic.recommendedModels);
+  const [isCustomModel, setIsCustomModel] = useState(false);
   const [testNotice, setTestNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [savedNotice, setSavedNotice] = useState('');
@@ -86,6 +125,21 @@ export function AIProviderSetup({ onConfigured }: Props) {
   const meta = PROVIDER_META[provider];
   const config = configs[provider] ?? null;
 
+  // Best-effort: pull the provider's full live catalog (via its stored key) and
+  // fold it into the dropdown, so a configured user sees every available model
+  // without having to press "Test key" first. Silent on failure — the curated
+  // list still works offline.
+  async function refreshModels(next: AIProvider, keepSelected: string) {
+    try {
+      const discovered = await api.getProviderModels(next);
+      if (Array.isArray(discovered) && discovered.length > 0) {
+        setModels(mergeModels(next, [keepSelected, ...discovered]));
+      }
+    } catch {
+      // Keep the curated fallback list.
+    }
+  }
+
   function applyProvider(next: AIProvider, loaded: Partial<Record<AIProvider, ProviderConfig | null>>) {
     const existing = loaded[next] ?? null;
     setProvider(next);
@@ -93,9 +147,15 @@ export function AIProviderSetup({ onConfigured }: Props) {
     setTestNotice('');
     setSavedNotice('');
     setErrorMessage('');
+    setIsCustomModel(false);
     const selected = existing?.selected_model || PROVIDER_META[next].recommendedModels[0];
     setModel(selected);
+    // mergeModels always includes `selected`, so a previously-saved custom id
+    // (e.g. one pasted earlier) shows up in the dropdown as the current choice.
     setModels(mergeModels(next, existing?.selected_model ? [existing.selected_model] : []));
+    if (existing?.is_configured) {
+      void refreshModels(next, selected);
+    }
   }
 
   useEffect(() => {
@@ -137,9 +197,14 @@ export function AIProviderSetup({ onConfigured }: Props) {
       setErrorMessage(`Paste your ${meta.label} API key first.`);
       return;
     }
+    const trimmedModel = model.trim();
+    if (!trimmedModel) {
+      setErrorMessage(`Enter a model ID first — for example ${meta.modelPlaceholder}.`);
+      return;
+    }
     setBusy(true);
     try {
-      const result = await api.testProviderKey(provider, { api_key: apiKey.trim(), model });
+      const result = await api.testProviderKey(provider, { api_key: apiKey.trim(), model: trimmedModel });
       if (result.ok) {
         setTestNotice(result.message || 'API key looks valid.');
         if (result.discovered_models.length > 0) {
@@ -162,12 +227,17 @@ export function AIProviderSetup({ onConfigured }: Props) {
       setErrorMessage(`Paste your ${meta.label} API key before saving.`);
       return;
     }
+    const trimmedModel = model.trim();
+    if (!trimmedModel) {
+      setErrorMessage(`Enter a model ID before saving — for example ${meta.modelPlaceholder}.`);
+      return;
+    }
     setBusy(true);
     try {
       const saved = await api.saveProviderConfig(provider, {
         provider_key: provider,
         display_name: meta.displayName,
-        selected_model: model,
+        selected_model: trimmedModel,
         api_key: apiKey.trim() || null
       });
       setConfigs((current) => ({ ...current, [provider]: saved }));
@@ -248,18 +318,57 @@ export function AIProviderSetup({ onConfigured }: Props) {
         </div>
         <div className="field">
           <label htmlFor="ai-model">AI model</label>
-          <select id="ai-model" value={model} onChange={(e) => setModel(e.target.value)}>
+          <select
+            id="ai-model"
+            value={isCustomModel ? CUSTOM_MODEL_VALUE : model}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === CUSTOM_MODEL_VALUE) {
+                setIsCustomModel(true);
+                setModel('');
+              } else {
+                setIsCustomModel(false);
+                setModel(value);
+              }
+            }}
+          >
             {models.map((id) => (
               <option key={id} value={id}>
                 {id === meta.recommendedModels[0] ? `${id} (recommended)` : id}
               </option>
             ))}
+            <option value={CUSTOM_MODEL_VALUE}>Enter a model ID…</option>
           </select>
+          {isCustomModel && (
+            <>
+              <input
+                id="ai-model-custom"
+                type="text"
+                placeholder={meta.modelPlaceholder}
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-label="Custom model ID"
+                aria-describedby="ai-model-custom-hint"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+              />
+              <div className="field-hint" id="ai-model-custom-hint">
+                Paste any {meta.label} model ID (for example {meta.modelPlaceholder}). Browse the full,
+                always-current list at{' '}
+                <button type="button" className="link-button" onClick={() => void openExternal(meta.modelsUrl)}>
+                  {meta.modelsUrl.replace('https://', '')}
+                </button>
+                .
+              </div>
+            </>
+          )}
         </div>
       </div>
       <p className="muted" id="ai-key-hint">
-        The recommended model handles clinical text carefully at a low cost. The key is encrypted, stays on this
-        computer, and is only used when AI assist is turned on.
+        Pick a model or choose “Enter a model ID…” to paste any {meta.label} model ID. The key is encrypted, stays on
+        this computer, and is only used when AI assist is turned on.
       </p>
 
       {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}

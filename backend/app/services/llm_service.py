@@ -359,7 +359,7 @@ class OpenRouterClient(_BaseLLMClient):
 
     @classmethod
     def default_model(cls) -> str:
-        return "anthropic/claude-sonnet-4.6"
+        return "anthropic/claude-sonnet-5"
 
     @property
     def _headers(self) -> dict[str, str]:
