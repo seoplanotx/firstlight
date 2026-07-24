@@ -93,7 +93,7 @@ describe('ClinicianSummaryPage', () => {
 
   it('renders the case snapshot, framing, trials and research', async () => {
     render(<ClinicianSummaryPage />);
-    expect(await screen.findByText('Summary for the Doctor')).toBeInTheDocument();
+    expect(await screen.findByText('For your doctor')).toBeInTheDocument();
     expect(screen.getByText('Non-small cell lung cancer')).toBeInTheDocument();
     expect(screen.getByText(/1 trial and 1 research item/i)).toBeInTheDocument();
     expect(screen.getByText('New recruiting EGFR trial')).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('ClinicianSummaryPage', () => {
 
   it('generates an appointment prep sheet on demand', async () => {
     render(<ClinicianSummaryPage />);
-    await screen.findByText('Summary for the Doctor');
+    await screen.findByText('For your doctor');
 
     await userEvent.click(screen.getByRole('button', { name: /make appointment prep sheet/i }));
 

@@ -9,6 +9,8 @@ import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
 import {
   formatFindingTypeLabel,
+  formatFreshnessBucket,
+  formatRecruitmentBucket,
   formatRelevanceLabel,
   formatStatusLabel,
   relevanceTone,
@@ -38,8 +40,8 @@ function CondensedFindingItem({ finding }: { finding: CondensedFinding }) {
   const mode = useLanguageMode();
   const metaLine = [finding.source_name, finding.identifier].filter(Boolean).join('  ·  ');
   const buckets = [
-    finding.recruitment_bucket ? `Recruitment: ${finding.recruitment_bucket}` : null,
-    finding.freshness_bucket ? `Evidence: ${finding.freshness_bucket}` : null
+    finding.recruitment_bucket ? `Recruitment: ${formatRecruitmentBucket(finding.recruitment_bucket)}` : null,
+    finding.freshness_bucket ? `Evidence: ${formatFreshnessBucket(finding.freshness_bucket)}` : null
   ].filter(Boolean);
 
   return (
@@ -88,7 +90,7 @@ function CondensedFindingItem({ finding }: { finding: CondensedFinding }) {
   );
 }
 
-export function ClinicianSummaryPage() {
+export function ClinicianSummaryPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [summary, setSummary] = useState<ClinicianSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -126,7 +128,7 @@ export function ClinicianSummaryPage() {
     }
   }
 
-  if (loading) return <div className="loading-block" role="status">Building clinician summary...</div>;
+  if (loading) return <div className="loading-block" role="status">Building clinician summary…</div>;
   if (errorMessage && !summary) {
     return <PageErrorState title="Summary unavailable" message={errorMessage} onRetry={load} />;
   }
@@ -139,34 +141,33 @@ export function ClinicianSummaryPage() {
   const trialCount = summary.trial_findings.length;
   const researchCount = summary.research_findings.length;
 
-  return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <div className="eyebrow">For your oncology visit</div>
-          <h1>Summary for the Doctor</h1>
-          <p className="page-lede">
-            A clinician-facing snapshot of the case and what Firstlight flagged for review. Nothing here confirms
-            eligibility or recommends treatment — it is a starting point for the care team.
-          </p>
-        </div>
-        <div className="page-header-actions">
-          <button className="secondary-button" disabled={busy} onClick={() => void makePrepSheet()}>
-            Make appointment prep sheet
-          </button>
-          <button className="ghost-button" onClick={() => window.print()}>
-            Print this page
-          </button>
-        </div>
+  const actions = (
+    <>
+      <button type="button" className="secondary-button" disabled={busy} onClick={() => void makePrepSheet()}>
+        {busy ? 'Creating…' : 'Make appointment prep sheet'}
+      </button>
+      <button type="button" className="ghost-button" onClick={() => window.print()}>
+        Print this page
+      </button>
+    </>
+  );
+
+  const content = (
+    <>
+      <div className="callout summary-frame">
+        <p>
+          <strong>A starting point to review together.</strong> Firstlight gathered what may be worth raising with
+          your care team — they decide what actually matters for you.
+        </p>
+        <p className="summary-frame-note">{summary.disclaimer}</p>
       </div>
 
       {notice && <div className="callout" role="status">{notice}</div>}
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       <Card
         title="Case snapshot"
         description="The details you entered, summarized for a clinician's quick read."
-        className="hero-card"
       >
         <div className="chart-grid">
           {caseHeaderRows(header).map((row) => (
@@ -296,8 +297,29 @@ export function ClinicianSummaryPage() {
       </Card>
 
       <BriefingBlockers blockers={summary.data_gaps} />
+    </>
+  );
 
-      <div className="callout">{summary.disclaimer}</div>
+  if (embedded) {
+    return (
+      <>
+        <div className="section-toolbar">{actions}</div>
+        {content}
+      </>
+    );
+  }
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">For your oncology visit</div>
+          <h1>For your doctor</h1>
+          <p className="page-lede">A clinician-facing snapshot of the case and what Firstlight flagged for review.</p>
+        </div>
+        <div className="page-header-actions">{actions}</div>
+      </div>
+      {content}
     </div>
   );
 }

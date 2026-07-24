@@ -167,12 +167,12 @@ export function ProfileForm({
       )}
 
       <div className="field">
-        <label htmlFor="profile-name">Profile name</label>
+        <label htmlFor="profile-name" className="required-field">Who is this profile for?</label>
         <input id="profile-name" value={form.profile_name} onChange={(e) => setForm({ ...form, profile_name: e.target.value })} required />
-        <div className="field-hint">A label for this profile, e.g. "Mom" or "Dad's lung cancer". Only you see this.</div>
+        <div className="field-hint">A name or label only you see — for example "Mom", "Dad's lung cancer", or the patient's first name.</div>
       </div>
       <div className="field">
-        <label htmlFor="profile-display-name">Display name / initials</label>
+        <label htmlFor="profile-display-name">Short name for your daily check</label>
         <input id="profile-display-name" value={form.display_name || ''} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
         <div className="field-hint">Optional. Shown at the top of your daily check. Initials are fine.</div>
       </div>
@@ -184,7 +184,7 @@ export function ProfileForm({
         </div>
       )}
       <div className="field">
-        <label htmlFor="profile-cancer-type">Cancer type</label>
+        <label htmlFor="profile-cancer-type" className="required-field">Cancer type</label>
         <input
           id="profile-cancer-type"
           ref={cancerInputRef}
@@ -194,6 +194,7 @@ export function ProfileForm({
             if (cancerError) setCancerError('');
             setForm({ ...form, cancer_type: e.target.value });
           }}
+          aria-required={true}
           aria-invalid={cancerError ? true : undefined}
           aria-describedby={cancerError ? 'profile-cancer-type-error' : undefined}
         />

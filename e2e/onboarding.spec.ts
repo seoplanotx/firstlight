@@ -16,7 +16,7 @@ test('first launch onboarding reaches the dashboard and support surface', async 
 
   await page.getByRole('button', { name: 'Start setup' }).click();
 
-  await fieldTextbox('Profile name').fill('Smoke profile');
+  await fieldTextbox('Who is this profile for?').fill('Smoke profile');
   await fieldTextbox('Cancer type').fill('Non-small cell lung cancer');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -31,7 +31,8 @@ test('first launch onboarding reaches the dashboard and support surface', async 
 
   await page.getByRole('button', { name: 'Open dashboard' }).click();
 
-  await expect(page.getByRole('heading', { name: "What's new for Smoke profile" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Monitoring for Smoke profile/)).toBeVisible();
   await expect(page.getByText('Automatic runs happen only while Firstlight is open.', { exact: true })).toBeVisible();
 
   await page.goto('/#/support');

@@ -9,7 +9,7 @@ export type DiscoveriesTab = 'all' | 'trials' | 'research';
 // Content types only. The Saved for Discussion shortlist lives under
 // Doctor Visit — saving during review feeds visit prep, not another tab here.
 const TABS: { key: DiscoveriesTab; label: string; to: string }[] = [
-  { key: 'all', label: 'All', to: '/discoveries' },
+  { key: 'all', label: "What's new", to: '/discoveries' },
   { key: 'trials', label: 'Trials', to: '/trials' },
   { key: 'research', label: 'Research', to: '/updates' }
 ];
@@ -17,6 +17,17 @@ const TABS: { key: DiscoveriesTab; label: string; to: string }[] = [
 export function DiscoveriesPage({ activeTab }: { activeTab: DiscoveriesTab }) {
   return (
     <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Your daily check</div>
+          <h1>Discoveries</h1>
+          <p className="page-lede">
+            Everything Firstlight found for the person you're monitoring — new findings to review, possible trials, and
+            fresh research.
+          </p>
+        </div>
+      </div>
+
       <nav className="section-tabs" aria-label="Discoveries views">
         {TABS.map((tab) => (
           <Link
@@ -30,9 +41,9 @@ export function DiscoveriesPage({ activeTab }: { activeTab: DiscoveriesTab }) {
         ))}
       </nav>
 
-      {activeTab === 'all' && <FindingsPage />}
-      {activeTab === 'trials' && <TrialMatchesPage />}
-      {activeTab === 'research' && <UpdatesPage />}
+      {activeTab === 'all' && <FindingsPage embedded />}
+      {activeTab === 'trials' && <TrialMatchesPage embedded />}
+      {activeTab === 'research' && <UpdatesPage embedded />}
     </div>
   );
 }

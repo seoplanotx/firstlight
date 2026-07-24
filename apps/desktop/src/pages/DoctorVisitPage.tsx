@@ -9,14 +9,25 @@ export type DoctorVisitTab = 'saved' | 'summary' | 'reports';
 // Visit prep in reading order: gather the shortlist, shape the summary,
 // print the report.
 const TABS: { key: DoctorVisitTab; label: string; to: string }[] = [
-  { key: 'saved', label: 'Saved for Discussion', to: '/saved-findings' },
-  { key: 'summary', label: 'Questions & summary', to: '/clinician' },
-  { key: 'reports', label: 'Printable reports', to: '/reports' }
+  { key: 'saved', label: 'Saved for discussion', to: '/saved-findings' },
+  { key: 'summary', label: 'For your doctor', to: '/clinician' },
+  { key: 'reports', label: 'Reports', to: '/reports' }
 ];
 
 export function DoctorVisitPage({ activeTab }: { activeTab: DoctorVisitTab }) {
   return (
     <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Bring it to your team</div>
+          <h1>Doctor Visit</h1>
+          <p className="page-lede">
+            Everything for the next appointment in one place — your shortlist, a summary for the doctor, and printable
+            reports.
+          </p>
+        </div>
+      </div>
+
       <nav className="section-tabs" aria-label="Doctor visit views">
         {TABS.map((tab) => (
           <Link
@@ -30,9 +41,9 @@ export function DoctorVisitPage({ activeTab }: { activeTab: DoctorVisitTab }) {
         ))}
       </nav>
 
-      {activeTab === 'saved' && <SavedForDiscussionPage />}
-      {activeTab === 'summary' && <ClinicianSummaryPage />}
-      {activeTab === 'reports' && <ReportsPage />}
+      {activeTab === 'saved' && <SavedForDiscussionPage embedded />}
+      {activeTab === 'summary' && <ClinicianSummaryPage embedded />}
+      {activeTab === 'reports' && <ReportsPage embedded />}
     </div>
   );
 }

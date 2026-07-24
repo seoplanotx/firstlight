@@ -192,15 +192,20 @@ export function AIProviderSetup({ onConfigured }: Props) {
   return (
     <div className="stack">
       <div className="field">
-        <label>AI provider</label>
-        <select value={provider} onChange={(e) => applyProvider(e.target.value as AIProvider, configs)}>
+        <label htmlFor="ai-provider">AI provider</label>
+        <select
+          id="ai-provider"
+          aria-describedby="ai-provider-hint"
+          value={provider}
+          onChange={(e) => applyProvider(e.target.value as AIProvider, configs)}
+        >
           {(Object.keys(PROVIDER_META) as AIProvider[]).map((key) => (
             <option key={key} value={key}>
               {PROVIDER_META[key].optionLabel}
             </option>
           ))}
         </select>
-        <div className="field-hint">
+        <div className="field-hint" id="ai-provider-hint">
           Anthropic (Claude) is the recommended direct connection. OpenRouter also works and can route to other
           models. Either way, the key stays on this computer.
         </div>
@@ -230,18 +235,20 @@ export function AIProviderSetup({ onConfigured }: Props) {
 
       <div className="form-grid">
         <div className="field">
-          <label>{meta.keyLabel}</label>
+          <label htmlFor="ai-key">{meta.keyLabel}</label>
           <input
+            id="ai-key"
             type="password"
             placeholder={meta.keyPlaceholder}
             autoComplete="off"
+            aria-describedby="ai-key-hint"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
         </div>
         <div className="field">
-          <label>AI model</label>
-          <select value={model} onChange={(e) => setModel(e.target.value)}>
+          <label htmlFor="ai-model">AI model</label>
+          <select id="ai-model" value={model} onChange={(e) => setModel(e.target.value)}>
             {models.map((id) => (
               <option key={id} value={id}>
                 {id === meta.recommendedModels[0] ? `${id} (recommended)` : id}
@@ -250,7 +257,7 @@ export function AIProviderSetup({ onConfigured }: Props) {
           </select>
         </div>
       </div>
-      <p className="muted">
+      <p className="muted" id="ai-key-hint">
         The recommended model handles clinical text carefully at a low cost. The key is encrypted, stays on this
         computer, and is only used when AI assist is turned on.
       </p>

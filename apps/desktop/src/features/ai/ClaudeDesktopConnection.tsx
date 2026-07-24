@@ -75,7 +75,7 @@ export function ClaudeDesktopConnection() {
   }
 
   if (!status) {
-    return errorMessage ? <div className="callout callout-danger" role="alert">{errorMessage}</div> : <div className="muted">Loading…</div>;
+    return errorMessage ? <div className="callout callout-danger" role="alert">{errorMessage}</div> : <div className="muted" role="status">Loading…</div>;
   }
 
   return (

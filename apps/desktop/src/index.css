@@ -17,6 +17,7 @@
   --ink: #212722;
   --ink-soft: #5d655f;
   --ink-faint: #686f68;
+  --ink-nav: #3c433d;
 
   --line: #e5e2d9;
   --line-strong: #d2cfc4;
@@ -43,6 +44,12 @@
   --radius: 6px;
   --radius-lg: 10px;
   --content-width: 1180px;
+
+  /* Semantic z-index scale (sticky → modal-backdrop → modal → toast). */
+  --z-sticky: 20;
+  --z-modal-backdrop: 100;
+  --z-modal: 101;
+  --z-toast: 200;
 }
 
 * {
@@ -217,7 +224,7 @@ code {
 .wordmark-sub {
   margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -236,7 +243,7 @@ code {
 .sidebar-section-label {
   padding: 0 10px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -252,7 +259,7 @@ code {
   padding: 8px 10px;
   border-left: 2px solid transparent;
   border-radius: 0 var(--radius) var(--radius) 0;
-  color: #3c433d;
+  color: var(--ink-nav);
   font-size: 0.9rem;
   transition: color 0.15s ease, background 0.15s ease, scale 0.1s ease;
 }
@@ -282,7 +289,7 @@ code {
 
 .sidebar-trust-label {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -351,11 +358,21 @@ code {
   flex-wrap: wrap;
 }
 
+/* Per-view actions for a tab body that sits under a shared section header
+   (Discoveries / Doctor Visit) — the view's own controls without a second header. */
+.section-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .eyebrow {
   display: block;
   margin-bottom: 4px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -507,7 +524,10 @@ code {
 .ghost-button:focus-visible,
 .link-button:focus-visible,
 .filter-chip:focus-visible,
-.nav-item:focus-visible {
+.nav-item:focus-visible,
+.mode-tab:focus-visible,
+.segmented-option:focus-visible,
+.source-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -520,10 +540,6 @@ code {
 
 .form-grid + .button-row {
   margin-top: 20px;
-}
-
-.hero-actions {
-  margin-top: 14px;
 }
 
 /* ---------- Badges / chips ---------- */
@@ -541,7 +557,7 @@ code {
   border-radius: 4px;
   padding: 2px 8px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink-soft);
@@ -658,7 +674,7 @@ code {
 .intent-card-cue {
   margin-top: 4px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--accent-strong);
   letter-spacing: 0.02em;
 }
@@ -785,7 +801,7 @@ code {
   background: var(--line);
   color: var(--ink-soft);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .mode-tab.active .mode-tab-count {
@@ -862,41 +878,34 @@ code {
   justify-content: space-between;
 }
 
-/* ---------- Stat strip ---------- */
-
-.stat-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+.review-queue-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.8rem;
 }
 
-.stat {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 16px 20px;
-}
-
-.stat + .stat {
-  border-left: 1px solid var(--line);
-}
-
-.stat-num {
+.review-queue-hint kbd {
   font-family: var(--font-mono);
-  font-size: 1.65rem;
-  font-weight: 500;
-  line-height: 1.1;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--bg-shade);
+  color: var(--ink-soft);
 }
 
-.stat-label {
-  font-size: 0.82rem;
-  line-height: 1.25;
-  color: var(--ink-soft);
+/* ---------- Today: header glance line ---------- */
+
+/* Quiet at-a-glance line under the page header: last-checked + the four counts,
+   as calm metadata rather than a competing KPI strip. */
+.today-glance {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  text-wrap: pretty;
 }
 
 .mini-stats-grid {
@@ -920,7 +929,7 @@ code {
 .mini-stat-label {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -933,71 +942,77 @@ code {
 
 /* ---------- Dashboard briefing ---------- */
 
-.briefing-hero {
+/* The briefing runs single-column, full content width — the findings are the
+   substance, so they get the room the old two-column layout gave away. */
+.dashboard-sections {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-  gap: 24px;
-  align-items: start;
+  gap: 20px;
 }
 
-.briefing-copy {
-  display: grid;
-  gap: 8px;
+/* Collapsed reference panel below the briefing (check status, sources, questions,
+   recent finds). An unboxed disclosure so its cards don't nest inside a card. */
+.today-details {
+  margin-top: 10px;
 }
 
-.briefing-copy h2 {
-  font-size: 1.3rem;
-  line-height: 1.25;
-}
-
-.briefing-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.briefing-metric {
-  padding: 10px 14px;
-}
-
-.briefing-metric:nth-child(2n) {
-  border-left: 1px solid var(--line);
-}
-
-.briefing-metric:nth-child(n + 3) {
+.today-details-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 2px;
   border-top: 1px solid var(--line);
+  cursor: pointer;
+  list-style: none;
+  color: var(--ink);
 }
 
-.briefing-metric-label {
-  display: block;
+.today-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.today-details-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+.today-details-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.today-details-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.today-details-hint {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
-.briefing-metric strong {
-  display: block;
-  margin-top: 1px;
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+.today-details-chevron {
+  flex: none;
+  color: var(--ink-soft);
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
-.dashboard-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.85fr);
-  gap: 20px;
-  align-items: start;
+.today-details-summary:hover .today-details-chevron {
+  color: var(--ink);
 }
 
-.dashboard-main-column,
-.dashboard-side-column {
+.today-details[open] .today-details-chevron {
+  transform: rotate(180deg);
+}
+
+.today-details-body {
   display: grid;
   gap: 20px;
+  margin-top: 16px;
 }
 
 .headline-list {
@@ -1021,7 +1036,7 @@ code {
 .headline-item .muted {
   margin-top: 1px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -1130,12 +1145,30 @@ code {
   box-shadow: 0 0 0 3px rgba(22, 97, 86, 0.14);
 }
 
+/* Placeholder text needs the same 4.5:1 as body copy; the UA default gray fails it.
+   --ink-faint is ~5.2:1 on the white input surface. opacity:1 overrides Firefox's dimming. */
+.toolbar input::placeholder,
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
 .field label {
   display: block;
   margin-bottom: 5px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink);
+}
+
+/* Required-field marker. The asterisk is CSS-generated (presentational only, so it
+   stays out of the accessible name); screen readers get "required" from the input's
+   own required/aria-required attribute. */
+.field label.required-field::after {
+  content: ' *';
+  color: var(--danger);
+  font-weight: 600;
 }
 
 /* Standalone fields stay readable; grid columns size their own fields. */
@@ -1166,8 +1199,8 @@ code {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--line-strong);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink);
@@ -1233,6 +1266,95 @@ code {
   border-color: var(--danger-line);
   background: var(--danger-wash);
   color: var(--danger);
+}
+
+/* Caution, not blocker — for transient/not-your-fault trouble (a source that
+   timed out, a local action that failed and can be retried). Red is reserved
+   for true blockers. */
+.callout.callout-caution {
+  border-color: var(--amber-line);
+  background: var(--amber-wash);
+  color: var(--amber);
+}
+
+/* Inline caution sub-line for list rows (e.g. a source that didn't respond) —
+   quiet amber text, not a boxed alert. */
+.source-note-caution {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--amber);
+}
+
+/* ---------- Confirm dialog ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(33, 39, 34, 0.42);
+  animation: modal-backdrop-in 0.15s ease;
+}
+
+.modal {
+  position: relative;
+  z-index: var(--z-modal);
+  width: min(440px, 100%);
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(33, 39, 34, 0.18);
+  animation: modal-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-title {
+  font-size: 1.15rem;
+}
+
+.modal-body {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.primary-button.danger-button {
+  background: var(--danger);
+}
+
+.primary-button.danger-button:hover:not(:disabled) {
+  background: #872f27;
+}
+
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .callout ol,
@@ -1301,7 +1423,7 @@ code {
 .finding-meta-line {
   margin-top: 4px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -1322,7 +1444,7 @@ code {
 .detail-grid strong {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--ink-faint);
 }
@@ -1352,7 +1474,7 @@ code {
 
 .support-card-label {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -1370,7 +1492,7 @@ code {
 
 .evidence-label {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
@@ -1408,7 +1530,7 @@ code {
 
 .chart-label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1488,6 +1610,7 @@ code {
 }
 
 .finding-actions button {
+  min-height: 40px;
   font-size: 0.82rem;
   padding: 6px 12px;
 }
@@ -1529,7 +1652,9 @@ code {
 /* ---------- Today's next steps ---------- */
 
 .today-actions-card {
-  border-color: var(--line-strong);
+  /* The day's single focal module — an accent border (as on .hero-card) sets it
+     apart from the neutral-bordered briefing sections below. */
+  border-color: var(--accent-line);
 }
 
 .today-actions-list {
@@ -1721,7 +1846,7 @@ code {
 
 .audit-time {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -1795,7 +1920,7 @@ code {
   border: 1px solid var(--line-strong);
   background: var(--surface);
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--ink-soft);
 }
 
@@ -1915,58 +2040,16 @@ code {
 
 .health-item .muted {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
-/* ---------- Motion ---------- */
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-stack > * {
-  animation: rise 0.3s ease both;
-}
-
-.page-stack > *:nth-child(2) {
-  animation-delay: 0.07s;
-}
-
-.page-stack > *:nth-child(3) {
-  animation-delay: 0.14s;
-}
-
-.page-stack > *:nth-child(4) {
-  animation-delay: 0.21s;
-}
-
-.page-stack > *:nth-child(5) {
-  animation-delay: 0.28s;
-}
+/* ---------- Motion ----------
+   No page-load entrance sequence. This is a product surface: users load into a
+   task, not a choreographed reveal. Motion lives on state changes (hover, active,
+   progress, tab switches), never on a section's arrival. */
 
 /* ---------- Responsive ---------- */
-
-@media (max-width: 1280px) {
-  .stat-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .stat:nth-child(n + 3) {
-    border-top: 1px solid var(--line);
-  }
-
-  .stat:nth-child(3) {
-    border-left: 0;
-  }
-}
 
 @media (max-width: 1160px) {
   .app-shell,
@@ -2009,11 +2092,6 @@ code {
     border-bottom: 1px solid var(--line);
   }
 
-  .dashboard-layout,
-  .briefing-hero {
-    grid-template-columns: 1fr;
-  }
-
   .footer-note {
     flex-direction: column;
     align-items: flex-start;
@@ -2036,8 +2114,6 @@ code {
     justify-content: flex-start;
   }
 
-  .stat-strip,
-  .briefing-metrics,
   .detail-grid,
   .form-grid,
   .row-card-grid,
@@ -2051,17 +2127,8 @@ code {
     grid-auto-columns: auto;
   }
 
-  .stat + .stat,
   .mini-stat + .mini-stat {
     border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .briefing-metric:nth-child(2n) {
-    border-left: 0;
-  }
-
-  .briefing-metric + .briefing-metric {
     border-top: 1px solid var(--line);
   }
 
@@ -2090,8 +2157,11 @@ code {
     scroll-behavior: auto;
   }
 
-  .page-stack > *,
-  .progress-bar {
+  .progress-bar,
+  .review-queue-progress-bar,
+  .profile-strength-bar,
+  .modal,
+  .modal-backdrop {
     animation: none;
     transition: none;
   }
@@ -2102,7 +2172,8 @@ code {
   .link-button,
   .filter-chip,
   .nav-item,
-  .finding-item {
+  .finding-item,
+  .intent-card {
     transition: none;
   }
 
@@ -2111,8 +2182,65 @@ code {
   .ghost-button:active:not(:disabled),
   .link-button:active,
   .filter-chip:active,
-  .nav-item:active {
+  .nav-item:active,
+  .intent-card:active {
     scale: 1;
+    transform: none;
+  }
+}
+
+/* Print — the doctor-facing pages ("Print this page", reports) must stay
+   legible in plain black-and-white. Drop app chrome and screen tints, and
+   give structure/severity a solid hairline instead of relying on color. */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar,
+  .skip-link,
+  .section-tabs,
+  .page-header-actions,
+  .footer-note,
+  .today-details-chevron {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 0;
+  }
+
+  .page-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .card,
+  .callout,
+  .summary-frame,
+  .support-card,
+  .evidence-callout,
+  .badge {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #333 !important;
+    box-shadow: none !important;
+  }
+
+  .card,
+  .finding-item,
+  .blocker-item {
+    break-inside: avoid;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
   }
 }
 
@@ -2229,6 +2357,24 @@ code {
   margin: 0;
 }
 
+/* Clinician summary: a calm steadying frame that carries the caution up top,
+   replacing the disclaimer that used to sit buried at the bottom of the page. */
+.summary-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-frame p {
+  margin: 0;
+}
+
+.summary-frame-note {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .dismissed-toggle {
   margin-top: 12px;
 }
@@ -2242,6 +2388,16 @@ code {
 }
 .finding-select {
   padding-top: 1.1rem;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.finding-select input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 .sidebar-profile-select select {
   width: 100%;

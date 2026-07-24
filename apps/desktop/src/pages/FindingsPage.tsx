@@ -14,7 +14,8 @@ type ReviewMode = 'needs_review' | 'archive';
 type ViewMode = 'queue' | 'list';
 
 const STORAGE_KEY = 'firstlight.findingsPrefs';
-const UNDO_TIMEOUT_MS = 8000;
+// Long enough that a phone-call interruption doesn't lose the undo.
+const UNDO_TIMEOUT_MS = 15000;
 
 const MODE_ACTION: Record<ReviewMode, FindingAction> = {
   needs_review: 'none',
@@ -22,7 +23,7 @@ const MODE_ACTION: Record<ReviewMode, FindingAction> = {
 };
 
 const ACTION_CONFIRMATIONS: Record<FindingAction, string> = {
-  discuss: 'Saved for Discussion — waiting in Doctor Visit.',
+  discuss: 'Saved for discussion — waiting in Doctor Visit.',
   dismissed: 'Set aside.',
   none: 'Moved back to your review list.'
 };
@@ -36,6 +37,7 @@ type FindingsPrefs = {
   mode: ReviewMode;
   view: ViewMode;
   filtersOpen: boolean;
+  queueIndex: number;
 };
 
 const DEFAULT_PREFS: FindingsPrefs = {
@@ -46,7 +48,8 @@ const DEFAULT_PREFS: FindingsPrefs = {
   dateRange: 'any',
   mode: 'needs_review',
   view: 'queue',
-  filtersOpen: false
+  filtersOpen: false,
+  queueIndex: 0
 };
 
 function readPrefs(): FindingsPrefs {
@@ -63,7 +66,9 @@ function readPrefs(): FindingsPrefs {
         parsed.dateRange === '7d' || parsed.dateRange === '30d' || parsed.dateRange === '90d' ? parsed.dateRange : 'any',
       mode: parsed.mode === 'archive' ? 'archive' : 'needs_review',
       view: parsed.view === 'list' ? 'list' : 'queue',
-      filtersOpen: Boolean(parsed.filtersOpen)
+      filtersOpen: Boolean(parsed.filtersOpen),
+      queueIndex:
+        typeof parsed.queueIndex === 'number' && parsed.queueIndex >= 0 ? Math.floor(parsed.queueIndex) : 0
     };
   } catch {
     return { ...DEFAULT_PREFS };
@@ -83,7 +88,7 @@ function withinDateRange(item: Finding, range: DateRangeKey): boolean {
 
 const MODE_TABS: { value: ReviewMode; label: string }[] = [
   { value: 'needs_review', label: 'Needs review' },
-  { value: 'archive', label: 'Archive' }
+  { value: 'archive', label: 'Set aside' }
 ];
 
 const FILTER_OPTIONS = [
@@ -92,7 +97,7 @@ const FILTER_OPTIONS = [
   { value: 'literature', label: 'Research' }
 ];
 
-export function FindingsPage() {
+export function FindingsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const initial = readPrefs();
   const [items, setItems] = useState<Finding[]>([]);
   const [sources, setSources] = useState<SourceConfig[]>([]);
@@ -104,7 +109,7 @@ export function FindingsPage() {
   const [mode, setMode] = useState<ReviewMode>(initial.mode);
   const [view, setView] = useState<ViewMode>(initial.view);
   const [filtersOpen, setFiltersOpen] = useState(initial.filtersOpen);
-  const [queueIndex, setQueueIndex] = useState(0);
+  const [queueIndex, setQueueIndex] = useState(initial.queueIndex);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -134,18 +139,18 @@ export function FindingsPage() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen })
+        JSON.stringify({ query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen, queueIndex })
       );
     } catch {
       // best-effort
     }
-  }, [query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen]);
+  }, [query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen, queueIndex]);
 
   async function load() {
     setLoading(true);
     setErrorMessage('');
     try {
-      // Load everything, including set-aside items, so all three review modes and
+      // Load everything, including set-aside items, so both review modes and
       // their counts stay accurate without reloading when the mode changes.
       const [result, sourceResult] = await Promise.all([
         api.getFindings({ include_dismissed: true }),
@@ -290,6 +295,56 @@ export function FindingsPage() {
     setQueueIndex(0);
   }
 
+  function goToNext() {
+    queueNavigated.current = true;
+    setQueueIndex((current) => Math.min(visible.length - 1, current + 1));
+  }
+
+  function goToPrev() {
+    queueNavigated.current = true;
+    setQueueIndex((current) => Math.max(0, current - 1));
+  }
+
+  // Keyboard shortcuts for the one-at-a-time queue: move with arrows or J/K,
+  // decide with X (set aside) / D (save for discussion). Ignored while typing
+  // in a field so search input is unaffected.
+  function handleQueueKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const tag = (event.target as HTMLElement).tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const current = visible[queueIndex];
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'j':
+        if (queueIndex < visible.length - 1) {
+          event.preventDefault();
+          goToNext();
+        }
+        break;
+      case 'ArrowLeft':
+      case 'k':
+        if (queueIndex > 0) {
+          event.preventDefault();
+          goToPrev();
+        }
+        break;
+      case 'x':
+        if (current && pendingId === null) {
+          event.preventDefault();
+          handleAction(current, 'dismissed');
+        }
+        break;
+      case 'd':
+        if (current && pendingId === null) {
+          event.preventDefault();
+          handleAction(current, current.user_action === 'discuss' ? 'none' : 'discuss');
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   function handleTablistKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
@@ -323,7 +378,7 @@ export function FindingsPage() {
 
   if (loading) return <div className="loading-block" role="status">Loading…</div>;
   if (errorMessage && items.length === 0) {
-    return <PageErrorState title="Nothing to show yet" message={errorMessage} onRetry={load} />;
+    return <PageErrorState title="Couldn't load your findings" message={errorMessage} onRetry={load} />;
   }
 
   const useQueue = mode === 'needs_review' && view === 'queue';
@@ -334,28 +389,14 @@ export function FindingsPage() {
     },
     archive: {
       title: 'Nothing set aside',
-      message: 'Items you mark "not relevant" move here. You can always restore them.'
+      message: 'Items you set aside move here. You can always restore them.'
     }
   };
   const queueCurrent = visible[queueIndex];
 
-  return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <div className="eyebrow">Everything Firstlight found</div>
-          <h1>What's New</h1>
-          <p className="page-lede">
-            Work through new findings one at a time, keep the ones worth raising at the next visit, and set aside the
-            rest.
-          </p>
-        </div>
-        <div className="page-header-actions">
-          <span className="section-counter">{visible.length} shown</span>
-        </div>
-      </div>
-
-      {errorMessage && <div className="callout callout-danger" role="alert">{errorMessage}</div>}
+  const content = (
+    <>
+      {errorMessage && <div className="callout callout-caution" role="alert">{errorMessage}</div>}
 
       {undo && (
         <div className="callout undo-callout" role="status">
@@ -489,7 +530,7 @@ export function FindingsPage() {
         <Card title="Handle several findings at once" description={`${selected.size} selected`}>
           <div className="button-row">
             <button className="primary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('discuss')}>
-              Save for Discussion
+              Save for discussion
             </button>
             <button className="secondary-button" type="button" disabled={bulkBusy} onClick={() => void handleBulk('dismissed')}>
               Set aside
@@ -528,7 +569,7 @@ export function FindingsPage() {
               }
             />
           ) : queueCurrent ? (
-            <div className="review-queue">
+            <div className="review-queue" onKeyDown={handleQueueKeyDown}>
               <div className="review-queue-stepper">
                 <span className="section-counter" aria-live="polite">
                   {queueIndex + 1} of {visible.length}
@@ -550,29 +591,22 @@ export function FindingsPage() {
                 />
               </div>
               <div className="button-row review-queue-nav">
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={queueIndex === 0}
-                  onClick={() => {
-                    queueNavigated.current = true;
-                    setQueueIndex((current) => Math.max(0, current - 1));
-                  }}
-                >
+                <button className="ghost-button" type="button" disabled={queueIndex === 0} onClick={goToPrev}>
                   Back
                 </button>
                 <button
                   className="secondary-button"
                   type="button"
                   disabled={queueIndex >= visible.length - 1}
-                  onClick={() => {
-                    queueNavigated.current = true;
-                    setQueueIndex((current) => Math.min(visible.length - 1, current + 1));
-                  }}
+                  onClick={goToNext}
                 >
                   Next
                 </button>
               </div>
+              <p className="review-queue-hint muted">
+                Keyboard: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>J</kbd>/<kbd>K</kbd> to move · <kbd>X</kbd> to set aside ·{' '}
+                <kbd>D</kbd> to save for discussion
+              </p>
             </div>
           ) : null}
         </Card>
@@ -630,6 +664,29 @@ export function FindingsPage() {
           )}
         </Card>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Everything Firstlight found</div>
+          <h1>What's new</h1>
+          <p className="page-lede">
+            Work through new findings one at a time, keep the ones worth raising at the next visit, and set aside the
+            rest.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <span className="section-counter">{visible.length} shown</span>
+        </div>
+      </div>
+      {content}
     </div>
   );
 }

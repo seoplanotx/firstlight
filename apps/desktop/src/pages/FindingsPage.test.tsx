@@ -118,7 +118,7 @@ describe('FindingsPage', () => {
     expect(screen.queryByText('Saved item')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /saved/i })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('tab', { name: /archive/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /set aside/i }));
     expect(await screen.findByText('Archived item')).toBeInTheDocument();
     expect(screen.queryByText('High score, older')).not.toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe('FindingsPage', () => {
     await screen.findByText('High score, older');
 
     const card = screen.getByText('High score, older').closest('.finding-item') as HTMLElement;
-    await userEvent.click(within(card).getByRole('button', { name: /not relevant/i }));
+    await userEvent.click(within(card).getByRole('button', { name: /set aside/i }));
 
     await waitFor(() => expect(mockedApi.setFindingAction).toHaveBeenCalledWith(2, 'dismissed'));
     const status = await screen.findByRole('status');

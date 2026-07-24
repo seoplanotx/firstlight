@@ -39,6 +39,59 @@ export function formatFindingTypeLabel(type: string) {
   return type.replace(/_/g, ' ');
 }
 
+// Plain-language labels for backend enums, so raw API tokens
+// (e.g. "running", "very_recent", "manual") never reach the screen.
+const RUN_STATUS_LABELS: Record<string, string> = {
+  running: 'In progress',
+  completed: 'Finished',
+  failed: "Didn't finish",
+  queued: 'Waiting to start'
+};
+
+export function formatRunStatus(status: string) {
+  return RUN_STATUS_LABELS[status] || status.replace(/_/g, ' ');
+}
+
+const TRIGGERED_BY_LABELS: Record<string, string> = {
+  manual: 'You ran it',
+  scheduled: 'Automatic check',
+  startup: 'Automatic check'
+};
+
+export function formatTriggeredBy(triggeredBy: string) {
+  return TRIGGERED_BY_LABELS[triggeredBy] || triggeredBy.replace(/_/g, ' ');
+}
+
+const FRESHNESS_LABELS: Record<string, string> = {
+  very_recent: 'Very recent',
+  recent: 'Recent',
+  current: 'Current',
+  older: 'Older'
+};
+
+export function formatFreshnessBucket(bucket: string) {
+  return FRESHNESS_LABELS[bucket] || bucket.replace(/_/g, ' ');
+}
+
+const RECRUITMENT_LABELS: Record<string, string> = {
+  open: 'Recruiting',
+  limited: 'Limited enrollment',
+  closed: 'Closed'
+};
+
+export function formatRecruitmentBucket(bucket: string) {
+  return RECRUITMENT_LABELS[bucket] || bucket.replace(/_/g, ' ');
+}
+
+const MONITORING_MODE_LABELS: Record<string, string> = {
+  while_open: 'Automatic runs while the app is open',
+  manual: 'Manual checks only'
+};
+
+export function formatMonitoringMode(mode: string) {
+  return MONITORING_MODE_LABELS[mode] || 'Manual checks only';
+}
+
 export function typeTone(type: string): BadgeTone {
   if (type === 'clinical_trials') return 'info';
   if (type === 'drug_updates') return 'warning';

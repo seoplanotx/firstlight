@@ -68,7 +68,7 @@ describe('ReportsPage', () => {
 
   it('labels the appointment prep report type in history', async () => {
     renderPage();
-    expect((await screen.findAllByText('Appointment Prep Sheet')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Appointment prep sheet')).length).toBeGreaterThan(0);
   });
 
   it('leads with intent, runs the guided prep, and generates an appointment prep sheet', async () => {
@@ -108,9 +108,9 @@ describe('ReportsPage', () => {
 
   it('regenerates an existing report from its history entry', async () => {
     renderPage();
-    await screen.findAllByText('Appointment Prep Sheet');
+    await screen.findAllByText('Appointment prep sheet');
 
-    await userEvent.click(screen.getByRole('button', { name: /generate updated version/i }));
+    await userEvent.click(screen.getByRole('button', { name: /update this report/i }));
 
     await waitFor(() =>
       expect(mockedApi.generateReport).toHaveBeenCalledWith({ report_type: 'appointment_prep' })
