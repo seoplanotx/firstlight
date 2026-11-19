@@ -14,8 +14,10 @@ export function UpdatesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [errorMessage, setErrorMessage] = useState('');
   const [pendingId, setPendingId] = useState<number | null>(null);
 
-  async function load() {
-    setLoading(true);
+  // `silent` refreshes in place after an action instead of replacing the page
+  // with a loading block (which dropped focus, scroll, and open details).
+  async function load({ silent = false }: { silent?: boolean } = {}) {
+    if (!silent) setLoading(true);
     setErrorMessage('');
     try {
       const result = await api.getFindings({ finding_type: 'literature' });
@@ -35,7 +37,7 @@ export function UpdatesPage({ embedded = false }: { embedded?: boolean } = {}) {
     setPendingId(findingId);
     try {
       await api.setFindingAction(findingId, action);
-      await load();
+      await load({ silent: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
     } finally {

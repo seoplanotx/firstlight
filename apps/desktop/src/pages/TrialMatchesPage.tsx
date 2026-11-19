@@ -14,8 +14,10 @@ export function TrialMatchesPage({ embedded = false }: { embedded?: boolean } = 
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  async function load() {
-    setLoading(true);
+  // `silent` refreshes in place after an action instead of replacing the page
+  // with a loading block (which dropped focus, scroll, and open details).
+  async function load({ silent = false }: { silent?: boolean } = {}) {
+    if (!silent) setLoading(true);
     setErrorMessage('');
     try {
       const result = await api.getFindings({ finding_type: 'clinical_trials' });

@@ -21,6 +21,16 @@ class MonitoringServiceTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.engine.dispose()
 
+    def test_lock_is_released_when_profile_lookup_fails(self) -> None:
+        with self.session_factory() as session:
+            with patch("app.services.monitoring_service.get_active_profile", side_effect=RuntimeError("db hiccup")):
+                with self.assertRaises(RuntimeError):
+                    run_monitoring(session)
+            # A follow-up run must not be refused as "already in progress".
+            run = run_monitoring(session)
+        self.assertEqual(run.status, "failed")
+        self.assertEqual(run.error_text, "No patient profile is available yet.")
+
     def test_rejects_overlapping_run_when_existing_run_is_marked_running(self) -> None:
         with self.session_factory() as session:
             profile = PatientProfile(

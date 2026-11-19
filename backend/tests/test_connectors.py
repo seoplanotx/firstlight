@@ -453,3 +453,90 @@ class OpenFdaDrugUpdatesConnectorTests(unittest.TestCase):
         records = connector.fetch(build_context({"page_size": 5}))
 
         self.assertEqual(records, [])
+
+
+class QueryFallbackTests(unittest.TestCase):
+    """A strict all-details query that matches nothing must fall back to broader tiers."""
+
+    def test_clinicaltrials_falls_back_to_gene_level_then_condition(self) -> None:
+        connector = ClinicalTrialsGovConnector()
+        seen: list[dict[str, str]] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            params = dict(request.url.params)
+            seen.append(params)
+            if len(seen) < 2:
+                return httpx.Response(200, json={"studies": []})
+            body = {
+                "studies": [
+                    {
+                        "protocolSection": {
+                            "identificationModule": {"nctId": "NCT00000042", "briefTitle": "EGFR study"},
+                            "statusModule": {"overallStatus": "RECRUITING"},
+                        }
+                    }
+                ]
+            }
+            return httpx.Response(200, json=body)
+
+        connector._build_client = lambda timeout: httpx.Client(transport=httpx.MockTransport(handler), timeout=timeout)  # type: ignore[method-assign]
+        records = connector.fetch(build_context({"page_size": 5}))
+
+        self.assertEqual([record.external_identifier for record in records], ["NCT00000042"])
+        self.assertEqual(len(seen), 2)
+        self.assertIn('"EGFR Exon 19 deletion"', seen[0]["query.term"])
+        self.assertEqual(seen[1]["query.term"], '"EGFR" OR "TP53"')
+        self.assertEqual(seen[1]["filter.overallStatus"], seen[0]["filter.overallStatus"])
+
+    def test_clinicaltrials_returns_empty_after_all_tiers(self) -> None:
+        connector = ClinicalTrialsGovConnector()
+        calls = {"count": 0}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            calls["count"] += 1
+            return httpx.Response(200, json={"studies": []})
+
+        connector._build_client = lambda timeout: httpx.Client(transport=httpx.MockTransport(handler), timeout=timeout)  # type: ignore[method-assign]
+        self.assertEqual(connector.fetch(build_context({})), [])
+        # strict, gene-level, full condition, cancer type alone
+        self.assertEqual(calls["count"], 4)
+
+    def test_pubmed_falls_back_to_cancer_type_only(self) -> None:
+        connector = PubMedConnector()
+        terms: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/esearch.fcgi"):
+                terms.append(request.url.params["term"])
+                idlist = ["40000003"] if len(terms) == 3 else []
+                return httpx.Response(200, json={"esearchresult": {"idlist": idlist}})
+            if request.url.path.endswith("/esummary.fcgi"):
+                return httpx.Response(
+                    200,
+                    json={"result": {"40000003": {"title": "Lung cancer review", "pubdate": "2026 Jan"}}},
+                )
+            return httpx.Response(200, text="<PubmedArticleSet></PubmedArticleSet>")
+
+        connector._build_client = lambda timeout: httpx.Client(transport=httpx.MockTransport(handler), timeout=timeout)  # type: ignore[method-assign]
+        records = connector.fetch(build_context({"retmax": 2}))
+
+        self.assertEqual([record.external_identifier for record in records], ["PMID:40000003"])
+        self.assertIn('"EGFR"[Title/Abstract] OR "TP53"[Title/Abstract]', terms[1])
+        self.assertEqual(terms[2], '("Non-small cell lung cancer"[Title/Abstract])')
+
+    def test_europepmc_fallback_keeps_preprint_filter(self) -> None:
+        connector = EuropePmcPreprintsConnector()
+        queries: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            queries.append(request.url.params["query"])
+            return httpx.Response(200, json={"resultList": {"result": []}})
+
+        connector._build_client = lambda timeout: httpx.Client(transport=httpx.MockTransport(handler), timeout=timeout)  # type: ignore[method-assign]
+        self.assertEqual(connector.fetch(build_context({})), [])
+        self.assertEqual(len(queries), 3)
+        self.assertTrue(all(query.endswith("SRC:PPR") for query in queries))
+
+    def test_pubmed_tolerates_non_numeric_retmax(self) -> None:
+        connector = PubMedConnector()
+        self.assertEqual(connector._retmax(build_context({"retmax": "lots"})), 5)

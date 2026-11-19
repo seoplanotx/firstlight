@@ -4,9 +4,10 @@ import type { LanguageMode } from './languageMode';
 // Plain-language wording for the family-facing default, with the clinical
 // register preserved for users who turn it on in Settings.
 const RELEVANCE_PLAIN_LABELS: Record<string, string> = {
-  'High relevance': 'Strong match',
+  // "Match" wording reads as eligibility; these stay about topical relatedness.
+  'High relevance': 'Closely related',
   'Worth reviewing': 'Worth a look',
-  'Low confidence': 'Possible match',
+  'Low confidence': 'Possibly related',
   'Insufficient data': 'Not enough detail yet'
 };
 

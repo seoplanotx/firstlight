@@ -155,12 +155,18 @@ export function OnboardingWizard({ onCompleted }: Props) {
     }
   }
 
+  // Retry-safe: if a later step failed, a second click updates the profile
+  // created on the first attempt instead of creating a duplicate.
+  const savedProfileIdRef = useRef<number | null>(null);
+
   async function finalize() {
     setErrorMessage('');
     setNotice('');
     setBusy(true);
     try {
-      const saved = await api.createProfile(profile);
+      const existingId = savedProfileIdRef.current;
+      const saved = existingId ? await api.updateProfile(existingId, profile) : await api.createProfile(profile);
+      savedProfileIdRef.current = saved.id ?? null;
       await api.updateSettings({
         ...settings,
         default_profile_id: saved.id

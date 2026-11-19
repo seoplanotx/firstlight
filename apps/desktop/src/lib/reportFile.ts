@@ -56,7 +56,11 @@ export async function revealReportFile(path: string): Promise<boolean> {
  * Save a copy wherever the user picks. The save dialog grants write access to
  * the chosen path, so no broad filesystem permission is needed.
  */
-export async function saveReportCopy(suggestedName: string, getBytes: () => Promise<Blob>): Promise<SaveResult> {
+export async function saveReportCopy(
+  suggestedName: string,
+  getBytes: () => Promise<Blob>,
+  filter: { name: string; extensions: string[] } = { name: 'PDF', extensions: ['pdf'] }
+): Promise<SaveResult> {
   let save: typeof import('@tauri-apps/plugin-dialog').save;
   let writeFile: typeof import('@tauri-apps/plugin-fs').writeFile;
   try {
@@ -68,7 +72,7 @@ export async function saveReportCopy(suggestedName: string, getBytes: () => Prom
 
   const destination = await save({
     defaultPath: suggestedName,
-    filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    filters: [filter]
   });
   if (!destination) return 'cancelled';
 
@@ -81,7 +85,7 @@ export async function saveReportCopy(suggestedName: string, getBytes: () => Prom
  * Browser fallback for `npm run dev` and the Playwright smoke test.
  *
  * The anchor must be in the document and the object URL must outlive the click,
- * or the transfer never starts — see `SupportPage` for the same shape.
+ * or the transfer never starts.
  */
 export function downloadInBrowser(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);

@@ -42,6 +42,22 @@ Behavior:
 - When no abstract is available, the connector falls back to a citation-only snippet and records an explicit gap.
 - Raw payload includes journal, authors, PubMed identifiers, MeSH terms, article types, and abstract sections when available.
 
+## Query broadening (ClinicalTrials.gov, PubMed, Europe PMC)
+
+The strict query ANDs every profile detail as an exact phrase (cancer type, subtype,
+stage text, each biomarker + variant, therapy names). That is precise but frequently
+matches **zero** records — e.g. two biomarkers, or free-text staging like
+"Stage IV, progressed on first-line". Each of these connectors therefore tries query
+tiers strictest-first and stops at the first tier that returns anything:
+
+1. Strict query (unchanged).
+2. Cancer context AND any biomarker **gene** (`"EGFR" OR "TP53"`), when biomarkers exist.
+3. Cancer context alone (ClinicalTrials.gov also tries the cancer type without subtype).
+
+Recruitment-status filters and the Europe PMC `SRC:PPR` preprint filter apply to every
+tier. Broadening only widens retrieval; deterministic matching and scoring still decide
+relevance labels, so looser matches land as lower-confidence findings.
+
 ## Normalization and scoring
 
 Matching is still deterministic and local.

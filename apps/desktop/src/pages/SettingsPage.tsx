@@ -55,9 +55,13 @@ export function SettingsPage() {
   }
 
   async function saveGeneral() {
-    setBusy(true);
     setErrorMessage('');
     setNotice('');
+    if (!settings?.daily_run_time) {
+      setErrorMessage('Choose a time of day for the automatic check before saving.');
+      return;
+    }
+    setBusy(true);
     try {
       const saved = await api.updateSettings(settings);
       setSettings(saved);

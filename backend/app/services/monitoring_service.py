@@ -41,8 +41,11 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
     if not _monitoring_lock.acquire(blocking=False):
         raise RunConflictError("Monitoring is already in progress. Wait for the active run to finish.")
 
-    profile = get_profile(session, profile_id) if profile_id else get_active_profile(session)
+    run: MonitoringRun | None = None
     try:
+        # Inside the try so a failure here still releases the lock; otherwise
+        # every later run would be refused until the app restarted.
+        profile = get_profile(session, profile_id) if profile_id else get_active_profile(session)
         if monitoring_is_running(session):
             raise RunConflictError("Monitoring is already in progress. Wait for the active run to finish.")
 
@@ -170,12 +173,18 @@ def run_monitoring(session: Session, profile_id: int | None = None, triggered_by
             },
         )
         return run
+    except RunConflictError:
+        raise
     except Exception as exc:
-        if "run" in locals() and isinstance(run, MonitoringRun):
-            run.status = "failed"
-            run.error_text = str(exc)
-            run.completed_at = utcnow()
-            session.commit()
+        if run is not None:
+            try:
+                session.rollback()
+                run.status = "failed"
+                run.error_text = str(exc)
+                run.completed_at = utcnow()
+                session.commit()
+            except Exception:  # pragma: no cover - DB itself is unusable
+                logger.exception("Could not record monitoring run failure for run %s", run.id)
         raise
     finally:
         _monitoring_lock.release()

@@ -18,7 +18,10 @@ type UndoState = { id: number; previous: FindingAction; message: string } | null
 // Shared undo behavior for the single-action finding lists (Trials, Saved) so a
 // card action can always be reversed within a comfortable window — matching the
 // review queue. `reload` refreshes the list; `onError` surfaces action failures.
-export function useFindingUndo(reload: () => Promise<void>, onError: (message: string) => void) {
+export function useFindingUndo(
+  reload: (options?: { silent?: boolean }) => Promise<void>,
+  onError: (message: string) => void
+) {
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [undo, setUndo] = useState<UndoState>(null);
   const timer = useRef<number | null>(null);
@@ -36,7 +39,7 @@ export function useFindingUndo(reload: () => Promise<void>, onError: (message: s
     setPendingId(findingId);
     try {
       await api.setFindingAction(findingId, action);
-      await reload();
+      await reload({ silent: true });
       clearTimer();
       if (offerUndo && previous !== action) {
         setUndo({ id: findingId, previous, message: ACTION_CONFIRMATIONS[action] });

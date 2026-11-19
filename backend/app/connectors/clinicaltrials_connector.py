@@ -5,7 +5,13 @@ from typing import Any
 
 import httpx
 
-from app.connectors.base import BaseConnector, ConnectorContext, ConnectorRecord
+from app.connectors.base import (
+    BaseConnector,
+    ConnectorContext,
+    ConnectorRecord,
+    dedupe_queries,
+    profile_biomarker_genes,
+)
 from app.connectors.http import get_with_retries
 
 
@@ -77,9 +83,31 @@ class ClinicalTrialsGovConnector(BaseConnector):
             query["query.term"] = " AND ".join(f'"{part}"' for part in term_parts if part)
         return query
 
+    def _query_tiers(self, context: ConnectorContext) -> list[dict[str, str]]:
+        """Strictest query first, then progressively broader fallbacks.
+
+        The strict query ANDs every profile detail as an exact phrase, which is
+        precise but often matches zero registry records (free-text staging,
+        multiple variants, therapy names). Falling back to gene-level biomarker
+        overlap and then the condition alone keeps a run from silently
+        returning nothing; deterministic scoring still decides relevance.
+        """
+        strict = self._build_query(context)
+        query_cond = strict["query.cond"]
+        tiers: list[dict[str, str]] = [strict]
+
+        genes = profile_biomarker_genes(context.profile)
+        if genes:
+            tiers.append({"query.cond": query_cond, "query.term": " OR ".join(f'"{gene}"' for gene in genes)})
+        tiers.append({"query.cond": query_cond})
+
+        cancer_type = getattr(context.profile, "cancer_type", None)
+        if isinstance(cancer_type, str) and cancer_type.strip() and cancer_type.strip() != query_cond:
+            tiers.append({"query.cond": cancer_type.strip()})
+        return dedupe_queries(tiers)
+
     def fetch(self, context: ConnectorContext) -> list[ConnectorRecord]:
-        params: dict[str, Any] = {
-            **self._build_query(context),
+        base_params: dict[str, Any] = {
             "format": "json",
             "countTotal": "true",
             "pageSize": self._page_size(context),
@@ -87,14 +115,17 @@ class ClinicalTrialsGovConnector(BaseConnector):
 
         overall_statuses = self._overall_statuses(context)
         if overall_statuses:
-            params["filter.overallStatus"] = ",".join(overall_statuses)
+            base_params["filter.overallStatus"] = ",".join(overall_statuses)
 
+        studies: list[dict[str, Any]] = []
         with self._build_client(30.0) as client:
-            response = get_with_retries(client, self._studies_url, params=params)
-            response.raise_for_status()
-            payload = response.json()
+            for query in self._query_tiers(context):
+                response = get_with_retries(client, self._studies_url, params={**query, **base_params})
+                response.raise_for_status()
+                studies = response.json().get("studies", []) or []
+                if studies:
+                    break
 
-        studies = payload.get("studies", [])
         records: list[ConnectorRecord] = []
         for study in studies:
             parsed = self._parse_study(study)

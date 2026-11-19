@@ -7,7 +7,13 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from app.connectors.base import BaseConnector, ConnectorContext, ConnectorRecord
+from app.connectors.base import (
+    BaseConnector,
+    ConnectorContext,
+    ConnectorRecord,
+    dedupe_queries,
+    profile_biomarker_genes,
+)
 from app.connectors.http import get_with_retries
 
 
@@ -41,24 +47,52 @@ class PubMedConnector(BaseConnector):
             terms.append('"cancer"[Title/Abstract]')
         return " AND ".join(terms)
 
+    def _query_tiers(self, context: ConnectorContext) -> list[str]:
+        """Strict phrase query first, then gene-level and cancer-type-only fallbacks.
+
+        ANDing several exact variant phrases (e.g. two biomarkers) routinely
+        matches zero citations, so broader tiers keep a run from coming back
+        empty. Deterministic scoring still ranks what is returned.
+        """
+        tiers = [self._build_query(context)]
+        cancer_type = getattr(context.profile, "cancer_type", None)
+        if isinstance(cancer_type, str) and cancer_type.strip():
+            cancer_clause = f'("{cancer_type.strip()}"[Title/Abstract])'
+            genes = profile_biomarker_genes(context.profile)
+            if genes:
+                gene_clause = " OR ".join(f'"{gene}"[Title/Abstract]' for gene in genes)
+                tiers.append(f"{cancer_clause} AND ({gene_clause})")
+            tiers.append(cancer_clause)
+        return dedupe_queries(tiers)
+
+    def _retmax(self, context: ConnectorContext) -> int:
+        settings = context.source_config.settings_json or {}
+        try:
+            retmax = int(settings.get("retmax", settings.get("page_size", 5)))
+        except (TypeError, ValueError):
+            retmax = 5
+        return max(1, min(retmax, 20))
+
     def fetch(self, context: ConnectorContext) -> list[ConnectorRecord]:
-        query = self._build_query(context)
-        retmax = int(context.source_config.settings_json.get("retmax", context.source_config.settings_json.get("page_size", 5)))
-        retmax = max(1, min(retmax, 20))
+        retmax = self._retmax(context)
         with self._build_client(20.0) as client:
-            search_response = get_with_retries(
-                client,
-                self._search_url,
-                params={
-                    "db": "pubmed",
-                    "retmode": "json",
-                    "sort": "pub+date",
-                    "retmax": retmax,
-                    "term": query,
-                },
-            )
-            search_response.raise_for_status()
-            ids = search_response.json().get("esearchresult", {}).get("idlist", [])
+            ids: list[str] = []
+            for query in self._query_tiers(context):
+                search_response = get_with_retries(
+                    client,
+                    self._search_url,
+                    params={
+                        "db": "pubmed",
+                        "retmode": "json",
+                        "sort": "pub+date",
+                        "retmax": retmax,
+                        "term": query,
+                    },
+                )
+                search_response.raise_for_status()
+                ids = search_response.json().get("esearchresult", {}).get("idlist", []) or []
+                if ids:
+                    break
             if not ids:
                 return []
 

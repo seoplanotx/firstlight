@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
-from sqlalchemy import Text
+from sqlalchemy import DateTime, Text
 from sqlalchemy.types import TypeDecorator
 
 from app.core.security import decrypt_value, encrypt_value
@@ -54,3 +54,31 @@ class EncryptedDate(TypeDecorator):
             return date.fromisoformat(decrypted)
         except ValueError:
             return None
+
+
+class UTCDateTime(TypeDecorator):
+    """A timezone-aware UTC datetime that survives SQLite.
+
+    SQLite has no timezone storage, so ``DateTime(timezone=True)`` hands back
+    *naive* values. Serialized without an offset, the desktop UI parsed them as
+    local time and every "x minutes ago" / date filter was off by the user's
+    UTC offset. Values are normalized to UTC on write and re-tagged as UTC on
+    read, so the API always emits ``...+00:00``.
+    """
+
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        if isinstance(value, datetime) and value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value

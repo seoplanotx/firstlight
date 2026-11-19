@@ -10,3 +10,6 @@ export function setProfileEditsDirty(value: boolean): void {
 export function hasUnsavedProfileEdits(): boolean {
   return dirty;
 }
+
+/** Window event fired whenever the active patient profile changes or is saved. */
+export const PROFILE_CHANGED_EVENT = 'firstlight:profile-changed';

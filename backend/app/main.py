@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.logging import configure_logging
 from app.core.release import APP_VERSION
+from app.core.request_guard import ALLOWED_ORIGINS, LocalRequestGuardMiddleware
 from app.services.bootstrap_service import initialize_application
 from app.services.scheduler_service import configure_scheduler_from_settings, shutdown_scheduler, start_scheduler
 from app.services.settings_service import get_settings
@@ -35,17 +36,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:1420",
-        "http://127.0.0.1:1420",
-        "http://localhost:1421",
-        "http://127.0.0.1:1421",
-        "tauri://localhost",
-    ],
+    allow_origins=list(ALLOWED_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Added last so it runs first: rejects DNS-rebinding hosts and cross-site
+# origins before CORS or any route sees the request.
+app.add_middleware(LocalRequestGuardMiddleware)
 
 app.include_router(api_router)
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import {
   isPermissionGranted,
   requestPermission,
@@ -16,20 +16,32 @@ const LAST_NOTIFIED_RUN_KEY = 'firstlight.lastNotifiedRunId';
 function latestCompletedRun(runs: MonitoringRun[]): MonitoringRun | null {
   let latest: MonitoringRun | null = null;
   for (const run of runs) {
-    if (run.status !== 'completed') continue;
+    // A run where one source failed still stores real findings worth an alert.
+    if (run.status !== 'completed' && run.status !== 'completed_with_warnings') continue;
+    // The user who clicked "Check now" already sees the result on screen; only
+    // background (scheduled) runs should raise an OS notification.
+    if (run.triggered_by === 'manual') continue;
     if (!latest || run.id > latest.id) latest = run;
   }
   return latest;
 }
 
 function readLastNotifiedId(): number {
-  const raw = window.localStorage.getItem(LAST_NOTIFIED_RUN_KEY);
-  const parsed = raw ? Number.parseInt(raw, 10) : 0;
-  return Number.isFinite(parsed) ? parsed : 0;
+  try {
+    const raw = window.localStorage.getItem(LAST_NOTIFIED_RUN_KEY);
+    const parsed = raw ? Number.parseInt(raw, 10) : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
 }
 
 function writeLastNotifiedId(runId: number) {
-  window.localStorage.setItem(LAST_NOTIFIED_RUN_KEY, String(runId));
+  try {
+    window.localStorage.setItem(LAST_NOTIFIED_RUN_KEY, String(runId));
+  } catch {
+    // best-effort
+  }
 }
 
 async function ensureNotificationPermission(): Promise<boolean> {
@@ -64,12 +76,10 @@ function buildNotificationBody(run: MonitoringRun): string {
  * when the window is hidden to the tray, so the user is alerted in the background.
  */
 export function useBackgroundMonitoring() {
-  const startedRef = useRef(false);
-
+  // No "already started" ref: under React StrictMode the first mount's cleanup
+  // clears the interval, and a ref guard then stopped the remount from
+  // restarting it. The effect's own cleanup is enough to avoid duplicates.
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
     let cancelled = false;
     let timer: number | undefined;
     let permissionReady = false;

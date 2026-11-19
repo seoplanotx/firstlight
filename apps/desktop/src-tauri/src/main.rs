@@ -73,19 +73,55 @@ fn hide_to_tray(app: &tauri::AppHandle, window: &tauri::Window) {
 
 #[cfg(not(debug_assertions))]
 fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, Box<dyn std::error::Error>> {
+    use tauri_plugin_shell::process::CommandEvent;
+
+    // --exit-with-parent: the backend watches its stdin pipe and shuts down when
+    // this process goes away (quit, crash, force-quit), so an orphaned sidecar
+    // never keeps port 17845 bound for the next launch. This also covers the
+    // PyInstaller one-file layout, where killing the bootloader alone can leave
+    // the Python child running.
     let command = app
         .shell()
         .sidecar("oncowatch-backend")?
-        .args(["--host", "127.0.0.1", "--port", "17845"]);
+        .args(["--host", "127.0.0.1", "--port", "17845", "--exit-with-parent"]);
     let (mut rx, child) = command.spawn()?;
 
+    let handle = app.clone();
     tauri::async_runtime::spawn(async move {
         while let Some(event) = rx.recv().await {
-            println!("[oncowatch-backend] {:?}", event);
+            match event {
+                CommandEvent::Stdout(line) => {
+                    println!("[oncowatch-backend] {}", String::from_utf8_lossy(&line).trim_end())
+                }
+                CommandEvent::Stderr(line) => {
+                    eprintln!("[oncowatch-backend] {}", String::from_utf8_lossy(&line).trim_end())
+                }
+                CommandEvent::Terminated(payload) => {
+                    eprintln!(
+                        "[oncowatch-backend] exited (code {:?}, signal {:?})",
+                        payload.code, payload.signal
+                    );
+                    // Forget the dead child so quit doesn't try to kill it, and
+                    // so the state reflects reality.
+                    let state = handle.state::<BackendState>();
+                    state.child.lock().unwrap().take();
+                    break;
+                }
+                other => println!("[oncowatch-backend] {:?}", other),
+            }
         }
     });
 
     Ok(child)
+}
+
+/// Stop the sidecar now (before an in-place restart, or on quit).
+fn stop_backend(app: &tauri::AppHandle) {
+    let state = app.state::<BackendState>();
+    let mut child_guard = state.child.lock().unwrap();
+    if let Some(child) = child_guard.take() {
+        let _ = child.kill();
+    }
 }
 
 #[cfg(not(debug_assertions))]
@@ -106,8 +142,27 @@ fn check_for_updates(app: tauri::AppHandle) {
                 println!("[updater] installing update {}", update.version);
                 match update.download_and_install(|_, _| {}, || {}).await {
                     Ok(_) => {
-                        println!("[updater] update installed, restarting");
-                        app.restart();
+                        let window_visible = app
+                            .get_webview_window("main")
+                            .and_then(|window| window.is_visible().ok())
+                            .unwrap_or(false);
+                        if window_visible {
+                            // Never restart out from under someone mid-task (an
+                            // unsaved profile edit, a report being prepared). The
+                            // new version is picked up the next time Firstlight starts.
+                            println!("[updater] update installed; will apply on next launch");
+                            use tauri_plugin_notification::NotificationExt;
+                            let _ = app
+                                .notification()
+                                .builder()
+                                .title("Firstlight update ready")
+                                .body("The new version will be used the next time Firstlight starts.")
+                                .show();
+                        } else {
+                            println!("[updater] update installed while in the background, restarting");
+                            stop_backend(&app);
+                            app.restart();
+                        }
                     }
                     Err(error) => eprintln!("[updater] install failed: {error}"),
                 }
@@ -154,14 +209,10 @@ fn main() {
             }
         })
         .build(tauri::generate_context!())
-        .expect("error while building OncoWatch")
+        .expect("error while building Firstlight")
         .run(|app_handle, event| {
             if let RunEvent::ExitRequested { .. } = event {
-                let state = app_handle.state::<BackendState>();
-                let mut child_guard = state.child.lock().unwrap();
-                if let Some(child) = child_guard.take() {
-                    let _ = child.kill();
-                }
+                stop_backend(app_handle);
             }
         });
 }

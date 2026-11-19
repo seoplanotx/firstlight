@@ -76,6 +76,11 @@ def export_all_data(session: Session) -> dict[str, Any]:
                 "relevance_label": f.relevance_label,
                 "score": f.score,
                 "status": f.status,
+                # The family's own triage (saved for discussion / set aside)
+                # is their data too, so it travels with the export.
+                "user_action": f.user_action,
+                "normalized_summary": f.normalized_summary,
+                "published_at": f.published_at.isoformat() if f.published_at else None,
                 "why_it_surfaced": f.why_it_surfaced,
                 "why_it_may_not_fit": f.why_it_may_not_fit,
                 "matching_gaps": f.matching_gaps,

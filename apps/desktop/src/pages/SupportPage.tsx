@@ -5,8 +5,25 @@ import { EmptyState } from '../components/EmptyState';
 import { api } from '../lib/api';
 import { formatAuditAction, formatAuditTimestamp } from '../lib/audit';
 import { getErrorMessage } from '../lib/errors';
+import { PROFILE_CHANGED_EVENT } from '../lib/profileEditGuard';
+import { downloadInBrowser, isDesktopShell, saveReportCopy } from '../lib/reportFile';
 import { formatMonitoringMode } from '../lib/findingPresentation';
 import type { AuditEvent, BootstrapInfo } from '../lib/types';
+
+// Browser-side state tied to the deleted data. Display preferences (language
+// mode, notification opt-in) are kept. The notification marker must reset
+// because SQLite reuses run ids after a wipe, which would silence alerts.
+const PATIENT_STATE_KEYS = ['firstlight.appointmentPrep', 'firstlight.findingsPrefs', 'firstlight.lastNotifiedRunId'];
+
+function clearLocalPatientState() {
+  for (const key of PATIENT_STATE_KEYS) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // best-effort
+    }
+  }
+}
 
 type SupportPageProps = {
   bootstrap: BootstrapInfo;
@@ -38,15 +55,14 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
     setBusy('export');
     setStatusMessage(null);
     try {
-      const blob = await api.exportAllData();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `firstlight-export-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      const filename = `firstlight-export-${new Date().toISOString().slice(0, 10)}.json`;
+      // In the desktop app, ask where to save (the webview ignores download
+      // links); in the browser dev build, fall back to a download.
+      const result = isDesktopShell()
+        ? await saveReportCopy(filename, () => api.exportAllData(), { name: 'JSON', extensions: ['json'] })
+        : 'unavailable';
+      if (result === 'cancelled') return;
+      if (result === 'unavailable') downloadInBrowser(await api.exportAllData(), filename);
       setStatusIsError(false);
       setStatusMessage('Your data was exported to a local JSON file.');
       void loadAudit();
@@ -63,6 +79,10 @@ export function SupportPage({ bootstrap }: SupportPageProps) {
     setStatusMessage(null);
     try {
       const summary = await api.deleteAllData();
+      clearLocalPatientState();
+      // Let the sidebar (and any page that reloads on profile changes) drop
+      // the deleted profiles instead of offering them for selection.
+      window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT));
       setStatusIsError(false);
       setStatusMessage(
         `Deleted ${summary.profiles} profile(s), ${summary.findings} finding(s), and ${summary.reports} report(s).`

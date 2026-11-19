@@ -242,14 +242,19 @@ export function AIProviderSetup({ onConfigured }: Props) {
       });
       setConfigs((current) => ({ ...current, [provider]: saved }));
       setApiKey('');
+      let selected = true;
       try {
         const settings = await api.getSettings();
         await api.updateSettings({ ...settings, active_ai_provider: provider });
       } catch {
-        // The key is saved even if selecting the active provider fails.
+        // The key is saved even if selecting the active provider fails — but
+        // say so rather than claiming AI assist will use this provider.
+        selected = false;
       }
       setSavedNotice(
-        `Saved. The key is encrypted and stored only on this computer. AI assist will use ${meta.label}.`
+        selected
+          ? `Saved. The key is encrypted and stored only on this computer. AI assist will use ${meta.label}.`
+          : `Saved. The key is encrypted and stored only on this computer, but ${meta.label} could not be selected as the active provider. Try saving again.`
       );
       onConfigured?.(saved);
     } catch (error) {

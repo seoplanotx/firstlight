@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Float, ForeignKey, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.types import UTCDateTime
 from app.db.base import Base, TimestampMixin
 from app.utils.dates import utcnow
 
@@ -29,8 +30,8 @@ class Finding(Base, TimestampMixin):
     source_name: Mapped[str] = mapped_column(String(120), nullable=False)
     source_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     external_identifier: Mapped[str] = mapped_column(String(255), nullable=False)
-    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retrieved_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    published_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
     structured_tags: Mapped[list[str]] = mapped_column(JSON, default=list)
     raw_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -57,7 +58,7 @@ class Finding(Base, TimestampMixin):
     # Generated on demand only when de-identified AI assist is enabled; invalidated
     # (cleared) whenever the finding's content_hash changes.
     plain_language_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    plain_language_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    plain_language_generated_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     plain_language_provider: Mapped[str | None] = mapped_column(String(80), nullable=True)
     plain_language_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
@@ -79,6 +80,6 @@ class FindingEvidence(Base, TimestampMixin):
     snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     source_identifier: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
     finding: Mapped["Finding"] = relationship(back_populates="evidence_items")

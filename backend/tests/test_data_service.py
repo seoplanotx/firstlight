@@ -89,6 +89,7 @@ class DataServiceTests(unittest.TestCase):
         self.assertEqual(export["profiles"][0]["profile_name"], "Jane Patient Smith")
         self.assertEqual(export["profiles"][0]["biomarkers"][0]["name"], "EGFR")
         self.assertEqual(len(export["findings"]), 1)
+        self.assertIn("user_action", export["findings"][0])
         self.assertEqual(len(export["reports"]), 1)
 
     def test_delete_wipes_patient_data_and_removes_files(self) -> None:
