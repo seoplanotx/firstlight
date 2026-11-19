@@ -18,6 +18,17 @@ type ProfileFormProps = {
    * reachable afterward from Patient Details. Defaults to the full editor.
    */
   variant?: 'full' | 'essentials';
+  /**
+   * Suggested edits (e.g. from a pasted report) merged into the *live* form,
+   * so unsaved typing is kept and the form stays dirty against its last-saved
+   * baseline. A new `token` applies the merge once.
+   */
+  suggestion?: ProfileSuggestion | null;
+};
+
+export type ProfileSuggestion = {
+  token: number;
+  merge: (current: PatientProfile) => PatientProfile;
 };
 
 function blankBiomarker(): Biomarker {
@@ -86,7 +97,7 @@ function computeStrength(form: PatientProfile): StrengthLevel {
     label: 'Strong',
     ratio,
     tone: 'strong',
-    message: 'Strong detail. Firstlight has what it needs to match trials and research closely.'
+    message: 'Strong detail. Firstlight can look for closely related trials and research.'
   };
 }
 
@@ -95,7 +106,8 @@ export function ProfileForm({
   onSave,
   submitLabel = 'Save profile',
   onDirtyChange,
-  variant = 'full'
+  variant = 'full',
+  suggestion
 }: ProfileFormProps) {
   const essentials = variant === 'essentials';
   const [form, setForm] = useState<PatientProfile>(initialValue || defaultProfile);
@@ -106,6 +118,13 @@ export function ProfileForm({
   useEffect(() => {
     setForm(initialValue || defaultProfile);
   }, [initialValue]);
+
+  const appliedSuggestionRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!suggestion || appliedSuggestionRef.current === suggestion.token) return;
+    appliedSuggestionRef.current = suggestion.token;
+    setForm((current) => suggestion.merge(current));
+  }, [suggestion]);
 
   const considerText = useMemo(() => form.would_consider.join('\n'), [form.would_consider]);
   const avoidText = useMemo(() => form.would_not_consider.join('\n'), [form.would_not_consider]);

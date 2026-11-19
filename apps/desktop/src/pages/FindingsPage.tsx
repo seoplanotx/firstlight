@@ -146,8 +146,10 @@ export function FindingsPage({ embedded = false }: { embedded?: boolean } = {}) 
     }
   }, [query, filter, sortKey, sourceFilter, dateRange, mode, view, filtersOpen, queueIndex]);
 
-  async function load() {
-    setLoading(true);
+  // `silent` refreshes in place after an action instead of replacing the page
+  // with a loading block (which dropped focus, scroll, and open details).
+  async function load({ silent = false }: { silent?: boolean } = {}) {
+    if (!silent) setLoading(true);
     setErrorMessage('');
     try {
       // Load everything, including set-aside items, so both review modes and
@@ -171,10 +173,14 @@ export function FindingsPage({ embedded = false }: { embedded?: boolean } = {}) 
   }, []);
 
   async function applyAction(findingId: number, action: FindingAction, previous: FindingAction, offerUndo: boolean) {
+    // Keyboard triage (J/K/X/…) is handled on the queue container, so keep focus
+    // there once the acted-on card is replaced by the next one.
+    const queueHadFocus = Boolean(document.activeElement?.closest('.review-queue'));
     setPendingId(findingId);
     try {
       await api.setFindingAction(findingId, action);
-      await load();
+      await load({ silent: true });
+      if (queueHadFocus) queueCardRef.current?.focus({ preventScroll: true });
       clearUndoTimer();
       if (offerUndo && previous !== action) {
         setUndo({ id: findingId, previous, message: ACTION_CONFIRMATIONS[action] });
@@ -208,7 +214,7 @@ export function FindingsPage({ embedded = false }: { embedded?: boolean } = {}) 
     try {
       await api.setFindingActionsBulk([...selected], action);
       setUndo(null);
-      await load();
+      await load({ silent: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not update the selected items.'));
     } finally {

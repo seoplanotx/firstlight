@@ -52,7 +52,7 @@ class AppSettingsRead(BaseModel):
 
 class AppSettingsUpdate(BaseModel):
     default_profile_id: int | None = None
-    daily_run_time: str = "08:30"
+    daily_run_time: str = Field(default="08:30", pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
     default_report_style: str = "clinical"
     default_report_length: str = "daily_summary"
     demo_profile_enabled: bool = False

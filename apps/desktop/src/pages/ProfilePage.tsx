@@ -4,10 +4,10 @@ import { useBlocker } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageErrorState } from '../components/PageErrorState';
-import { ProfileForm } from '../features/profile/ProfileForm';
+import { ProfileForm, type ProfileSuggestion } from '../features/profile/ProfileForm';
 import { api } from '../lib/api';
 import { getErrorMessage } from '../lib/errors';
-import { setProfileEditsDirty } from '../lib/profileEditGuard';
+import { PROFILE_CHANGED_EVENT, setProfileEditsDirty } from '../lib/profileEditGuard';
 import type { PatientProfile } from '../lib/types';
 
 const LEAVE_PROMPT = 'You have unsaved profile changes. Leave without saving?';
@@ -34,6 +34,7 @@ export function ProfilePage() {
   const [extractWarnings, setExtractWarnings] = useState<string[]>([]);
   const [extractNote, setExtractNote] = useState('');
   const [extractError, setExtractError] = useState('');
+  const [suggestion, setSuggestion] = useState<ProfileSuggestion | null>(null);
   const [allowAi, setAllowAi] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
   const dirtyRef = useRef(false);
@@ -65,8 +66,8 @@ export function ProfilePage() {
     function onProfileChanged() {
       void load();
     }
-    window.addEventListener('firstlight:profile-changed', onProfileChanged);
-    return () => window.removeEventListener('firstlight:profile-changed', onProfileChanged);
+    window.addEventListener(PROFILE_CHANGED_EVENT, onProfileChanged);
+    return () => window.removeEventListener(PROFILE_CHANGED_EVENT, onProfileChanged);
   }, []);
 
   const blocker = useBlocker(() => dirtyRef.current);
@@ -99,7 +100,7 @@ export function ProfilePage() {
       setMessage('Profile saved locally.');
       const all = await api.getProfiles();
       setProfiles(all);
-      window.dispatchEvent(new Event('firstlight:profile-changed'));
+      window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT));
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not save the patient profile.'));
     }
@@ -111,7 +112,7 @@ export function ProfilePage() {
       setProfile(activated);
       markDirty(false);
       setMessage(`Now monitoring ${activated.display_name || activated.profile_name}.`);
-      window.dispatchEvent(new Event('firstlight:profile-changed'));
+      window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT));
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not switch profiles.'));
     }
@@ -165,42 +166,41 @@ export function ProfilePage() {
       const result = await api.extractProfileFromText(extractText, allowAi);
       setExtractWarnings(result.warnings || []);
       setAiMessage(result.ai_message || '');
-      setProfile((current) => {
-        const base = current || emptyProfile();
-        return {
+      // Merge into the live form (not the last-saved profile) so anything the
+      // user already typed survives, and the unsaved-changes guard stays on.
+      setSuggestion({
+        token: Date.now(),
+        merge: (base) => ({
           ...base,
           cancer_type: result.cancer_type || base.cancer_type,
           subtype: result.subtype || base.subtype,
           stage_or_context: result.stage_or_context || base.stage_or_context,
           notes: [base.notes, result.notes].filter(Boolean).join('\n') || base.notes,
-          biomarkers:
-            result.biomarkers?.length
-              ? [
-                  ...base.biomarkers,
-                  ...result.biomarkers.map((item) => ({
-                    name: item.name,
-                    variant: item.variant || null,
-                    status: item.status || null,
-                    notes: item.notes || null
-                  }))
-                ]
-              : base.biomarkers,
-          therapy_history:
-            result.therapy_history?.length
-              ? [
-                  ...base.therapy_history,
-                  ...result.therapy_history.map((item) => ({
-                    therapy_name: item.therapy_name,
-                    therapy_type: item.therapy_type || null,
-                    line_of_therapy: item.line_of_therapy || null,
-                    status: item.status || null,
-                    notes: item.notes || null
-                  }))
-                ]
-              : base.therapy_history
-        };
+          biomarkers: result.biomarkers?.length
+            ? [
+                ...base.biomarkers.filter((item) => item.name.trim()),
+                ...result.biomarkers.map((item) => ({
+                  name: item.name,
+                  variant: item.variant || null,
+                  status: item.status || null,
+                  notes: item.notes || null
+                }))
+              ]
+            : base.biomarkers,
+          therapy_history: result.therapy_history?.length
+            ? [
+                ...base.therapy_history.filter((item) => item.therapy_name.trim()),
+                ...result.therapy_history.map((item) => ({
+                  therapy_name: item.therapy_name,
+                  therapy_type: item.therapy_type || null,
+                  line_of_therapy: item.line_of_therapy || null,
+                  status: item.status || null,
+                  notes: item.notes || null
+                }))
+              ]
+            : base.therapy_history
+        })
       });
-      markDirty(true);
       setExtractNote('Suggestions applied to the form below — review carefully, then save.');
     } catch (error) {
       setExtractError(getErrorMessage(error, 'Could not extract profile candidates.'));
@@ -300,6 +300,7 @@ export function ProfilePage() {
           onSave={handleSave}
           submitLabel={profile?.id ? 'Save profile' : 'Create profile'}
           onDirtyChange={markDirty}
+          suggestion={suggestion}
         />
       </Card>
 

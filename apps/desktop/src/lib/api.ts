@@ -37,6 +37,29 @@ export class ApiError extends Error {
   }
 }
 
+function humanizeField(loc: unknown): string {
+  if (!Array.isArray(loc)) return '';
+  const field = [...loc].reverse().find((part) => typeof part === 'string' && part !== 'body');
+  if (typeof field !== 'string') return '';
+  const words = field.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+// FastAPI validation errors (422) carry `detail` as a list of {loc, msg}.
+// Turn them into a readable sentence instead of "Request failed: 422".
+function validationMessage(detail: unknown[]): string {
+  const parts = detail
+    .map((item) => {
+      if (!item || typeof item !== 'object') return '';
+      const { loc, msg } = item as { loc?: unknown; msg?: unknown };
+      const message = typeof msg === 'string' ? msg.replace(/^Value error, /, '') : '';
+      const field = humanizeField(loc);
+      return field && message ? `${field}: ${message}` : message;
+    })
+    .filter(Boolean);
+  return parts.length ? `Please check: ${parts.join('; ')}.` : '';
+}
+
 function errorMessageFromBody(body: unknown, fallback: string): string {
   if (typeof body === 'string' && body.trim()) {
     return body;
@@ -45,6 +68,10 @@ function errorMessageFromBody(body: unknown, fallback: string): string {
     const detail = (body as { detail?: unknown }).detail;
     if (typeof detail === 'string' && detail.trim()) {
       return detail;
+    }
+    if (Array.isArray(detail)) {
+      const message = validationMessage(detail);
+      if (message) return message;
     }
     if (detail && typeof detail === 'object' && 'message' in detail) {
       const message = (detail as { message?: unknown }).message;
@@ -105,6 +132,40 @@ async function requestBlob(path: string): Promise<Blob> {
   return response.blob();
 }
 
+/** "8:30" / "08:30:00" → "08:30"; anything unparseable is passed through for the API to explain. */
+export function normalizeRunTime(value: string | undefined): string | undefined {
+  if (typeof value !== 'string') return value;
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(value.trim());
+  if (!match) return value;
+  return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+// Callers often spread the whole settings read model back into a PUT. Send only
+// the fields the update schema accepts, with the run time in the strict HH:MM form.
+const SETTINGS_UPDATE_KEYS = [
+  'default_profile_id',
+  'daily_run_time',
+  'default_report_style',
+  'default_report_length',
+  'demo_profile_enabled',
+  'privacy_mode',
+  'deidentified_ai_disclosure_acknowledged',
+  'active_ai_provider'
+] as const;
+
+export function toSettingsUpdate(payload: Partial<AppSettings>): Partial<AppSettings> {
+  const update: Partial<AppSettings> = {};
+  for (const key of SETTINGS_UPDATE_KEYS) {
+    if (payload[key] !== undefined) {
+      (update as Record<string, unknown>)[key] = payload[key];
+    }
+  }
+  if (update.daily_run_time !== undefined) {
+    update.daily_run_time = normalizeRunTime(update.daily_run_time);
+  }
+  return update;
+}
+
 export const api = {
   getBootstrap: () => request<BootstrapInfo>('/bootstrap'),
   getOnboardingState: () => request<OnboardingState>('/onboarding/state'),
@@ -120,7 +181,7 @@ export const api = {
 
   getSettings: () => request<AppSettings>('/settings'),
   updateSettings: (payload: Partial<AppSettings>) =>
-    request<AppSettings>('/settings', { method: 'PUT', body: JSON.stringify(payload) }),
+    request<AppSettings>('/settings', { method: 'PUT', body: JSON.stringify(toSettingsUpdate(payload)) }),
   getProviderConfig: (provider: AIProvider = 'openrouter') =>
     request<ProviderConfig | null>(`/settings/provider/${provider}`),
   saveProviderConfig: (provider: AIProvider, payload: Record<string, unknown>) =>
@@ -204,9 +265,5 @@ export const api = {
 
   getAuditLog: () => request<{ events: AuditEvent[] }>('/data/audit-log'),
   deleteAllData: () => request<DataDeletionSummary>('/data/delete', { method: 'POST' }),
-  exportAllData: async () => {
-    const response = await fetch(`${API_BASE}/api/data/export`);
-    if (!response.ok) throw new Error('Could not export your data');
-    return response.blob();
-  }
+  exportAllData: () => requestBlob('/data/export')
 };

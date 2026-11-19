@@ -6,7 +6,13 @@ from typing import Any
 
 import httpx
 
-from app.connectors.base import BaseConnector, ConnectorContext, ConnectorRecord
+from app.connectors.base import (
+    BaseConnector,
+    ConnectorContext,
+    ConnectorRecord,
+    dedupe_queries,
+    profile_biomarker_genes,
+)
 from app.connectors.http import get_with_retries
 
 
@@ -59,28 +65,48 @@ class EuropePmcPreprintsConnector(BaseConnector):
         terms = self._profile_terms(context)
         if not terms:
             terms = ["cancer"]
-        term_clauses = " AND ".join(f'(TITLE:"{term}" OR ABSTRACT:"{term}")' for term in terms)
+        term_clauses = " AND ".join(self._term_clause(term) for term in terms)
         return f"{term_clauses} AND SRC:PPR"
 
+    @staticmethod
+    def _term_clause(term: str) -> str:
+        return f'(TITLE:"{term}" OR ABSTRACT:"{term}")'
+
+    def _query_tiers(self, context: ConnectorContext) -> list[str]:
+        """Strict phrase query first, then gene-level and cancer-type-only fallbacks."""
+        tiers = [self._build_query(context)]
+        cancer_type = getattr(context.profile, "cancer_type", None)
+        if isinstance(cancer_type, str) and cancer_type.strip():
+            cancer_clause = self._term_clause(cancer_type.strip())
+            genes = profile_biomarker_genes(context.profile, limit=3)
+            if genes:
+                gene_clause = " OR ".join(self._term_clause(gene) for gene in genes)
+                tiers.append(f"{cancer_clause} AND ({gene_clause}) AND SRC:PPR")
+            tiers.append(f"{cancer_clause} AND SRC:PPR")
+        return dedupe_queries(tiers)
+
     def fetch(self, context: ConnectorContext) -> list[ConnectorRecord]:
-        query = self._build_query(context)
         page_size = self._page_size(context)
         search_terms = self._profile_terms(context)
 
+        results: list[dict[str, Any]] = []
         with self._build_client(20.0) as client:
-            response = get_with_retries(
-                client,
-                self._search_url,
-                params={
-                    "query": query,
-                    "format": "json",
-                    "resultType": "core",
-                    "sort": "P_PDATE_D desc",
-                    "pageSize": page_size,
-                },
-            )
-            response.raise_for_status()
-            results = (response.json().get("resultList") or {}).get("result", []) or []
+            for query in self._query_tiers(context):
+                response = get_with_retries(
+                    client,
+                    self._search_url,
+                    params={
+                        "query": query,
+                        "format": "json",
+                        "resultType": "core",
+                        "sort": "P_PDATE_D desc",
+                        "pageSize": page_size,
+                    },
+                )
+                response.raise_for_status()
+                results = (response.json().get("resultList") or {}).get("result", []) or []
+                if results:
+                    break
 
         records: list[ConnectorRecord] = []
         for result in results:

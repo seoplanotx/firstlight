@@ -38,8 +38,10 @@ export function DashboardPage() {
   const [runBusy, setRunBusy] = useState(false);
   const [pendingFindingId, setPendingFindingId] = useState<number | null>(null);
 
-  async function load() {
-    setLoading(true);
+  // `silent` refreshes in place after an action instead of replacing the page
+  // with a loading block (which dropped focus, scroll, and open details).
+  async function load({ silent = false }: { silent?: boolean } = {}) {
+    if (!silent) setLoading(true);
     setErrorMessage('');
     try {
       const result = await api.getDashboard();
@@ -74,10 +76,10 @@ export function DashboardPage() {
     try {
       await api.triggerRun();
       setNotice('Done. The latest research has been pulled in and this page is up to date.');
-      await load();
+      await load({ silent: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not check for new research.'));
-      await load();
+      await load({ silent: true });
     } finally {
       setRunBusy(false);
     }
@@ -87,7 +89,7 @@ export function DashboardPage() {
     setPendingFindingId(findingId);
     try {
       await api.setFindingAction(findingId, action);
-      await load();
+      await load({ silent: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Could not update this item.'));
     } finally {
@@ -134,11 +136,7 @@ export function DashboardPage() {
   const nothingNew = newCount === 0 && changedCount === 0;
   const glanceCounts = nothingNew
     ? 'Nothing new since your last check.'
-    : `${newCount} new · ${changedCount} updated · ${strongCount} strong ${pluralize(
-        strongCount,
-        'match',
-        'matches'
-      )} · ${trialCount} possible ${pluralize(trialCount, 'trial', 'trials')}`;
+    : `${newCount} new · ${changedCount} updated · ${strongCount} closely related · ${trialCount} possible ${pluralize(trialCount, 'trial', 'trials')}`;
 
   return (
     <div className="page-stack">

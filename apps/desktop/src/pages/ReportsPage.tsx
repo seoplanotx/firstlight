@@ -8,7 +8,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PageErrorState } from '../components/PageErrorState';
 import { ReportContents, outlineSummaryLine } from '../components/ReportContents';
 import { api, ApiError } from '../lib/api';
-import { appointmentPayload, readAppointment, writeAppointment } from '../lib/appointmentPrefs';
+import { appointmentPayload, formatLocalDate, readAppointment, writeAppointment } from '../lib/appointmentPrefs';
 import type { Appointment } from '../lib/appointmentPrefs';
 import { getErrorMessage } from '../lib/errors';
 import {
@@ -139,6 +139,8 @@ export function ReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [phase, setPhase] = useState<Phase>('choose');
   const [intent, setIntent] = useState<ReportType | null>(null);
   const [preview, setPreview] = useState<ReportOutline | null>(null);
+  const [previewError, setPreviewError] = useState('');
+  const [previewAttempt, setPreviewAttempt] = useState(0);
   const [appointment, setAppointment] = useState<Appointment>(readAppointment);
   const [lastGenerated, setLastGenerated] = useState<ReportExport | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -182,18 +184,21 @@ export function ReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
     if (phase !== 'prep' || !intent) return;
     let cancelled = false;
     setPreview(null);
+    setPreviewError('');
     api
       .getReportPreview(intent)
       .then((result) => {
         if (!cancelled) setPreview(result);
       })
-      .catch(() => {
-        if (!cancelled) setPreview(null);
+      .catch((error) => {
+        // A null preview means "still working", so a failure needs its own
+        // state — otherwise the page says "Working out…" forever.
+        if (!cancelled) setPreviewError(getErrorMessage(error, 'Could not work out what this report will include.'));
       });
     return () => {
       cancelled = true;
     };
-  }, [phase, intent]);
+  }, [phase, intent, previewAttempt]);
 
   // Render the print sheet first, then hand the page to the OS print dialog.
   useEffect(() => {
@@ -435,6 +440,13 @@ export function ReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
 
             {preview ? (
               <ReportContents outline={preview} headingLevel={4} />
+            ) : previewError ? (
+              <div className="callout callout-caution" role="alert">
+                <p>{previewError} You can still create the report.</p>
+                <button className="secondary-button" type="button" onClick={() => setPreviewAttempt((value) => value + 1)}>
+                  Try again
+                </button>
+              </div>
             ) : (
               <p className="muted" role="status">
                 Working out what to include…
@@ -480,7 +492,7 @@ export function ReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
                 <p className="muted">
                   For your appointment
                   {appointment.doctor ? ` with ${appointment.doctor}` : ''}
-                  {appointment.date ? ` on ${new Date(appointment.date).toLocaleDateString()}` : ''}.
+                  {appointment.date ? ` on ${formatLocalDate(appointment.date)}` : ''}.
                 </p>
               )}
             </div>

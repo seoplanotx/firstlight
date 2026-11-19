@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { api } from '../lib/api';
-import { hasUnsavedProfileEdits, setProfileEditsDirty } from '../lib/profileEditGuard';
+import { PROFILE_CHANGED_EVENT, hasUnsavedProfileEdits, setProfileEditsDirty } from '../lib/profileEditGuard';
 import type { PatientProfile } from '../lib/types';
 
 import { ConfirmDialog } from './ConfirmDialog';
@@ -40,6 +40,10 @@ export function Sidebar() {
 
   useEffect(() => {
     void loadProfiles();
+    // Profiles created or activated on Patient Details must show up here too.
+    const refresh = () => void loadProfiles();
+    window.addEventListener(PROFILE_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(PROFILE_CHANGED_EVENT, refresh);
   }, []);
 
   async function handleActivate(profileId: number) {
@@ -50,7 +54,7 @@ export function Sidebar() {
       setActiveId(activated.id ?? profileId);
       setProfileEditsDirty(false);
       // Soft refresh for pages that load active profile on mount.
-      window.dispatchEvent(new Event('firstlight:profile-changed'));
+      window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT));
     } catch {
       // leave selection unchanged
     } finally {

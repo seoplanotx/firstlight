@@ -46,20 +46,43 @@ def _run_scheduled_job() -> None:
             logger.info("Skipped scheduled run because monitoring is already in progress.")
 
 
+DEFAULT_RUN_TIME = (8, 30)
+
+
+def parse_run_time(value: str | None) -> tuple[int, int] | None:
+    """Parse "HH:MM" (24-hour) into ``(hour, minute)``; ``None`` if malformed."""
+    if not isinstance(value, str):
+        return None
+    parts = value.strip().split(":")
+    if len(parts) != 2 or not all(part.isdigit() for part in parts):
+        return None
+    hour, minute = int(parts[0]), int(parts[1])
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return None
+    return hour, minute
+
+
 def configure_scheduler_from_settings(daily_run_time: str) -> None:
     scheduler = get_scheduler()
-    hour, minute = daily_run_time.split(":")
+    parsed = parse_run_time(daily_run_time)
+    if parsed is None:
+        # A bad stored value must never stop the app from starting.
+        logger.warning("Invalid daily run time %r; using %02d:%02d.", daily_run_time, *DEFAULT_RUN_TIME)
+        parsed = DEFAULT_RUN_TIME
+    hour, minute = parsed
     scheduler.add_job(
         _run_scheduled_job,
         trigger="cron",
         id=JOB_ID,
         replace_existing=True,
-        hour=int(hour),
-        minute=int(minute),
+        hour=hour,
+        minute=minute,
         coalesce=True,
-        misfire_grace_time=1800,
+        # No grace limit: if the computer was asleep at the scheduled time,
+        # run once when it wakes instead of silently skipping the day.
+        misfire_grace_time=None,
     )
-    logger.info("Daily monitoring job scheduled for %s", daily_run_time)
+    logger.info("Daily monitoring job scheduled for %02d:%02d", hour, minute)
 
 
 def next_run_time_iso() -> str | None:

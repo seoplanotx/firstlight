@@ -40,3 +40,14 @@ export function appointmentPayload(appointment: Appointment): {
   if (appointment.doctor.trim()) payload.appointment_clinician = appointment.doctor.trim();
   return payload;
 }
+
+/**
+ * Format a date-only "YYYY-MM-DD" value as a local calendar date. `new Date(
+ * "2026-07-28")` parses as UTC midnight, which shows July 27 west of UTC.
+ */
+export function formatLocalDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return date.toLocaleDateString();
+}

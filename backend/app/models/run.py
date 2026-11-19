@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.types import UTCDateTime
 from app.db.base import Base
 from app.utils.dates import utcnow
 
@@ -21,8 +22,8 @@ class MonitoringRun(Base):
     profile_id: Mapped[int | None] = mapped_column(ForeignKey("patient_profiles.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[str] = mapped_column(String(40), default="queued")
     triggered_by: Mapped[str] = mapped_column(String(40), default="manual")
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     summary_json: Mapped[dict] = mapped_column(JSON, default=dict)
     new_findings_count: Mapped[int] = mapped_column(Integer, default=0)
     changed_findings_count: Mapped[int] = mapped_column(Integer, default=0)

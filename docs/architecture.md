@@ -57,6 +57,10 @@ Owns:
 - new/changed detection
 - run summaries
 
+The daily job has no misfire limit: if the computer was asleep at the scheduled time it
+runs once on wake (coalesced). A malformed stored run time falls back to 08:30 instead of
+blocking startup, and the settings API rejects non-`HH:MM` values.
+
 ### Report service
 Owns:
 - PDF generation
@@ -107,6 +111,15 @@ Owns:
 - report defaults
 - provider config
 - encrypted local secret storage
+
+### Local API request guard
+`app/core/request_guard.py` runs before every route. The loopback API has no login, so it:
+- rejects any `Host` that is not a loopback name (blocks DNS-rebinding pages from reading data)
+- rejects any `Origin` outside the desktop UI's own origins (blocks other websites from
+  triggering actions such as data deletion)
+
+Requests without an `Origin` (Claude Desktop extension, curl, tests) are allowed. The same
+origin list feeds CORS. Add new UI origins in `ALLOWED_ORIGINS` there.
 
 ## Rules-first, LLM-second
 

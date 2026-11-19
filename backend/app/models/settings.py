@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import Boolean, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.db.types import UTCDateTime
 from app.db.base import Base, TimestampMixin
 from app.utils.dates import utcnow
 
@@ -18,7 +19,7 @@ class SourceConfig(Base, TimestampMixin):
     connector_key: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     settings_json: Mapped[dict] = mapped_column(JSON, default=dict)
-    last_successful_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_successful_sync_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -30,7 +31,7 @@ class ReportExport(Base, TimestampMixin):
     report_type: Mapped[str] = mapped_column(String(60), nullable=False)
     status: Mapped[str] = mapped_column(String(40), default="completed")
     file_path: Mapped[str] = mapped_column(String(1000), nullable=False)
-    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     summary_json: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
@@ -48,7 +49,7 @@ class AppSettings(Base, TimestampMixin):
     demo_profile_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     privacy_mode: Mapped[str] = mapped_column(String(40), default="local_only")
     deidentified_ai_disclosure_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
-    last_health_check_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_health_check_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     # Claude Desktop (MCP) gateway access: off by default; the connection code
     # is stored encrypted like provider API keys and never returned after issue.
     mcp_access_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -67,7 +68,7 @@ class ApiProviderConfig(Base, TimestampMixin):
     api_base_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     selected_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
     encrypted_api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
-    last_tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_tested_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     last_test_success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
 
@@ -77,7 +78,7 @@ class OnboardingState(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     current_step: Mapped[str | None] = mapped_column(String(60), nullable=True)
     show_demo_profile_option: Mapped[bool] = mapped_column(Boolean, default=True)
     welcome_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
